@@ -1,0 +1,445 @@
+# Power and Sample Size for Longitudinal Trials {#sec-longitudinal-power}
+
+*Prerequisites: Chapters 5, 8, 11, and 18.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Apply the closed-form power formulas for slope-based
+  longitudinal trials and state what each assumes.
+- Explain how dropout enters the closed-form calculations
+  and where the approximations fail.
+- Choose among the available R packages for longitudinal
+  power and know what each implements.
+- Build a simulation-based power calculation that
+  reproduces the closed-form result and then extends
+  beyond it.
+
+## Orientation
+
+Chapter 5 gave the sample-size formula for a two-arm
+comparison at a single time point. Longitudinal trials
+need more, because the quantity of interest is a
+difference in rates of change, the observations within a
+patient are correlated, and dropout removes some
+observations and not others.
+
+Three approaches exist, and a competent design uses at
+least two of them. **Closed-form formulas** give an answer
+in a line and expose which parameters matter.
+**Package implementations** encode those formulas with
+extensions for dropout and unequal spacing. **Simulation**
+handles everything else and is the only route once the
+analysis model departs from what the formulas assume.
+
+The chapter's practical message: use the closed form to
+understand the design, use simulation to size it, and use
+the agreement between them as the check that neither has a
+mistake in it.
+
+## Provenance
+
+This chapter follows two research compendia.
+`31-long-power` (project `longpower`) is a review of
+closed-form power methods for longitudinal trials and the
+software implementing them, with comparative examples
+across the Diggle, Edland, and Hu formulations, the effect
+of dropout, and MMRM endpoint analysis. `28-trialsim`
+(project `trialsim`) develops clinical trial simulation
+with linear mixed-effects models as the general-purpose
+alternative when closed forms do not apply.
+
+## The statistician's contribution {#sec-long-power-human}
+
+**(Judgment 1.) Which estimand the calculation is for.**
+The sample size for a slope difference and for a
+final-visit difference are different numbers, computed
+from different formulas, under different assumptions.
+Chapter 18 decided the estimand; this chapter sizes it.
+
+**(Judgment 2.) Where the variance components come from.**
+The calculation needs the residual variance, the random
+intercept variance, the random slope variance, and often
+their correlation. These must come from prior longitudinal
+data in the same population with the same instrument. A
+calculation with invented variance components is
+arithmetic, not design.
+
+**(Judgment 3.) Whether the dropout assumption is a
+guess.** Closed forms handle dropout by assuming a
+pattern, usually a fixed proportion at each visit or an
+exponential attrition. Real dropout is neither. The
+sensitivity of the answer to the dropout assumption should
+be reported.
+
+## The closed-form landscape
+
+For a two-arm trial with $n$ patients per arm, $J$
+measurements at times $t_1, \dots, t_J$, and a random
+intercept and slope model, the variance of the
+slope-difference estimator has the general form
+$$
+\mathrm{Var}(\hat\delta) = \frac{2}{n}\left[
+  \sigma_b^2 + \frac{\sigma^2}{\sum_j (t_j - \bar t)^2}
+\right],
+$$
+where $\sigma_b^2$ is the between-patient slope variance
+and $\sigma^2$ the residual variance. The required sample
+size follows immediately:
+$$
+n = \frac{2(z_{1-\alpha/2} + z_{1-\beta})^2}{\delta^2}
+    \left[\sigma_b^2 +
+      \frac{\sigma^2}{\sum_j (t_j - \bar t)^2}\right].
+$$
+
+Everything worth knowing about longitudinal design is
+visible in this expression.
+
+The bracketed term has two parts. The first, $\sigma_b^2$,
+is irreducible: no number of measurements reduces the
+uncertainty arising from patients genuinely differing in
+their rates. The second shrinks as measurements are added
+and as they are spread further apart, since $\sum_j (t_j -
+\bar t)^2$ grows with both. This is the formal statement of
+Chapters 11 and 12: more observations and longer follow-up
+buy precision, up to a floor.
+
+The named variants differ in what they add. The **Diggle**
+formulation is the general marginal-model version. The
+**Edland** formulation is written for the random
+intercept-and-slope model and is the one used in
+Alzheimer trial design. The **Hu** formulation extends to
+patterns of dropout. The `longpower` compendium works
+through comparative examples of all three, and the
+practical finding is that they agree closely when their
+assumptions coincide, so a discrepancy between two of them
+in a real calculation means an input has been
+mis-specified.
+
+```r
+library(longpower)
+
+# Edland formulation: random intercept + slope
+edland.linear.power(
+  n = NULL, delta = 0.5,
+  t = c(0, 0.5, 1, 1.5, 2),      # years
+  sig2.s = 0.05,                  # slope variance
+  sig2.e = 0.35,                  # residual variance
+  sig.level = 0.05, power = 0.90)
+#> n = 217 per arm
+
+# Diggle formulation for comparison
+diggle.linear.power(
+  delta = 0.5, t = c(0, 0.5, 1, 1.5, 2),
+  sigma2 = 0.35, R = 0.6,
+  sig.level = 0.05, power = 0.90)
+#> n = 231 per arm
+```
+
+The two differ because they parameterize the correlation
+differently; reconciling them is a useful exercise and a
+good check that the variance components have been
+translated correctly.
+
+## Dropout
+
+Dropout reduces the information each departing patient
+contributes, and the reduction depends on when they leave.
+A patient who completes four of five visits contributes
+nearly a full slope; a patient who completes only the
+baseline contributes nothing.
+
+The naive Chapter 5 inflation, dividing by $1 - \pi$,
+over-corrects badly here, because it treats every dropout
+as contributing nothing when most contribute a great deal.
+
+The closed-form treatment weights each patient's
+contribution by their observed design. If a proportion
+$p_j$ of patients are observed through visit $j$, the
+effective information is a weighted sum over dropout
+patterns, and the required sample size is inflated by a
+factor typically far smaller than $1/(1-\pi)$.
+
+```r
+# Hu-style calculation with attrition
+liu.liang.linear.power(
+  delta = 0.5, t = c(0, 0.5, 1, 1.5, 2),
+  sigma2 = 0.35, R = 0.6,
+  retention = c(1, 0.95, 0.90, 0.85, 0.80),
+  sig.level = 0.05, power = 0.90)
+#> n = 252 per arm
+```
+
+Here 20% attrition by the final visit inflates the
+requirement from 231 to 252, about 9%, not the 25% the
+naive formula would demand. The difference matters: a
+trial sized by the naive rule over-enrolls by 16%.
+
+::: {.callout-warning}
+## Warning
+
+All of these dropout adjustments assume the dropout is
+non-informative, that is MCAR or MAR given the model. They
+correct the *variance* for lost information. They do
+nothing about the *bias* that informative dropout
+introduces, which is the subject of Chapters 10 and 21. A
+power calculation is not a missing-data plan.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: which lever to pull
+
+**Question.** A slope-based trial is 20% under-powered.
+The team can (a) enroll 20% more patients, (b) extend
+follow-up from 18 to 24 months, or (c) add two
+intermediate visits. Which is most efficient, and what
+determines the answer?
+
+**Answer.**
+
+Look at the variance expression. Option (a) reduces the
+whole bracket by dividing by a larger $n$: a 20% increase
+in $n$ reduces the variance by 17%.
+
+Option (b) increases $\sum_j (t_j - \bar t)^2$, which
+grows roughly with the square of the duration. Extending
+from 18 to 24 months multiplies that sum by about $(24/18)^2
+= 1.78$, so the second term of the bracket falls by 44%.
+Whether this translates into a 44% variance reduction
+depends on how much of the bracket that term represents,
+which is governed by the slope-to-noise ratio. If
+$\sigma_b^2$ dominates, the gain is small; if the residual
+term dominates, the gain is large and duration is by far
+the best lever.
+
+Option (c) also increases the sum of squared deviations
+but by much less, because interior visits are close to the
+mean time and contribute little to the sum. Two
+intermediate visits typically buy a few percent.
+
+The general ranking, for slope-based trials: extend
+duration, then add patients, then add interior visits.
+With the caveat that extending duration increases dropout
+and cost per patient, and that the linearity assumption
+must hold over the longer window.
+:::
+
+## Simulation
+
+Once the analysis departs from the formulas, and it
+usually does, simulation is the only route. Departures
+that force it: categorical-time MMRM rather than a slope
+model, non-linear trajectories, informative dropout,
+covariate adjustment with realistic covariate
+distributions, interim analyses, and any endpoint that is
+not continuous and normal.
+
+The `trialsim` compendium develops the general pattern:
+generate patients from a linear mixed-effects
+data-generating model with specified variance components,
+apply the intended dropout mechanism, fit the intended
+analysis model, and record whether the null was rejected.
+
+```r
+simulate_lmm_power <- function(n_per_arm, delta, times,
+                               sig2_b, sig2_e, sig2_a,
+                               dropout = NULL,
+                               n_sim = 2000, seed = 2026) {
+  set.seed(seed)
+  mean(replicate(n_sim, {
+    N   <- 2 * n_per_arm
+    id  <- rep(seq_len(N), each = length(times))
+    arm <- rep(rep(0:1, each = n_per_arm), each = length(times))
+    tt  <- rep(times, N)
+    a   <- rnorm(N, 0, sqrt(sig2_a))[id]
+    b   <- rnorm(N, 0, sqrt(sig2_b))[id]
+    y   <- a + (b + delta * arm) * tt + rnorm(length(tt), 0,
+                                              sqrt(sig2_e))
+    d   <- data.frame(id, arm, tt, y)
+    if (!is.null(dropout)) d <- apply_dropout(d, dropout)
+    fit <- nlme::lme(y ~ tt * arm, random = ~ tt | id,
+                     data = d, na.action = na.omit)
+    summary(fit)$tTable['tt:arm', 'p-value'] < 0.05
+  }))
+}
+
+simulate_lmm_power(217, 0.5, c(0, .5, 1, 1.5, 2),
+                   sig2_b = 0.05, sig2_e = 0.35,
+                   sig2_a = 1.0)
+#> [1] 0.902
+```
+
+The 0.902 against the closed form's target 0.90 is the
+validation. **Always run this check.** A simulation that
+reproduces the closed form under the closed form's
+assumptions can then be trusted when the assumptions are
+relaxed; a simulation that does not agree has a bug, and
+the bug is usually in the variance components or in the
+model specification.
+
+Two disciplines. Simulate under the null and confirm the
+type I error is at nominal level. And report the Monte
+Carlo standard error: with 2,000 replicates near 90%
+power, it is about 0.007, so differences smaller than
+about 1.5 percentage points between designs are not
+resolvable at that replicate count.
+
+## Software
+
+The compendium reviews the available CRAN packages. The
+main ones:
+
+**`longpower`** implements the Diggle, Edland, Liu-Liang,
+and Hu formulations, handles attrition, and is the
+standard tool for slope-based designs. It also accepts
+fitted `lme` or `gee` objects directly, which is the most
+reliable route: fit the model to pilot data and pass it
+in, rather than translating variance components by hand.
+
+**`pwr`** covers the elementary designs of Chapter 5 and
+does not handle longitudinal structure.
+
+**`simr`** performs simulation-based power for `lme4`
+models, including the extend-and-test workflow for
+determining the sample size at which a fitted model
+achieves target power.
+
+**`gsDesign` and `rpact`** handle group-sequential
+extensions, including for longitudinal endpoints via the
+information-fraction framing.
+
+**`mmrm`** is an analysis package rather than a power
+package, and is what the simulation should call inside its
+loop if the trial's analysis is MMRM.
+
+## Worked example: sizing a two-year trial three ways
+
+An 18-month trial, quarterly visits, slope-based endpoint,
+target effect a 30% slowing of a 0.6-unit-per-year
+decline, so $\delta = 0.18$. Variance components from
+pilot data: $\sigma_a^2 = 1.1$, $\sigma_b^2 = 0.04$,
+$\sigma^2 = 0.30$. Two-sided 0.05, 90% power. Expected
+retention 100, 96, 92, 88, 85, 82, 80% across the seven
+visits.
+
+**Route 1: by hand.** $\sum_j (t_j - \bar t)^2$ for seven
+quarterly visits over 1.5 years is 2.625.
+$$
+n = \frac{2(1.96 + 1.28)^2}{0.18^2}
+    \left[0.04 + \frac{0.30}{2.625}\right] = 500.
+$$
+
+**Route 2: `longpower` with attrition.** Using the
+Liu-Liang formulation with the retention vector gives 543
+per arm, a 9% inflation.
+
+**Route 3: simulation.** Generate under the same
+components with dropout following the retention vector,
+fit the random-slopes model, 5,000 replicates. Power at
+$n = 543$: 0.897 (Monte Carlo SE 0.004). Agreement
+confirms the closed form.
+
+**Then extend beyond the closed form.** Re-simulate with
+(a) MAR dropout where the hazard of withdrawal depends on
+the previous observed value, and (b) a categorical-time
+MMRM analysis rather than a slope model. Under (a) power
+falls to 0.881, and under (b) to 0.844, reflecting the
+efficiency cost of the unconstrained shape that Chapter 18
+described. If the SAP specifies categorical-time MMRM,
+the trial needs 610 per arm, not 543.
+
+That last step is where the exercise earns its keep. The
+closed form sized the trial for a model the SAP does not
+specify. Only the simulation, using the actual analysis,
+gives the right number.
+
+## Collaborating with an LLM on longitudinal power
+
+**Prompt 1: 'Compute the sample size for this longitudinal
+trial.'**
+
+*What to watch for.* The most common error is confusing
+the residual variance with the total variance, which can
+change the answer by a factor of two or more. The second
+most common is using the cross-sectional standard
+deviation where the formula wants the residual.
+
+*Verification.* Compute by hand from the formula, and
+separately with `longpower`, and reconcile.
+
+**Prompt 2: 'Adjust the sample size for 20% dropout.'**
+
+*What to watch for.* Models routinely apply the naive
+$1/(1 - \pi)$ inflation, which substantially over-enrolls
+a longitudinal trial.
+
+*Verification.* Compare against a retention-weighted
+calculation. If the model's answer inflates by the full
+25% for 20% attrition, it has used the wrong rule.
+
+**Prompt 3: 'Write a simulation to validate this power
+calculation.'**
+
+*What to watch for.* Good scaffolding, and frequently a
+mismatch between the generating model and the fitted
+model, which makes the validation meaningless.
+
+*Verification.* First run the simulation with no dropout
+and confirm it reproduces the closed form. Only then add
+complications.
+
+## Principle in use
+
+1. **Two routes to every number.** Closed form and
+   simulation. Their agreement is the only practical
+   protection against an input error.
+
+2. **Simulate the analysis in the SAP, not a convenient
+   approximation to it.** The two can differ by 10% or
+   more in required sample size.
+
+3. **Report the retention assumption alongside the sample
+   size.** It is the input most likely to be wrong and the
+   one the trial can monitor while it runs.
+
+## Exercises
+
+1. Derive the variance expression at the start of this
+   chapter from the random intercept-and-slope model.
+
+2. For a fixed total number of measurements, compute the
+   required $n$ for follow-up durations of 12, 18, 24, and
+   36 months, and plot the result.
+
+3. Reconcile the Diggle and Edland calculations in the
+   first code block: find the parameter translation that
+   makes them agree.
+
+4. Implement the retention-weighted dropout adjustment and
+   compare it to the naive inflation across attrition
+   rates from 5% to 40%.
+
+5. Size a trial by closed form, validate by simulation,
+   then re-simulate with an analysis model that differs
+   from the one the formula assumes. Report the
+   discrepancy in required sample size.
+
+## Further reading
+
+- The compendia `31-long-power` and `28-trialsim`.
+- @zhao2022power, the power formulas for the random
+  intercept-and-slope model used throughout this chapter.
+- @iddi2022longpower, the `longpower` package paper, which
+  documents the Diggle, Edland, Liu-Liang, and Hu
+  formulations and their translation.
+- @harrall2023power, a step-by-step tutorial for power in
+  longitudinal mixed models.
+- @laird1990estimating, on estimating rates of change.
+- @frost2008optimizing, for the interaction with run-in
+  observations.
+- @diggle2002analysis, Chapter 2, on design.
+- @fitzmaurice2011applied, Chapter 20.
+- @lachin1981introduction, for the general framing.
+- The `longpower` and `simr` package documentation, both
+  of which include worked examples.

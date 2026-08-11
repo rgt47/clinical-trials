@@ -1,0 +1,412 @@
+# Factorial Designs and Matched-Tuple Randomization {#sec-factorial}
+
+*Prerequisites: Chapters 3, 5, and 16.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Describe a factorial trial, state what it estimates, and
+  explain the efficiency argument for it.
+- Identify the assumption a factorial design relies on and
+  what happens when it fails.
+- Explain matched-tuple randomization and how it
+  generalizes matched pairs to $k$ arms.
+- State the variance of a factorial contrast under the
+  matched-tuple randomization distribution and the
+  degrees-of-freedom cost.
+- Decide when matched-tuple randomization is worth its
+  complexity.
+
+## Orientation
+
+A factorial trial randomizes each patient to a combination
+of two or more interventions simultaneously. With two
+binary factors A and B, patients are assigned to one of
+four arms: neither, A alone, B alone, both. The main
+effect of A is estimated by comparing everyone who got A
+to everyone who did not, averaging across B, and vice
+versa.
+
+The efficiency claim is striking: two questions answered
+for the price of one trial. It holds when the two
+treatments do not interact, and it is the basis for some
+of the largest and most informative trials ever run.
+
+The second half of the chapter takes up a distinct
+question. A factorial design with $k$ arms needs balance
+across $k$ groups, and the standard tools (stratification,
+minimization) are strained by $k > 2$. Matched-tuple
+randomization is the natural generalization of the matched
+pair: group patients into tuples of size $k$ matched on
+baseline covariates, and randomly assign the $k$ treatment
+combinations within each tuple. Every factorial contrast
+is then exactly balanced within every tuple.
+
+## Provenance
+
+The matched-tuple methodology, variance formulas, and
+simulation results come from the research compendium
+`16-factorial-matched-random` (project `factorialrandom`),
+which develops matching algorithms using Mahalanobis and
+prognostic-score distances, derives exact and asymptotic
+variance formulas for factorial effects under the
+matched-tuple randomization distribution, and evaluates
+efficiency in simulations motivated by Alzheimer disease
+prevention trials with trial-ready cohorts.
+
+## The statistician's contribution {#sec-factorial-human}
+
+**(Judgment 1.) Whether the no-interaction assumption is
+defensible.** A factorial trial powered for main effects
+is under-powered for interaction by a factor of about
+four. If a substantial interaction is plausible on
+mechanistic grounds, the design either needs to be powered
+for it, which is expensive, or should not be factorial.
+
+**(Judgment 2.) Whether the pool is available in
+advance.** Matched-tuple randomization requires the
+subjects to be matchable, which requires a pool of
+characterized candidates. In sequential enrollment this is
+impossible; in a trial-ready cohort, where participants
+are screened and characterized before any trial opens, it
+is natural.
+
+**(Judgment 3.) The degrees-of-freedom accounting.**
+Matching constrains the randomization distribution, and
+the variance estimator is based on $M - 1$ tuples rather
+than $N - k$ patients. In a small trial with large $k$
+this can cost more than the matching gains.
+
+## Factorial designs
+
+Consider two factors, each at two levels, with $N$
+patients allocated equally to the four cells. Write the
+outcome model
+$$
+Y = \mu + \alpha A + \beta B + \gamma AB + \epsilon,
+$$
+with $A, B \in \{-1, +1\}$ coded as contrasts.
+
+The main effect of A is estimated by
+$\hat\alpha = (\bar Y_{A+} - \bar Y_{A-})/2$, using all
+$N$ patients. Its variance is $\sigma^2 / N$, exactly as
+if the trial had studied A alone with $N$ patients. The
+same holds for B. This is the efficiency claim: two main
+effects at the cost of one trial's sample size.
+
+The interaction is estimated by a contrast that pits the
+diagonal cells against the off-diagonal ones, and its
+variance is four times that of a main effect. Hence the
+standard result that detecting an interaction of the same
+magnitude as a main effect requires four times the sample
+size.
+
+**What happens when there is an interaction.** The main
+effect of A is then an average over the levels of B, and
+whether that average is meaningful depends on the
+question. If B is a treatment that will be used in half of
+practice, the averaged effect may be exactly what a health
+system wants. If A works only in the presence of B, the
+averaged main effect describes no patient's situation.
+
+**Practical examples.** The Physicians' Health Study
+(aspirin and beta-carotene) and ISIS-2 (streptokinase and
+aspirin) are canonical, and the latter found no
+interaction between two treatments acting through
+different mechanisms, which is the typical case.
+@yusuf1991factorial argue that factorial designs are
+under-used for exactly this reason: interactions between
+mechanistically distinct interventions are usually small.
+
+::: {.callout-warning}
+## Warning
+
+A factorial trial that finds a significant interaction is
+usually reporting noise. With the design powered for main
+effects, an interaction test at conventional significance
+has power around 20 to 25% for an interaction equal to the
+main effect, and much less for smaller ones. A significant
+result at that power is more likely to be a false positive
+than a true one when interactions are a priori
+improbable. Report the interaction test; do not build the
+conclusion on it.
+:::
+
+## The balance problem with $k$ arms
+
+Chapter 3's tools were developed for two arms. With $k =
+4$ or $k = 8$ factorial cells, they strain:
+
+- Stratified blocks need block sizes that are multiples of
+  $k$, so a block of size 8 in a $2^3$ design, which makes
+  within-stratum balance coarse when strata are small.
+- Minimization generalizes but the imbalance metric across
+  $k$ groups is less clean and the assignment probabilities
+  more arbitrary.
+- Simple randomization leaves substantial imbalance across
+  four or eight groups at realistic trial sizes.
+
+## Matched-tuple randomization
+
+The construction. Given a pool of $N_{\text{pool}}$
+characterized candidates, form $M$ tuples of size $k$ by
+optimal matching on baseline covariates, using Mahalanobis
+distance or a prognostic score. Within each tuple, assign
+the $k$ treatment combinations by drawing uniformly from
+the $k!$ permutations. Tuples are independent, so the
+randomization space contains $(k!)^M$ equally likely
+allocations.
+
+The consequence is exact: within every tuple, each
+treatment combination is represented once, so every
+factorial contrast is perfectly balanced within every
+tuple, and the covariate distributions across arms are as
+similar as the matching allows.
+
+**Estimation.** For a contrast defined by weights $w_z$
+over the $k$ combinations with $\sum_z w_z = 0$, the
+estimator is the average across tuples of the
+contrast-weighted outcomes,
+$$
+\hat\tau_c = \frac{1}{M}\sum_{m=1}^{M} \sum_z w_z Y_m(z),
+$$
+which is unbiased under the matched-tuple randomization
+distribution.
+
+**Variance.** The exact variance is
+$\mathrm{Var}(\hat\tau_c) = M^{-2}\sum_m V_m(c)$, where
+$V_m(c)$ depends on the within-tuple potential outcomes. A
+conservative estimator replaces $V_m(c)$ by the
+within-tuple sample variance of the contrast-weighted
+outcomes, which is the natural analogue of the paired
+$t$-test variance.
+
+**Regression adjustment.** Following the Lin-style
+argument of Chapter 16, the difference-in-means can be
+augmented with a regression adjustment on residual
+covariate differences, which recovers efficiency when the
+matching is imperfect and cannot hurt asymptotically.
+
+```r
+# Sketch: form tuples by optimal matching, then permute
+# treatments within tuple.
+library(nbpMatching)
+
+d  <- dist_mahalanobis(pool[, covariates])
+tp <- form_tuples(d, k = 4)             # M tuples of size 4
+assign <- unlist(lapply(split(tp$id, tp$tuple),
+                        function(ids) sample(1:4)))
+```
+
+## Efficiency and its limits
+
+The compendium's simulation, motivated by Alzheimer
+prevention trials, evaluates covariate balance, efficiency
+gains, coverage, power, and the effect of pool
+oversampling. The findings shape four practical
+conditions under which matched-tuple randomization is
+advantageous:
+
+1. **The full pool is available before randomization.**
+   This is what permits global rather than sequential
+   matching, and it is the situation in a trial-ready
+   cohort such as TRC-PAD, AHEAD 3-45, DIAN-TU, or EPAD,
+   where thousands of participants are characterized in
+   advance.
+2. **Strong prognostic covariates are measured at
+   baseline.** Matching on weak predictors buys nothing.
+3. **The number of arms is not too large**, up to about
+   $k = 8$, that is a $2^3$ design, to avoid excessive
+   degrees-of-freedom loss.
+4. **The pool-to-sample ratio exceeds 1.** Excess
+   candidates allow the matching algorithm to discard poor
+   matches, and the simulation shows the quality of
+   matching, and hence the efficiency gain, improving with
+   oversampling.
+
+**The degrees-of-freedom cost.** With $M$ tuples the
+effective degrees of freedom for variance estimation are
+$M - 1$, against $N - k$ under unrestricted randomization.
+For a $2^3$ design with $N = 160$, $M = 20$ and the
+variance is estimated on 19 degrees of freedom rather than
+152. This is the binding limitation, and it is attenuated
+when $M$ exceeds roughly 30.
+
+**Computational cost.** Optimal $k$-tuple formation by
+integer programming is feasible for pools up to about
+1,000 and needs heuristics beyond that. Trial-ready cohort
+pools of 1,000 to 2,000 sit at the edge of the tractable
+range.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: matching versus rerandomization
+
+**Question.** How does matched-tuple randomization differ
+from rerandomization, and can they be combined?
+
+**Answer.**
+
+Both target covariate balance and both do it by
+restricting the randomization distribution, which is why
+both require the analysis to respect that distribution.
+
+Rerandomization draws an allocation, checks a balance
+criterion, and re-draws if the criterion fails. It
+restricts the allocation space and leaves the subjects
+ungrouped.
+
+Matched-tuple randomization restricts both the allocation
+space and the grouping: patients are first partitioned
+into matched tuples, and then only allocations that give
+each tuple one of each treatment are permitted. The
+constraint is stronger and the balance is exact within
+tuple rather than approximate overall.
+
+They can be combined: form tuples, then rerandomize within
+tuples to balance residual covariates that the matching
+did not use. The compendium's assessment is that the
+marginal benefit of the combination is small when tuples
+are already well matched, which is the expected result,
+since there is little residual imbalance left to remove.
+
+The important shared consequence: under either scheme, the
+inference should use the actual randomization
+distribution, either by a permutation test or by a
+variance estimator derived for that distribution. Applying
+an unrestricted-randomization standard error to a
+restricted design is conservative and wastes the balance
+that was purchased.
+:::
+
+## Worked example: a $2 \times 2$ prevention trial
+
+An Alzheimer prevention trial in a trial-ready cohort of
+1,400 characterized participants. Two interventions: an
+anti-amyloid agent and an intensive lifestyle program.
+Target enrollment 400. Primary endpoint: change in a
+composite cognitive score over three years.
+
+**Design.** $2 \times 2$ factorial, $k = 4$. The
+mechanisms are distinct, so a substantial interaction is
+not expected; the trial is powered for main effects and
+reports the interaction descriptively.
+
+**Randomization.** Matched-tuple. From the pool of 1,400,
+form 100 tuples of four participants each, matched on a
+prognostic score built from age, APOE genotype, baseline
+composite score, and baseline amyloid PET centiloid. Pool
+ratio is 3.5, comfortably above 1, which allows the
+algorithm to discard poor matches.
+
+**Estimation.** Difference-in-means across tuples for each
+main-effect contrast, with the conservative within-tuple
+variance estimator, augmented by regression adjustment on
+residual covariate differences.
+
+**Degrees of freedom.** $M = 100$, so 99 degrees of
+freedom for the variance estimate. Well above the
+threshold of concern.
+
+**Efficiency.** Simulated relative efficiency against
+stratified block randomization on the same covariates,
+categorized: matched-tuple gives a variance reduction of
+roughly 15 to 20% for the main effects in the compendium's
+Alzheimer-motivated scenarios, with the gain increasing in
+the prognostic strength of the matching variables and in
+the pool ratio.
+
+**What it buys, stated plainly.** A 15 to 20% variance
+reduction is equivalent to enrolling 15 to 20% more
+patients. At 400 patients in a prevention trial costing
+tens of millions, that is a substantial saving, and it is
+available only because the cohort was characterized in
+advance.
+
+## Collaborating with an LLM on factorial designs
+
+**Prompt 1: 'Compute the sample size for a 2x2 factorial
+trial.'**
+
+*What to watch for.* The main-effect calculation is
+usually correct. Models often fail to note that the
+interaction requires four times the sample size, and
+sometimes size the trial for the interaction without
+saying so, which quadruples the answer.
+
+*Verification.* Confirm which contrast the calculation
+targets, and check that the main-effect variance is
+$\sigma^2/N$ rather than $4\sigma^2/N$.
+
+**Prompt 2: 'Implement matched-tuple randomization.'**
+
+*What to watch for.* Code that matches into pairs and then
+splits, which does not give a valid $k$-tuple structure,
+or that assigns treatments without drawing uniformly from
+all $k!$ permutations within tuple.
+
+*Verification.* Check that every tuple contains each
+treatment exactly once, and simulate the allocation
+distribution to confirm each permutation is equally
+likely.
+
+**Prompt 3: 'How should we analyze a matched-tuple
+randomized trial?'**
+
+*What to watch for.* A tendency to recommend the standard
+unadjusted analysis, which is valid but conservative
+because it ignores the matching.
+
+*Verification.* The analysis should either use the
+tuple-based variance estimator or condition on the tuple
+structure, and a permutation test over the actual
+randomization distribution is always available as a check.
+
+## Principle in use
+
+1. **Use factorial designs when the mechanisms are
+   distinct.** Two answers for one trial is real, and the
+   interaction concern is usually theoretical.
+
+2. **Match only when the pool exists in advance.**
+   Sequential enrollment forecloses global matching, and
+   minimization is then the right tool.
+
+3. **Count the tuples, not the patients, when assessing
+   the variance estimate.** $M - 1$ degrees of freedom is
+   the operative number.
+
+## Exercises
+
+1. Derive the variance of the main-effect and interaction
+   contrasts in a balanced $2 \times 2$ design and confirm
+   the factor of four.
+
+2. Simulate a $2 \times 2$ trial with a true interaction
+   equal to half the main effect. What is the power of the
+   interaction test at the main-effect-powered sample
+   size?
+
+3. Implement matched-pair randomization for $k = 2$ and
+   compare the variance of the treatment effect to simple
+   randomization, for covariate-outcome correlations of
+   0.3, 0.5, and 0.7.
+
+4. Extend to $k = 4$ tuples and reproduce the relationship
+   between pool ratio and matching quality.
+
+5. For a $2^3$ design with $N = 120$, compute the
+   degrees-of-freedom cost of matched-tuple randomization
+   and determine whether the efficiency gain from matching
+   compensates for it, using a simulated prognostic score
+   with $R^2 = 0.4$.
+
+## Further reading
+
+- The compendium `16-factorial-matched-random`.
+- @yusuf1991factorial, on factorial designs in trials.
+- @greevy2004optimal, on optimal multivariate matching
+  before randomization.
+- @lin2013agnostic, on regression adjustment in
+  randomized experiments.
+- @senn2007statistical, Chapter 18, on factorial trials.

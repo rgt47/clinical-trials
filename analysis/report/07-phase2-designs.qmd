@@ -1,0 +1,479 @@
+# Phase II: Screening Designs {#sec-phase2}
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- State the decision a phase II trial supports and explain
+  why that decision, not a hypothesis test, drives the
+  design.
+- Design and interpret Simon's two-stage design, including
+  the optimal and minimax variants.
+- Explain the hazards of single-arm trials with historical
+  controls and identify when they are nonetheless
+  reasonable.
+- Design a randomized phase II selection or screening
+  trial and choose its error rates.
+- Implement Bayesian predictive-probability monitoring for
+  a single-arm trial.
+
+## Orientation
+
+Phase II asks whether a treatment is promising enough to
+justify a phase III trial. That is a screening decision,
+and screening decisions have a distinctive error
+structure: a false positive costs a phase III trial, which
+is expensive but recoverable, while a false negative kills
+a drug that would have worked, which is not recoverable at
+all. This asymmetry is why phase II conventions permit
+$\alpha$ of 0.10 or even 0.20 one-sided, and why a
+phase II trial with 5% type I error is usually
+mis-designed.
+
+The endpoint is typically short-term and often a
+surrogate: tumor response, biomarker change,
+progression-free survival at six months, symptom
+improvement. Sample sizes are 30 to 100. The design
+question is how to spend that budget so that ineffective
+agents are dropped quickly and effective ones move on.
+
+The chapter's second theme is the single-arm design. Most
+phase II oncology trials are single-arm, comparing an
+observed response rate against a historical benchmark, and
+this practice has produced a long record of phase III
+failures. Understanding exactly why is one of the more
+useful things a trials statistician can carry into a study
+team meeting.
+
+## The statistician's contribution {#sec-phase2-human}
+
+**(Judgment 1.) The null response rate is a claim about
+history, and it is usually wrong.** In Simon's design,
+$p_0$ is the response rate below which the drug is
+uninteresting, taken from historical experience. Response
+rates in historical series are inflated by patient
+selection, by improvements in supportive care, and by
+changes in how response is measured. Setting $p_0$ too low
+makes almost any agent look promising.
+
+**(Judgment 2.) Whether a control arm is affordable.** The
+statistician should quantify what randomization costs.
+Doubling the sample size to add a concurrent control is
+often the difference between a phase II result that
+predicts phase III and one that does not, and stating the
+number turns a philosophical argument into a budget
+decision.
+
+**(Judgment 3.) What decision rule the trial implies.**
+Phase II designs are decision rules, not tests. The
+protocol should state what response counts trigger which
+decision, and the team should confirm in advance that they
+will act on the rule. A design whose 'stop' outcome will
+be overridden by enthusiasm is not a design.
+
+## Simon's two-stage design
+
+@simon1989optimal formalized the standard single-arm
+phase II. Test $H_0: p \le p_0$ against $H_1: p \ge p_1$,
+where $p_0$ is the uninteresting rate and $p_1$ the
+promising one.
+
+The design has parameters $(r_1, n_1, r, n)$: treat $n_1$
+patients in stage 1; if $r_1$ or fewer respond, stop and
+declare the agent uninteresting; otherwise continue to a
+total of $n$; if more than $r$ respond overall, declare it
+promising.
+
+Among all designs meeting the error constraints, the
+**optimal** design minimizes the expected sample size
+under $H_0$, and the **minimax** design minimizes the
+maximum sample size $n$.
+
+```r
+library(clinfun)
+
+ph2simon(pu = 0.20, pa = 0.40, ep1 = 0.10, ep2 = 0.10)
+#>  Simon 2-stage Phase II design
+#>
+#> Unacceptable response rate: 0.2
+#> Desirable response rate: 0.4
+#> Error rates: alpha = 0.1 ; beta = 0.1
+#>
+#>         r1 n1  r  n EN(p0) PET(p0)
+#> Minimax  4 18 10 33  22.25  0.7164
+#> Optimal  3 13 12 43  20.58  0.7473
+```
+
+Read the optimal row: treat 13 patients; if 3 or fewer
+respond, stop; otherwise go to 43 total and declare
+promising if more than 12 respond. Under the null the
+trial stops early with probability 0.75 and treats 20.6
+patients on average.
+
+Choosing between optimal and minimax is practical. If
+accrual is fast and patients are plentiful, the minimax
+design's smaller maximum matters. If the agent is likely
+inactive and the ethical priority is exposing few patients
+to an ineffective drug, the optimal design's smaller
+expected size is preferable. Admissible designs
+intermediate between the two exist and are worth
+considering.
+
+**Practical failure modes.** Stage 1 is often
+over-enrolled, because accrual does not pause while
+responses are assessed, and the analysis then does not
+match the design. The protocol should state how
+over-enrollment is handled. And the design has no futility
+rule after stage 1 begins; a trial can continue to 43
+patients while it is clear by patient 30 that the drug is
+inactive, which is why Bayesian monitoring is attractive.
+
+## Why single-arm trials mislead
+
+Consider a single-arm trial that observes 12 responses in
+43 patients, 28%, against a historical $p_0$ of 20%, and
+declares the agent promising. Four mechanisms can produce
+this result with an inactive drug.
+
+**Patient selection.** Trial patients are selected on
+performance status, organ function, and willingness to
+travel. They do better than the historical population on
+every treatment, including no treatment. This is the
+dominant mechanism and it is not subtle: within-trial
+comparisons of eligible and ineligible patients routinely
+show large differences.
+
+**Stage migration.** Better imaging detects smaller
+metastases, so patients who were once staged III are now
+staged IV. Both stage groups improve in apparent survival
+while no patient's prognosis changes at all. Any historical
+comparison spanning a change in diagnostic technology is
+affected.
+
+**Response assessment drift.** The historical rate was
+measured with different criteria, different imaging
+intervals, or local rather than central review. Response
+rates measured by local investigators are systematically
+higher than centrally reviewed rates.
+
+**Supportive care improvement.** Better antiemetics,
+growth factors, and management of complications improve
+outcomes independent of the agent under study.
+
+These operate in the same direction: they all inflate the
+apparent performance of the new agent. The empirical
+consequence is a phase II to phase III attrition rate in
+oncology of roughly 60 to 70%, with most failures
+occurring in agents that looked convincingly active in
+single-arm phase II.
+
+::: {.callout-warning}
+## Warning
+
+A historical control rate cited without its source
+population, its date, its response criteria, and its
+review method is not a control. When a protocol says 'the
+historical response rate is 20%', the statistician's next
+question should be 'in which series, enrolled when,
+assessed how'. The answer often reveals that the benchmark
+is 15 years old.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: when is single-arm defensible?
+
+**Question.** Under what circumstances is a single-arm
+phase II trial with historical control a reasonable
+design?
+
+**Answer.**
+
+Three conditions, and they need to hold together.
+
+First, the endpoint is one that does not occur without
+treatment. Objective tumor response in a refractory
+setting is close to this: untreated tumors essentially
+never shrink by 30% spontaneously, so a response rate of
+40% cannot be explained by selection. Contrast with
+progression-free survival, which depends heavily on the
+population and assessment schedule and is thoroughly
+unreliable as a single-arm endpoint.
+
+Second, the effect is large relative to any plausible
+selection bias. A response rate of 60% against a
+historical 5% is credible; 28% against 20% is not.
+
+Third, randomization is genuinely infeasible: an
+ultra-rare disease, or a setting where no accepted
+comparator exists.
+
+Even then, the correct interpretation is 'this agent
+warrants a randomized trial', never 'this agent works'.
+The regulatory precedents where single-arm phase II led to
+accelerated approval are cases where the first two
+conditions were met dramatically, and even several of
+those were later reversed by confirmatory trials.
+:::
+
+## Randomized phase II
+
+Three distinct designs travel under this name and they
+answer different questions.
+
+**Randomized selection (pick-the-winner).** Two or more
+experimental arms, no formal hypothesis test; the arm with
+the best observed outcome is selected for phase III. The
+design guarantees a high probability of selecting the
+better arm when the arms differ by a specified amount. It
+is efficient because it does not pay for a type I error
+rate at all. It provides no evidence that the selected arm
+beats standard care.
+
+**Randomized screening with a concurrent control.** An
+experimental arm and a control arm, tested at relaxed
+error rates, typically one-sided $\alpha = 0.10$ or 0.20
+with 80% power. This costs roughly two to four times a
+single-arm design and removes every one of the four
+mechanisms listed above, because the control arm is drawn
+from the same population, in the same era, assessed the
+same way.
+
+**Randomized discontinuation.** All patients receive the
+agent; those with stable disease after a run-in are
+randomized to continue or to placebo. Useful for
+cytostatic agents whose effect is stabilization rather
+than shrinkage, and it concentrates the randomized
+comparison in the subgroup where an effect is plausible.
+Chapter 11 examines the power consequences of run-in
+designs in general.
+
+The arithmetic for the screening design, comparing 40%
+against 20% response at one-sided $\alpha = 0.10$ and 80%
+power:
+
+```r
+power.prop.test(p1 = 0.40, p2 = 0.20, power = 0.80,
+                sig.level = 0.20)   # two-sided 0.20 = one-sided 0.10
+#>       n = 51.1 per arm
+```
+
+About 51 per arm, 102 total, against 43 for the
+single-arm Simon design. Roughly 2.4 times the patients
+for a result that means something. Whether that is worth
+it is the discussion to have with the team, and it should
+be had explicitly rather than settled by default.
+
+## Bayesian predictive-probability monitoring
+
+A Bayesian formulation makes continuous monitoring natural
+and gives a quantity the team can interpret directly.
+
+Place a Beta prior on the response rate, $p \sim
+\mathrm{Beta}(a, b)$, typically weakly informative such as
+$\mathrm{Beta}(0.4, 1.6)$ with mean 0.2 and a prior weight
+of two observations. After $x$ responses in $n$ patients
+the posterior is $\mathrm{Beta}(a + x, b + n - x)$.
+
+The **predictive probability** of trial success is the
+probability, given current data, that the trial will
+declare success if it runs to its full sample size. Stop
+for futility when it drops below a threshold, say 0.05,
+and for efficacy when it exceeds, say, 0.95.
+
+```r
+predictive_prob <- function(x, n, n_max, p0 = 0.20,
+                            a = 0.4, b = 1.6,
+                            theta_t = 0.90) {
+  m <- n_max - n                       # patients remaining
+  post_a <- a + x; post_b <- b + n - x
+  # beta-binomial predictive distribution of future responses
+  py <- sapply(0:m, function(y)
+    choose(m, y) * beta(post_a + y, post_b + m - y) /
+      beta(post_a, post_b))
+  # success at the end: P(p > p0 | all data) > theta_t
+  success <- sapply(0:m, function(y)
+    pbeta(p0, post_a + y, post_b + m - y,
+          lower.tail = FALSE) > theta_t)
+  sum(py[success])
+}
+
+predictive_prob(x = 4, n = 20, n_max = 40)
+#> [1] 0.2814
+predictive_prob(x = 2, n = 20, n_max = 40)
+#> [1] 0.0231
+```
+
+Four responses in the first 20 leaves a 28% chance the
+trial ends positive; two responses leaves 2%, below any
+reasonable futility threshold, and the trial should stop.
+
+The advantages: monitoring can occur after every patient
+without a multiplicity penalty in the Bayesian formulation
+(though the frequentist operating characteristics still
+must be simulated and reported, and regulators will ask
+for them); the quantity monitored is directly
+interpretable; and the design accommodates unequal
+follow-up naturally.
+
+The obligation: simulate the design's type I error and
+power over a grid of true response rates. A Bayesian design
+with unreported frequentist operating characteristics will
+not survive review.
+
+## Phase II/III seamless designs
+
+A seamless design runs phase II and phase III under one
+protocol with one patient population, using the phase II
+stage to select a dose or a population and continuing into
+phase III without pausing.
+
+**Operationally seamless** designs simply avoid the gap
+between trials, analyzing the two stages separately.
+**Inferentially seamless** designs use the stage 1 patients
+in the final analysis, which requires a combination test
+or a closed-testing procedure to control the type I error
+across the selection and the final comparison. The
+machinery is that of adaptive designs (Chapter 9).
+
+The gain is time, often a year or more, and the shared
+control arm. The cost is complexity and the requirement
+that the phase II endpoint be measurable early enough to
+inform the selection before the trial has enrolled most of
+its patients, which is frequently not the case.
+
+## Worked example: designing a phase II in a rare sarcoma
+
+A targeted agent in a sarcoma subtype with roughly 400 new
+cases a year in the US. Historical response rate to
+standard chemotherapy is reported at 15%, from a
+multi-institution series published in 2009 with local
+review.
+
+**First question: single-arm or randomized?** Accrual is
+the binding constraint; the team estimates 25 patients a
+year across six centers. A 100-patient randomized
+screening trial takes four years. A 40-patient single-arm
+takes 18 months.
+
+**Assess the historical benchmark.** 2009, local review,
+mixed prior therapy. Central review would likely lower it;
+current supportive care would raise the observed rate. The
+team cannot defend 15% within better than plus or minus
+five points. That range spans the difference between an
+interesting and an uninteresting result, which is itself a
+decisive argument.
+
+**Decision.** Randomized screening, 1:1 against
+physician's-choice chemotherapy, one-sided $\alpha = 0.10$,
+80% power to detect 35% versus 15%. Required: 42 per arm.
+Four years of accrual, and the trial answers the question
+the team actually has.
+
+**Interim futility.** A Bayesian predictive-probability
+futility look after 20 patients per arm, stopping if the
+predictive probability of success is below 0.10. Simulated
+operating characteristics: type I error 0.104, power
+0.782, expected sample size under the null 62 rather than
+84.
+
+**If accrual truly forbids randomization.** Fall back to
+Simon's optimal design with $p_0 = 0.15$ and $p_1 = 0.35$,
+and state in the protocol and in every presentation of the
+results that a positive outcome licenses a randomized
+trial and nothing more.
+
+## Collaborating with an LLM on phase II design
+
+**Prompt 1: 'Design a Simon two-stage for these
+parameters.'**
+
+*What to watch for.* The numbers are usually right, since
+they come from a lookup. Confirm which variant (optimal or
+minimax) is being reported, and confirm the error rates
+are the ones intended, since models default to $\alpha =
+0.05$ where phase II convention is 0.10.
+
+*Verification.* Reproduce with `clinfun::ph2simon`.
+
+**Prompt 2: 'Is our historical control rate appropriate?'**
+
+*What to watch for.* The model will list the standard
+concerns competently. It cannot know your disease's
+recent literature well enough to give the number.
+
+*Verification.* Do the literature search yourself and
+tabulate the candidate historical series with dates,
+review method, and population.
+
+**Prompt 3: 'Implement Bayesian predictive-probability
+monitoring.'**
+
+*What to watch for.* The beta-binomial arithmetic is a
+common source of subtle errors, particularly in the
+predictive distribution. Also check whether the code
+computes the predictive probability of *trial success* or
+the posterior probability of efficacy; these are different
+and are often conflated.
+
+*Verification.* Check against a brute-force simulation of
+the remaining patients. Confirm the reported operating
+characteristics by simulating over a grid of true rates.
+
+## Principle in use
+
+1. **Price the control arm and present the number.** 'A
+   concurrent control doubles the trial' is a decision the
+   team can make. 'Single-arm is standard in this
+   disease' is not a decision.
+
+2. **Interrogate $p_0$ before accepting the design.** The
+   null rate carries the entire inferential weight of a
+   single-arm trial, and it is usually the least examined
+   number in the protocol.
+
+3. **State the decision the trial supports, in the
+   protocol.** 'A positive result will trigger a
+   randomized phase III of the following design' commits
+   the team to the screening logic and prevents a
+   promising phase II from being reported as evidence of
+   efficacy.
+
+## Exercises
+
+1. Compute Simon's optimal and minimax designs for $p_0 =
+   0.10$, $p_1 = 0.30$, $\alpha = \beta = 0.10$. Explain
+   the trade-off between them in terms a clinician would
+   find useful.
+
+2. Simulate a single-arm phase II with true response rate
+   equal to $p_0$, but with a patient population 10%
+   healthier than the historical series such that the true
+   rate is $p_0 + 0.07$. What fraction of trials declare
+   the inactive agent promising?
+
+3. For the randomized screening design in the worked
+   example, compute the sample size at one-sided $\alpha$
+   of 0.05, 0.10, and 0.20, and discuss how you would
+   choose.
+
+4. Implement predictive-probability monitoring for a
+   40-patient trial and produce the stopping boundary: for
+   each $n$ from 10 to 40, the number of responses below
+   which the trial stops for futility.
+
+5. Find a published single-arm phase II that led to a
+   negative phase III. Identify which of the four
+   mechanisms in this chapter best explains the
+   discrepancy, using evidence from the two papers.
+
+## Further reading
+
+- @simon1989optimal, the original two-stage design paper.
+- @pocock1975combination, on combining randomized and
+  historical controls, which remains the clearest
+  statement of the problem.
+- @berry2010bayesian, Chapter 4, on Bayesian phase II
+  monitoring.
+- @piantadosi2017clinical, on the logic of screening
+  designs.
+- The `clinfun`, `ph2bayes`, and `gsDesign` R packages.

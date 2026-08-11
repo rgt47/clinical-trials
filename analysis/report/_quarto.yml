@@ -1,0 +1,163 @@
+project:
+  pre-render:
+    - ../../tools/us-spelling
+  type: book
+  output-dir: _book
+
+book:
+  title: 'Design and Analysis of Clinical Trials'
+  subtitle: 'A ten-week graduate course'
+  author: 'The rgtlab Curriculum Project'
+  date: today
+  date-format: 'YYYY-MM-DD'
+
+  cover-image: images/cover.png
+  favicon: images/favicon.png
+
+  site-url: https://clinical-trials.rgtlab.org
+  repo-url: https://github.com/rgt47/clinical-trials
+  repo-branch: main
+  repo-actions: [edit, issue]
+
+  search: true
+  page-navigation: true
+  bread-crumbs: true
+  sidebar:
+    style: docked
+    collapse-level: 1
+
+  chapters:
+    - half-title.qmd
+    - copyright.qmd
+    - index.qmd
+    - preface.qmd
+    - conventions.qmd
+    - 00-intro.qmd
+
+    - part: 'Weeks 1-2: Foundations'
+      chapters:
+        - 01-trial-enterprise.qmd
+        - 02-protocol-estimands.qmd
+
+    - part: 'Weeks 3-5: Design'
+      chapters:
+        - 03-randomization.qmd
+        - 04-blinding-conduct.qmd
+        - 05-sample-size.qmd
+
+    - part: 'Weeks 6-7: Early-Phase Trials'
+      chapters:
+        - 06-phase1-dose-finding.qmd
+        - 07-phase2-designs.qmd
+
+    - part: 'Weeks 8-10: Confirmatory Trials'
+      chapters:
+        - 08-phase3-analysis.qmd
+        - 09-interim-monitoring.qmd
+        - 10-missing-data-reporting.qmd
+
+    - part: 'Advanced Topics I: Design'
+      chapters:
+        - 11-runin-designs.qmd
+        - 12-visit-placement.qmd
+        - 13-nof1-designs.qmd
+        - 14-adaptive-allocation.qmd
+        - 15-multicenter-site.qmd
+        - 16-baseline-covariates.qmd
+        - 17-factorial-matched.qmd
+
+    - part: 'Advanced Topics II: Longitudinal Analysis'
+      chapters:
+        - 18-mmrm-in-practice.qmd
+        - 19-mmrm-vs-survival.qmd
+        - 20-longitudinal-power.qmd
+        - 21-dropout-adjustment.qmd
+
+    - part: 'Advanced Topics III: Small Samples and Monitoring'
+      chapters:
+        - 22-exact-tests.qmd
+        - 23-conditional-power.qmd
+        - 24-sequential-analysis.qmd
+        - 25-multiplicity.qmd
+        - 26-repowering.qmd
+
+    - part: 'Advanced Topics IV: Estimation from Imperfect Data'
+      chapters:
+        - 27-summary-statistics.qmd
+        - 28-imputation-practice.qmd
+
+    - references.qmd
+
+  appendices:
+    - credits.qmd
+    - colophon.qmd
+
+format:
+  html:
+    theme:
+      - cosmo
+      - clinical-trials.scss
+    include-after-body: nav-toggle.html
+    code-annotations: hover
+    code-link: true
+    code-copy: hover
+    code-overflow: wrap
+    code-tools:
+      source: repo
+      toggle: false
+    code-block-bg: true
+    code-block-border-left: '#7a3b52'
+    highlight-style: arrow
+    fig-width: 7
+    fig-height: 4.5
+    fig-align: center
+    tbl-cap-location: top
+    toc-depth: 3
+    anchor-sections: true
+    smooth-scroll: true
+
+  pdf:
+    documentclass: scrbook
+    classoption: [11pt]
+    toc: false
+    code-annotations: below
+    highlight-style: arrow
+    geometry:
+      - paperwidth=6.5in
+      - paperheight=9in
+      - top=0.9in
+      - bottom=0.9in
+      - inner=0.9in
+      - outer=0.7in
+    include-in-header:
+      text: |
+        \usepackage{fontspec}
+        \setmonofont{DejaVu Sans Mono}[Scale=0.9]
+    include-before-body:
+      text: |
+        \begin{titlepage}
+        \thispagestyle{empty}
+        \newgeometry{margin=0pt}
+        \noindent\makebox[\paperwidth]{%
+          \includegraphics[width=\paperwidth,height=\paperheight,keepaspectratio]{images/cover.png}%
+        }
+        \restoregeometry
+        \end{titlepage}
+        \cleardoublepage
+
+bibliography: references.bib
+csl: https://www.zotero.org/styles/apa
+
+execute:
+  freeze: auto
+  eval: false
+  echo: true
+  warning: false
+  message: false
+
+knitr:
+  opts_chunk:
+    comment: '#>'
+    collapse: true
+    fig.retina: 2
+    dpi: 150

@@ -1,0 +1,3 @@
+# Design and Analysis of Clinical Trials {.unnumbered .unlisted}
+
+*A ten-week graduate course.*

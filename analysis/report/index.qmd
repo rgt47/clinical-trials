@@ -1,0 +1,72 @@
+# Welcome {.unnumbered .unlisted}
+
+This is the online version of **Design and Analysis of
+Clinical Trials: A ten-week graduate course** by The
+rgtlab Curriculum Project.
+
+The book covers the design, conduct, monitoring, analysis,
+and reporting of randomized clinical trials, written for
+first- and second-year graduate students in
+biostatistics, epidemiology, and public health, and for
+medical students with an interest in research. The core is
+structured for a single ten-week academic quarter: one
+chapter per week, each roughly two hours of lecture and
+four to six hours of assigned work. Eighteen further
+chapters treat advanced topics in depth for readers who
+continue past the quarter.
+
+The organizing claim of the book is that a trial is an
+experiment whose design decisions are made once, in
+advance, under uncertainty, and cannot be revised after
+the first patient is randomized. Everything the book
+teaches follows from that constraint: why the estimand is
+specified before the sample size, why the randomization
+procedure dictates the analysis model, why interim looks
+must be priced into the type I error before the first
+look, and why a pre-specified analysis of imperfect data
+is worth more than a perfect analysis chosen after seeing
+the data.
+
+The ten weeks are:
+
+1. The trial as an experiment: history, ethics, regulation.
+2. The protocol, the estimand, and the endpoint.
+3. Randomization and allocation concealment.
+4. Blinding, bias, and trial conduct.
+5. Sample size and power.
+6. Phase I: dose-finding designs.
+7. Phase II: screening designs.
+8. Phase III: the primary analysis.
+9. Interim monitoring, group-sequential, and adaptive designs.
+10. Missing data, sensitivity analysis, and reporting.
+
+The book sits in the rgtlab graduate sequence:
+
+- [*R for Biostatistics: A One-Week Boot Camp*](https://r-bootcamp.rgtlab.org),
+  pre-program preparation in the R language.
+- [*Biostatistics Practicum*](https://practicum.rgtlab.org),
+  workflow and reproducibility infrastructure.
+- [*Statistical Computing in the Age of AI*](https://scai.rgtlab.org),
+  introductory methods and computing.
+- [*Advanced Statistical Computing in the Age of AI*](https://scai-advanced.rgtlab.org),
+  advanced numerical and Bayesian computation.
+- [*Applied Statistical Methods for Health Sciences Research*](https://applied-methods.rgtlab.org),
+  the applied-methods axis, whose two clinical-trial
+  chapters this volume expands into a full course.
+- [*Applied Generative AI for Health Sciences Research*](https://applied-genai.rgtlab.org),
+  generative AI as the orthogonal axis.
+- *Design and Analysis of Clinical Trials* (this volume),
+  the trials axis.
+
+See the [Preface](preface.qmd) for motivation and the
+[Conventions](conventions.qmd) page for visual cues.
+
+## License
+
+This book is licensed under
+[Creative Commons
+Attribution-NonCommercial-NoDerivatives 4.0 International](https://creativecommons.org/licenses/by-nc-nd/4.0/).
+
+Code samples are licensed under
+[Creative Commons CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/),
+i.e. public domain.

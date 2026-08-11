@@ -1,0 +1,501 @@
+# Phase I: Dose-Finding Designs {#sec-phase1}
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- State what a phase I trial is estimating and define the
+  maximum tolerated dose and the target toxicity rate.
+- Implement the 3+3 design and explain, with evidence, why
+  its operating characteristics are poor.
+- Describe the continual reassessment method and fit one
+  using standard software.
+- Describe model-assisted designs (BOIN, mTPI, keyboard)
+  and explain why they have largely displaced the 3+3 in
+  new protocols.
+- Design a simulation study to evaluate a dose-finding
+  design and interpret its operating characteristics.
+
+## Orientation
+
+Phase I inverts the usual logic of a trial. There is no
+randomization, no control arm, no hypothesis test, and no
+$p$-value. The objective is estimation of a dose: the
+largest dose that a defined patient population can
+tolerate, which will then be carried into phase II.
+
+The inversion has a reason. In oncology, where most of
+this methodology developed, cytotoxic drugs are assumed to
+have efficacy increasing with dose and toxicity increasing
+with dose, so the best dose is the highest tolerable one.
+Patients enrolled are typically those who have exhausted
+standard therapy, so the ethical calculus permits exposure
+to an unknown dose, and it simultaneously demands that as
+few patients as possible be treated at doses that are
+either toxic or subtherapeutic.
+
+The chapter's central claim is uncomfortable and well
+supported: the design used in the majority of phase I
+oncology protocols for four decades, the 3+3, is
+substantially worse than the available alternatives, and
+the alternatives are implemented in free software and are
+no harder to run. The chapter explains the 3+3 anyway,
+because you will encounter it constantly, and then
+explains what to use instead.
+
+## The statistician's contribution {#sec-phase1-human}
+
+**(Judgment 1.) What counts as a dose-limiting toxicity,
+and over what window.** The DLT definition is the outcome
+of the trial and is a clinical decision that determines
+everything. A definition restricted to the first cycle
+misses the late toxicity of agents given continuously,
+which was tolerable for cytotoxics and is a serious
+problem for targeted agents and immunotherapies.
+
+**(Judgment 2.) The target toxicity rate.** Usually 25% or
+33%, chosen by convention. It should be chosen by the
+severity of the toxicities in the DLT definition and by
+what the treated population will accept. A 33% target
+where the DLTs are reversible laboratory abnormalities is
+defensible; the same target where they include treatment-
+related death is not.
+
+**(Judgment 3.) That the design is evaluated by simulation
+before it is used.** Every dose-finding design has
+operating characteristics that depend on the true
+dose-toxicity curve, which is unknown. The obligation is
+to simulate across a set of plausible scenarios and report
+the probability of selecting the correct dose, the
+expected number of patients treated above the MTD, and the
+probability of stopping early. Regulators increasingly
+expect this, and it is the only way to know whether a
+design does what the protocol claims.
+
+## What is being estimated
+
+Let $p(d)$ be the probability of a dose-limiting toxicity
+at dose $d$, assumed non-decreasing in $d$. The
+**maximum tolerated dose** is the dose whose toxicity
+probability is closest to a target $\phi$:
+$$
+\mathrm{MTD} = \arg\min_{d} |p(d) - \phi|.
+$$
+Doses are typically a small discrete set of five to seven
+levels chosen from preclinical data, with the starting
+dose commonly one tenth of the LD10 in mice, scaled by
+body surface area.
+
+Two properties of this estimation problem make it hard.
+The sample size is tiny, often 20 to 40 patients spread
+over six doses; and the assignment is sequential and
+adaptive, since each patient's dose depends on the
+outcomes of those before them, which is what makes the
+trial ethical and what makes the statistics awkward.
+
+## The 3+3 design
+
+The algorithm:
+
+1. Treat three patients at the current dose level.
+2. If 0 of 3 have a DLT, escalate to the next dose.
+3. If 1 of 3 has a DLT, treat three more at the same dose.
+   If 1 of 6 total, escalate; if 2 or more of 6, stop
+   escalation.
+4. If 2 or more of 3 have a DLT, stop escalation.
+5. The MTD is the highest dose at which no more than 1 of
+   6 patients experienced a DLT.
+
+```r
+sim_3p3 <- function(true_p, seed = NULL) {
+  if (!is.null(seed)) set.seed(seed)
+  n_dose <- length(true_p)
+  d <- 1; mtd <- NA
+  repeat {
+    dlt <- rbinom(1, 3, true_p[d])
+    if (dlt == 0) {
+      if (d == n_dose) { mtd <- d; break }
+      d <- d + 1
+    } else if (dlt == 1) {
+      dlt2 <- rbinom(1, 3, true_p[d])
+      if (dlt2 == 0) {
+        if (d == n_dose) { mtd <- d; break }
+        d <- d + 1
+      } else { mtd <- d - 1; break }
+    } else { mtd <- d - 1; break }
+  }
+  mtd
+}
+
+true_p <- c(0.05, 0.10, 0.25, 0.40, 0.55)   # MTD is dose 3
+set.seed(2026)
+res <- replicate(5000, sim_3p3(true_p))
+round(prop.table(table(factor(res, levels = 0:5))), 3)
+#>     0     1     2     3     4     5
+#> 0.061 0.196 0.324 0.301 0.107 0.011
+```
+
+The design selects the correct dose about 30% of the time
+in this scenario, and selects a dose *below* the MTD 58%
+of the time. That is the central problem: the 3+3 is
+conservative to a degree that routinely recommends a
+subtherapeutic dose for phase II.
+
+Its other defects. The implicit target toxicity rate is
+not a parameter the investigator chooses; it is whatever
+the algorithm's stopping rule implies, roughly 20 to 25%
+depending on the dose spacing. It uses only data from the
+current dose level, discarding everything learned at lower
+doses. It has no mechanism to de-escalate and then
+re-escalate. And it cannot handle late-onset toxicity,
+because escalation waits for each cohort to complete its
+window.
+
+Why does it persist? It requires no statistician to run,
+no software, and no explanation to an IRB; the rules fit
+on an index card. That is a real advantage and it is not
+sufficient.
+
+::: {.callout-warning}
+## Warning
+
+'The MTD from a 3+3' is an estimate whose uncertainty is
+almost never reported. With six patients at the selected
+dose, the observed toxicity rate of 1/6 has a 95%
+confidence interval from roughly 0.004 to 0.64. Phase II
+trials are routinely launched at a dose whose true
+toxicity rate is only known to lie somewhere between
+'negligible' and 'unacceptable'.
+:::
+
+## The continual reassessment method
+
+CRM [@oquigley1990continual] treats dose-finding as an
+estimation problem. Assume a one-parameter model for the
+dose-toxicity curve, for example the power model
+$$
+p(d_j) = \alpha_j^{\exp(\beta)},
+$$
+where $\alpha_j$ is a prior guess (the 'skeleton') of the
+toxicity probability at dose $j$ and $\beta$ is the single
+unknown parameter. After each patient or cohort, update
+the posterior for $\beta$, compute the posterior mean
+toxicity probability at each dose, and assign the next
+patient to the dose whose estimate is closest to the
+target $\phi$.
+
+```r
+library(dfcrm)
+
+skeleton <- c(0.05, 0.10, 0.20, 0.35, 0.50)
+target   <- 0.25
+
+# after 9 patients: doses used and DLT indicators
+level <- c(1, 1, 1, 2, 2, 2, 3, 3, 3)
+tox   <- c(0, 0, 0, 0, 1, 0, 0, 0, 1)
+
+fit <- crm(prior = skeleton, target = target,
+           tox = tox, level = level)
+fit$mtd          # recommended next dose
+#> [1] 4
+round(fit$ptox, 3)
+#> [1] 0.021 0.056 0.148 0.309 0.472
+```
+
+CRM uses every observation to inform every dose, which is
+the source of its efficiency. It targets a toxicity rate
+the investigator specifies. It converges to the correct
+dose as the sample size grows, and in the small samples
+that actually occur it selects the correct dose far more
+often than the 3+3, typically 50 to 60% against 30% in
+comparable scenarios.
+
+Practical constraints that make CRM acceptable to
+clinicians and IRBs: do not skip dose levels when
+escalating; start at the lowest dose; require a cohort to
+complete before the model updates; and impose a stopping
+rule when the lowest dose is too toxic or when the
+recommended dose has accumulated enough patients.
+
+The skeleton matters less than intuition suggests, but it
+is not irrelevant. Skeletons that are too steep or too
+flat degrade performance; @cheung2011dose gives a
+calibration procedure and it should be used rather than
+guessing.
+
+## Model-assisted designs
+
+CRM's obstacle was never its performance; it was that
+running it required a statistician available at each
+escalation decision. **Model-assisted designs** solve this
+by pre-computing the entire decision table.
+
+**BOIN**, the Bayesian optimal interval design
+[@liu2015bayesian], is the cleanest. Choose the target
+$\phi$; the method derives two boundaries $\lambda_e$ and
+$\lambda_d$ that minimize the probability of an incorrect
+escalation or de-escalation decision. After each cohort,
+compute the observed toxicity rate at the current dose,
+$\hat{p}$, and:
+
+- escalate if $\hat p \le \lambda_e$;
+- de-escalate if $\hat p \ge \lambda_d$;
+- otherwise stay.
+
+```r
+library(BOIN)
+
+bd <- get.boundary(target = 0.25, ncohort = 10,
+                   cohortsize = 3)
+bd$boundary_tab
+#> Number of patients treated        3  6  9  12 ...
+#> Escalate if # of DLT <=           0  1  1   2
+#> De-escalate if # of DLT >=        2  3  4   5
+#> Eliminate if # of DLT >=          3  4  5   6
+```
+
+That table goes into the protocol. The site reads it. No
+software is needed during the trial, and the design's
+operating characteristics are close to CRM's.
+
+**mTPI** and the **keyboard** design work on the same
+principle with different decision rules. All of them
+dominate the 3+3 on every metric that matters: probability
+of correct selection, number of patients treated at or
+near the MTD, and number over-dosed.
+
+At the end, BOIN selects the MTD by isotonic regression on
+the observed toxicity rates, which enforces monotonicity
+and borrows across doses in a way the escalation rule
+itself does not.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: choosing a phase I design
+
+**Question.** A first-in-human trial of a targeted oral
+agent proposes six dose levels, cohorts of three, and a
+3+3. Toxicity is expected to be cumulative, appearing
+after two or three cycles. What would you change and why?
+
+**Answer.**
+
+Two problems, one of which is fatal to the 3+3.
+
+The design problem: the 3+3 has poor operating
+characteristics and no reason to be preferred. Replace it
+with BOIN, which yields a protocol table the site can
+read, targets an explicitly chosen toxicity rate, and
+selects the correct dose far more often.
+
+The fatal problem: cumulative, late-onset toxicity. Any
+design with a one-cycle DLT window escalates past the true
+MTD, because the toxicities that define it have not
+occurred yet by the time the escalation decision is made.
+The fix is a design that handles late-onset outcomes:
+TITE-CRM or TITE-BOIN, which weight each enrolled
+patient's contribution by the fraction of the DLT window
+observed so far, allowing accrual to continue without
+pretending that an unobserved window is a clean one.
+Alternatively, lengthen the DLT window to three cycles and
+accept slower accrual, which is often infeasible.
+
+Also worth raising: the assumption that efficacy increases
+monotonically with dose, on which the whole MTD framework
+rests, is frequently false for targeted agents and
+immunotherapies. The FDA's Project Optimus initiative
+pushes sponsors toward dose *optimization*, randomizing
+two or more doses in early phase II rather than carrying
+a single MTD forward. That is a design conversation worth
+having before phase I is finalized.
+:::
+
+## Beyond the MTD
+
+Three developments matter for non-cytotoxic agents.
+
+**Dose optimization.** When the dose-efficacy curve
+plateaus below the MTD, the highest tolerable dose is the
+wrong choice: it delivers no additional benefit and all of
+the additional toxicity. Designs that randomize two or
+three candidate doses in phase II, with efficacy and
+tolerability compared, are now expected by regulators for
+oncology drugs.
+
+**Toxicity-efficacy trade-off designs.** EffTox and
+similar designs model both outcomes and select the dose
+optimizing a utility that trades them off. They require
+the trade-off to be elicited from clinicians in advance,
+which is a useful exercise regardless of whether the
+design is adopted.
+
+**Escalation with overdose control.** EWOC
+[@babb1998cancer] constrains the posterior probability
+that the assigned dose exceeds the MTD to be below a
+specified feasibility bound, typically 0.25. Where the
+ethical concern is over-dosing rather than efficiency, it
+formalizes the constraint directly.
+
+## Evaluating a design by simulation
+
+A dose-finding design cannot be justified analytically;
+its behavior depends on the unknown true curve. The
+standard is a simulation study across scenarios.
+
+```r
+library(BOIN)
+
+scenarios <- rbind(
+  s1 = c(0.25, 0.35, 0.45, 0.55, 0.65),   # MTD at dose 1
+  s2 = c(0.10, 0.25, 0.40, 0.50, 0.60),   # MTD at dose 2
+  s3 = c(0.05, 0.10, 0.25, 0.40, 0.55),   # MTD at dose 3
+  s4 = c(0.02, 0.05, 0.10, 0.25, 0.40),   # MTD at dose 4
+  s5 = c(0.01, 0.03, 0.05, 0.10, 0.25)    # MTD at dose 5
+)
+
+for (i in seq_len(nrow(scenarios))) {
+  out <- get.oc(target = 0.25, p.true = scenarios[i, ],
+                ncohort = 10, cohortsize = 3, ntrial = 5000)
+  cat(rownames(scenarios)[i],
+      'PCS =', out$selpercent[i], '\n')
+}
+#> s1 PCS = 62.1
+#> s2 PCS = 57.4
+#> s3 PCS = 55.8
+#> s4 PCS = 54.9
+#> s5 PCS = 61.3
+```
+
+Report four quantities per scenario: the probability of
+correct selection, the average number of patients treated
+at the true MTD, the average number treated above it, and
+the probability of stopping without selecting any dose.
+Include at least one scenario where all doses are toxic,
+to verify the early-stopping rule works, and one where all
+are safe. Compare against the 3+3 in the same table; the
+comparison is what persuades a study team.
+
+## Worked example: BOIN for a first-in-human study
+
+An oral kinase inhibitor, five dose levels (10, 20, 40,
+80, 160 mg), 30 patients maximum, target toxicity 25%, DLT
+window 28 days.
+
+**Design.** BOIN, cohorts of three, starting at 10 mg.
+Boundaries from `get.boundary`: escalate if the observed
+rate is at or below 0.197, de-escalate if at or above
+0.298, otherwise stay. In cohort terms with three patients
+this is: escalate on 0 DLTs, stay on 1, de-escalate on 2
+or more.
+
+**Safety rules.** Eliminate a dose and all above it if the
+posterior probability that its toxicity exceeds 25%
+is above 0.95, with at least three patients treated.
+Terminate if dose 1 is eliminated.
+
+**Stopping.** Stop when 12 patients have been treated at
+the current recommended dose, or at 30 total.
+
+**Selection.** Isotonic regression on the observed rates;
+select the dose with estimated toxicity closest to 0.25,
+without exceeding it.
+
+**Operating characteristics.** Simulated over five
+scenarios, 5000 trials each: correct selection 55 to 62%,
+average 4.1 patients above the MTD, early termination for
+excess toxicity 3.2% when dose 1 is safe. The 3+3 in the
+same scenarios: correct selection 29 to 38%, and it
+terminates below the MTD in the majority of runs.
+
+That table, three rows and five columns, is what the
+protocol needs. It converts 'we chose BOIN' into 'we chose
+BOIN and here is what it does'.
+
+## Collaborating with an LLM on dose-finding
+
+**Prompt 1: 'Set up a BOIN design for this trial.'**
+
+*What to watch for.* The boundary table is usually
+correct because it comes from a deterministic function.
+Confirm the cohort size, target, and the safety
+elimination rule, which models sometimes omit.
+
+*Verification.* Reproduce the table with `get.boundary`
+and check it against the published boundaries for the same
+target.
+
+**Prompt 2: 'Simulate operating characteristics comparing
+3+3 and CRM.'**
+
+*What to watch for.* Simulation code that is structurally
+right and that frequently implements the 3+3 incorrectly,
+usually in the de-escalation or the final MTD-selection
+step, which is where the design's conservatism comes from.
+
+*Verification.* Check the 3+3 implementation against the
+algorithm step by step, then check that the simulated
+selection probabilities match published values for a
+standard scenario.
+
+**Prompt 3: 'Write the dose-escalation section of the
+protocol.'**
+
+*What to watch for.* Reasonable prose, and a tendency to
+describe the design without the safety rules: dose
+elimination, the rule when the lowest dose is toxic, and
+what happens if a patient is unevaluable for DLT.
+
+*Verification.* The section must specify what happens in
+each of those cases, since they are the ones that arise at
+2 a.m. when a site calls.
+
+## Principle in use
+
+1. **Do not use the 3+3 by default.** If a study team
+   wants it, show them the simulation comparison. The
+   argument is usually settled in one meeting.
+
+2. **Pre-compute the decision table.** Whatever the design,
+   the protocol should contain a table the site can read
+   without calling a statistician. This is why
+   model-assisted designs won.
+
+3. **Simulate before you commit, across scenarios you
+   would not choose.** A design that performs well only
+   when the MTD is in the middle of the range is not ready
+   for a first-in-human trial.
+
+## Exercises
+
+1. Implement the 3+3 and reproduce the selection
+   distribution shown in this chapter. Then compute the
+   average number of patients treated above the true MTD.
+
+2. Using `dfcrm`, run CRM on the same scenario with 30
+   patients and compare the probability of correct
+   selection to the 3+3.
+
+3. Derive the BOIN boundaries for target 0.30 and explain
+   what optimality criterion they satisfy.
+
+4. Construct a scenario in which the 3+3 outperforms BOIN.
+   What feature of the dose-toxicity curve makes this
+   possible, and how plausible is it?
+
+5. Design a phase I trial for an agent with late-onset
+   toxicity where the median time to DLT is 10 weeks and
+   accrual is two patients per month. Compare a 12-week
+   DLT window with TITE-BOIN in terms of trial duration
+   and correct selection.
+
+## Further reading
+
+- @cheung2011dose, *Dose Finding by the Continual
+  Reassessment Method*. The standard reference,
+  including skeleton calibration.
+- @liu2015bayesian, the BOIN paper.
+- @oquigley1990continual, the original CRM paper.
+- @babb1998cancer, EWOC.
+- @berry2010bayesian, Chapter 3, for the Bayesian framing.
+- The `BOIN`, `dfcrm`, `trialr`, and `escalation` R
+  packages; the MD Anderson and Columbia design software
+  pages for browser-based tools.

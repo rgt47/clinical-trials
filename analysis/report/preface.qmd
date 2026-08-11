@@ -1,0 +1,162 @@
+# Preface {.unnumbered}
+
+This volume is the clinical-trials course of the rgtlab
+graduate curriculum. It exists because the two
+clinical-trial chapters of the companion volume *Applied
+Statistical Methods for Health Sciences Research* are a
+survey, and a survey is not enough for a student who will
+soon be sitting on a study team. Trial work is unusually
+consequential: the decisions are made before the data
+exist, they are written into a regulated document, and
+they cannot be revised once enrollment begins.
+
+## Who this book is for
+
+The intended reader is a first- or second-year graduate
+student in biostatistics, epidemiology, or public health,
+or a medical student with an interest in research. That
+audience is deliberately mixed, and it shapes the book in
+three ways.
+
+First, **every method is motivated by a decision someone
+has to make**, not by the mathematics that describes it.
+A reader who will never derive a group-sequential boundary
+still has to understand what a data monitoring committee
+is deciding when it looks at one, and a reader who will
+derive it needs the same motivation before the algebra is
+worth anything.
+
+Second, **the mathematics is kept at the level of a first
+graduate methods sequence**. The book uses normal-theory
+sample-size formulas, likelihood ratios, the log-rank
+statistic, and linear and generalized linear models. It
+does not use measure theory, martingale limit arguments,
+or asymptotic theory beyond a stated result. Where a
+derivation would be instructive but long, the book states
+the result, shows what it implies, and points to the
+reference that proves it.
+
+Third, **notation is defined where it is used**, and the
+Conventions page collects the recurring symbols in one
+place. A medical student who has had one statistics course
+should be able to read every chapter; a biostatistics
+student should find enough technical content in the
+advanced chapters to be worth their time.
+
+The advanced-topic chapters (11 through 28) are harder
+than the core ten. They are written so that the first half
+of each is accessible to the whole audience, with the
+simulation detail concentrated in the second half.
+
+## What this book covers
+
+Ten chapters, one per week of a quarter:
+
+1. **The trial as an experiment.** Why randomized
+   experiments answer causal questions that observational
+   designs answer only under assumptions. The historical
+   trials that established the method, the ethical
+   framework (Declaration of Helsinki, Belmont, Common
+   Rule), the regulatory architecture (FDA, EMA, ICH),
+   and the phase structure of drug development.
+2. **The protocol, the estimand, and the endpoint.** The
+   protocol as the trial's contract. Endpoint selection,
+   surrogate endpoints, composites. The ICH E9(R1)
+   estimand framework and the five intercurrent-event
+   strategies. The statistical analysis plan.
+3. **Randomization.** Simple, permuted-block, stratified,
+   urn, minimization, and response-adaptive allocation.
+   Allocation concealment as distinct from blinding.
+   Randomization-based inference. What each procedure
+   obliges the analysis to do.
+4. **Blinding, bias, and conduct.** The taxonomy of bias
+   in trials. Blinding levels and their failure modes.
+   Site management, protocol deviations, data quality,
+   database lock, and the operational machinery that
+   protects the design.
+5. **Sample size and power.** Continuous, binary, and
+   time-to-event endpoints. Non-inferiority and
+   equivalence margins. Cluster randomization and the
+   design effect. Simulation-based sizing. Sensitivity of
+   the calculation to each input.
+6. **Phase I dose-finding.** The 3+3 design and why it
+   persists despite poor operating characteristics.
+   Continual reassessment, escalation with overdose
+   control, BOIN and other model-assisted designs.
+   Simulation as the required evidence for a dose-finding
+   design.
+7. **Phase II screening designs.** Single-arm designs with
+   historical controls and their hazards. Simon's
+   two-stage design. Randomized phase II selection
+   designs. Bayesian predictive-probability monitoring.
+   Phase II/III seamless designs.
+8. **Phase III analysis.** The intention-to-treat
+   principle and its relationship to the estimand.
+   Covariate adjustment and stratified analysis. Repeated
+   measures, time-to-event, and count endpoints.
+   Multiplicity across endpoints, arms, and looks.
+   Subgroups and interaction tests.
+9. **Interim monitoring.** Data monitoring committees,
+   group-sequential boundaries and alpha spending,
+   conditional power and futility, sample-size
+   re-estimation, and the broader family of adaptive
+   designs including platform trials.
+10. **Missing data, sensitivity, and reporting.** Missing
+    data mechanisms in the estimand framework, MMRM,
+    multiple imputation, reference-based imputation and
+    tipping-point analysis, CONSORT reporting,
+    registration, and the regulatory submission.
+
+## What this book does not cover
+
+- The R language and workflow foundation (see *R for
+  Biostatistics: A One-Week Boot Camp* and *Biostatistics
+  Practicum*).
+- Model classes as such: linear models, GLM, mixed models,
+  survival, Bayesian computation (see *Statistical
+  Computing in the Age of AI*).
+- Observational causal inference, epidemiologic design,
+  mediation, and meta-analysis (see *Applied Statistical
+  Methods for Health Sciences Research*).
+- Trial operations at the level of a clinical research
+  associate: monitoring visits, site contracts, drug
+  supply. The book covers only what the statistician must
+  understand to protect the design.
+- Device and diagnostic trials, which follow a distinct
+  regulatory pathway, and vaccine trials, which merit
+  their own treatment.
+
+## Prerequisites
+
+One graduate course in statistical methods (estimation,
+hypothesis testing, confidence intervals, linear
+regression) and basic familiarity with R. Survival
+analysis and mixed models are introduced where they are
+needed rather than assumed. The book uses `pwr`,
+`gsDesign`, `rpact`, `randomizeR`, `BOIN`, `clinfun`,
+`mmrm`, `mice`, and `survival`; code blocks are short
+enough to read even by someone who does not write R
+routinely. No chapter assumes prior exposure to trials.
+
+## Chapter template
+
+Each content chapter follows the sequence-wide structure:
+Learning objectives, Orientation, The statistician's
+contribution, content sections with collapsible
+Check-your-understanding callouts, a Worked example,
+Collaborating with an LLM, Principle in use, Exercises,
+and Further reading. The template puts human judgment and
+verification at the center of every chapter rather than
+treating them as afterthoughts.
+
+## A note on tone
+
+The book is opinionated where the literature is settled
+and explicit about disagreement where it is not. The 3+3
+design is poor and remains in use; single-arm phase II
+trials with historical controls mislead more often than
+they inform; covariate-adjusted analyses are
+under-used in confirmatory trials. Each of these claims is
+argued, not asserted, and each is followed by what a
+statistician should actually do when the study team wants
+otherwise.

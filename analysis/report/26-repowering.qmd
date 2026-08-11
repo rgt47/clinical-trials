@@ -1,0 +1,431 @@
+# Repowering Trials: The Ethical Argument {#sec-repowering}
+
+*Prerequisites: Chapters 5 and 9.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- State the ethical argument that a trial's participants
+  have a claim on a correct answer.
+- Classify repowering operations by what they observe and
+  what they cost in type I error.
+- Explain why blinded re-estimation of nuisance parameters
+  is essentially free and should be routine.
+- Describe the mechanisms that make unblinded
+  re-estimation valid, and their costs.
+- Explain why ad hoc unblinded re-estimation has no
+  general theory of error control.
+
+## Orientation
+
+A confirmatory trial commits its participants to an
+experiment whose ability to produce a correct answer
+depends entirely on assumptions made before enrollment:
+the treatment effect, the outcome variance, the event
+rate. Chapter 5 established how those assumptions
+determine the sample size. This chapter starts from the
+observation that they are routinely wrong.
+
+The ethical claim follows. Participants accept risk and
+burden in exchange for the production of knowledge. If,
+partway through, it becomes apparent that the trial as
+designed will not produce a reliable answer, and if there
+exists a way to re-examine the assumptions and adjust
+without incurring bias, then the investigator is under an
+obligation to do so. A correct answer is a good to which
+participants have contributed and have a claim.
+
+The statistical machinery for this, sample-size
+re-estimation or repowering, has matured over two decades
+and remains contested both methodologically and
+institutionally. This chapter organizes it around what
+each operation observes, because that is what determines
+whether it is free, costly, or invalid.
+
+## Provenance
+
+This chapter follows the research compendium
+`21-repowering-trials` (project `repowering-trials`),
+which develops a taxonomy of repowering operations,
+situates the ethical argument against the regulatory frame
+established by the EMA Reflection Paper and the FDA
+adaptive design guidance, and examines the institutional
+obstacles to routine practice.
+
+## The statistician's contribution {#sec-repowering-human}
+
+**(Judgment 1.) Anticipating which assumption is most
+likely wrong.** Usually the variance or the event rate,
+not the effect size, and those are exactly the ones
+blinded re-estimation can address. Building the
+re-estimation into the protocol is cheap; retrofitting it
+is not.
+
+**(Judgment 2.) Refusing the ad hoc version.** The
+pressure to look and adjust arrives when the trial is
+struggling. Without a pre-specified mechanism there is no
+theory of error control, and the resulting trial cannot
+support a claim.
+
+**(Judgment 3.) Framing the request institutionally.**
+Repowering costs money and requires a sponsor or funder to
+approve an increase. The statistician's contribution is to
+have specified in the protocol the conditions under which
+the increase will be requested, so that the conversation
+happens under a rule rather than under pressure.
+
+## The taxonomy
+
+The compendium distinguishes three classes, and the
+distinction is what the operation *observes*.
+
+### Blinded re-estimation of nuisance parameters
+
+Observe the pooled variance, or the overall event rate,
+without reference to treatment assignment. Recompute the
+sample size using the observed nuisance parameter and the
+original assumed effect.
+
+**Type I error cost: essentially none.** The pooled
+variance under the null is the same as under the
+alternative to first order, and the re-estimation is
+independent of the treatment contrast. Simulation studies
+consistently find inflation of a few thousandths at most,
+and regulators accept it without adjustment
+[@friede2006sample].
+
+**May proceed continuously.** Because nothing is learned
+about the treatment effect, there is no reason to limit
+the number of times the nuisance parameter is examined.
+
+**Should be routine.** This is the chapter's strongest
+practical recommendation. A trial whose variance
+assumption comes from a small pilot, which describes most
+trials, should specify blinded re-estimation with a rule
+and a cap. The cost is a paragraph in the protocol.
+
+```r
+# Blinded variance re-estimation for a continuous endpoint
+blinded_reestimate <- function(y, n_planned, delta,
+                               alpha = 0.05, power = 0.90,
+                               cap = 2) {
+  s2 <- var(y)                    # pooled, ignores arm
+  # the pooled variance under a true effect delta is inflated
+  # by delta^2/4; correct for it
+  s2_within <- s2 - delta^2 / 4
+  n_new <- ceiling(2 * s2_within *
+    (qnorm(1 - alpha/2) + qnorm(power))^2 / delta^2)
+  min(n_new, cap * n_planned)
+}
+```
+
+The small correction for the effect-induced inflation of
+the pooled variance is worth including; without it the
+procedure systematically over-estimates the variance and
+over-enrolls.
+
+### Pre-specified unblinded re-estimation
+
+Observe the interim treatment effect and increase the
+sample size when the effect is smaller than hoped but not
+hopeless, the 'promising zone'.
+
+**Type I error cost: real, and controllable.** Using the
+conventional final test after a data-dependent sample-size
+change inflates the type I error, because the sample size
+is now a function of the interim effect. Three mechanisms
+restore validity:
+
+- **Combination tests.** Combine the stage-wise
+  $p$-values with weights fixed in advance, typically the
+  inverse-normal combination with weights proportional to
+  the planned information fractions.
+- **Conditional error functions.** Choose the second-stage
+  test so that its conditional type I error given the
+  first stage equals what the original design would have
+  allowed.
+- **Promising-zone designs** [@mehta2011adaptive]. Increase
+  the sample size only when the interim conditional power
+  falls in a specified range, chosen so that the
+  conventional test remains valid without weighting.
+
+**The cost.** The combination-test weights are fixed in
+advance, so patients enrolled in the expanded second stage
+are down-weighted relative to their number. Two patients
+contribute unequally to the final statistic depending on
+when they enrolled, which is uncomfortable and is the
+price of validity.
+
+**Regulatory position.** Accepted, with the FDA guidance
+[@fda2019adaptive] setting out the requirements:
+pre-specification, simulation of operating
+characteristics, and firewall arrangements so that the
+sponsor does not learn the interim effect.
+
+### Ad hoc or after-each-observation unblinded re-estimation
+
+Observe the treatment effect and adjust the sample size by
+judgment, or repeatedly.
+
+**No general theory of type I error control exists.** This
+is not a claim that the inflation is always large; it is a
+claim that it cannot be bounded in general, because the
+adaptation rule is not specified and therefore the
+sampling distribution of the final statistic is not
+determined.
+
+The practical consequence: a trial that increases its
+sample size after an unblinded look, without a
+pre-specified mechanism, has produced a result whose
+$p$-value does not mean what it says. The honest options
+afterward are to report the result as exploratory, or to
+report the first stage alone as the confirmatory analysis
+if it was pre-specified.
+
+::: {.callout-warning}
+## Warning
+
+The most common route to an invalid repowering is
+informal: a DMC reports that the trial is 'trending
+positive but underpowered', the sponsor increases
+enrollment, and no one writes down that this happened. The
+firewall exists to prevent exactly this, and its failure
+is usually social rather than technical. The protocol
+should state that any sample-size change following an
+unblinded look will be executed under the pre-specified
+mechanism or not at all.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: which operation applies?
+
+**Question.** Six months into a two-year trial, the
+observed pooled standard deviation of the primary endpoint
+is 14 against an assumed 10. What can be done, and what
+does it cost?
+
+**Answer.**
+
+This is a nuisance parameter, observed blind, so blinded
+re-estimation applies and costs essentially nothing.
+
+The arithmetic: sample size scales with $\sigma^2$, so a
+standard deviation of 14 rather than 10 requires
+$(14/10)^2 = 1.96$ times the sample size, nearly double.
+That is the scale of the problem, and it explains why
+variance mis-specification is the most common cause of
+underpowered trials.
+
+Two cautions. First, at six months the variance estimate
+is itself imprecise; with 100 patients observed the
+standard deviation is estimated with a coefficient of
+variation of about 7%, so 14 could reflect a true value of
+13 or 15, and the re-estimated sample size inherits that
+uncertainty. This is why the rule should include a cap and
+should not be triggered by small departures.
+
+Second, if the trial cannot afford to double, the honest
+responses are to reduce the target effect's ambition
+(which is not really an option, since the clinically
+meaningful difference does not change because the trial is
+struggling), to extend follow-up if that reduces variance,
+or to state in the final report that the trial was
+underpowered relative to its design assumptions. The last
+of these is what the ethical argument in this chapter says
+is owed to participants: an honest accounting, not a
+quiet reinterpretation.
+:::
+
+## The ethical argument, stated fully
+
+Three premises.
+
+**Participants contribute to the production of knowledge
+and have a claim on it.** They accept risk, burden, and
+the possibility of receiving an inferior treatment. The
+justification for asking this is that the trial will
+produce a reliable answer.
+
+**An underpowered trial fails to deliver.** A trial with
+40% power exposes its participants to the full risk and
+delivers a coin flip. It is not merely inefficient; it is
+a failure of the exchange that justified the enrollment.
+
+**Where the failure can be corrected without bias, it
+should be.** Blinded re-estimation is available, costs
+essentially nothing in error control, and can correct the
+most common cause of underpowering. Declining to use it,
+when the trial's variance assumption was known to be
+uncertain, is a choice to accept a preventable risk of an
+uninformative trial.
+
+The counter-arguments, and their answers.
+
+*'Increasing the sample size exposes more patients.'*
+True, and it is the trade the argument confronts directly:
+more patients exposed, against the certainty that the
+already-enrolled patients' exposure was wasted. When the
+trial can answer the question with a modest increase, the
+calculation favors the increase.
+
+*'The sponsor cannot afford it.'* A real constraint, and
+one that should be faced at design time. A protocol that
+specifies re-estimation with a cap has at least made the
+constraint explicit.
+
+*'Regulators are suspicious of adaptive designs.'* Of
+unblinded adaptation, with reason. Blinded nuisance
+re-estimation is uncontroversial and is described
+favorably in both the EMA reflection paper and the FDA
+guidance.
+
+## Institutional obstacles
+
+The compendium notes that the obstacles are as much
+institutional as methodological.
+
+**Funding structures.** A grant-funded trial has a fixed
+budget set years in advance, and no mechanism to request
+more when the interim variance is unfavorable. Building a
+contingency into the budget is possible and rare.
+
+**Contract and site logistics.** Extending enrollment
+requires site contracts, drug supply, and IRB amendments,
+each with a lead time.
+
+**The firewall.** Someone must compute the re-estimation
+and communicate only the resulting sample size, without
+the underlying data. This requires an independent
+statistician, and small trials often do not have one.
+
+**Publication and reporting.** A trial whose sample size
+changed must report the fact, the rule, and the mechanism.
+Reviewers unfamiliar with adaptive designs sometimes treat
+any change as suspicious, which discourages the practice
+even when it was executed correctly.
+
+## Worked example: a re-estimation plan
+
+A 24-month trial, continuous primary endpoint, planned 300
+per arm on an assumed within-arm SD of 10 and a target
+difference of 3, giving 90% power. The SD estimate comes
+from a 60-patient pilot, so it is uncertain.
+
+**Blinded re-estimation, specified in the protocol.** At
+50% enrollment, an independent statistician computes the
+pooled variance, applies the effect-inflation correction,
+and recomputes the required sample size. If the result
+exceeds the planned 300 by more than 10%, the sample size
+increases to the computed value, capped at 450 per arm.
+The study team is informed only of the new target.
+
+**Type I error.** Simulated over the anticipated range of
+true variances: maximum inflation 0.0013 above nominal.
+Reported in the protocol.
+
+**No unblinded re-estimation.** The trial's effect-size
+assumption comes from a well-characterized class effect
+and is not in doubt to the same degree; the promising-zone
+machinery would add complexity for a problem the trial
+does not have.
+
+**Futility.** A non-binding futility look at 60%
+information based on conditional power, as in Chapter 9.
+This is separate from the re-estimation and is handled by
+the DMC.
+
+**Reporting.** The final publication states the planned
+sample size, the re-estimation rule, whether it was
+triggered, the observed variance, and the final sample
+size. Four sentences.
+
+**What this plan buys.** If the true SD is 12 rather than
+10, the trial would have had 74% power as designed and has
+90% with the re-estimation. That difference is the
+difference between an uninformative trial and an
+informative one, and it was bought with a paragraph
+written before enrollment.
+
+## Collaborating with an LLM on repowering
+
+**Prompt 1: 'Can we increase the sample size mid-trial?'**
+
+*What to watch for.* Models generally answer yes with a
+description of adaptive designs, without distinguishing
+the blinded case (free) from the unblinded case (requires
+machinery) from the ad hoc case (invalid). The distinction
+is the whole answer.
+
+*Verification.* Ask what the proposed procedure observes.
+
+**Prompt 2: 'Implement blinded sample-size
+re-estimation.'**
+
+*What to watch for.* Code that computes the pooled
+variance without correcting for the inflation induced by a
+true treatment effect, which systematically over-enrolls.
+
+*Verification.* Check for the $\delta^2/4$ correction, and
+simulate the type I error under the rule.
+
+**Prompt 3: 'What does the FDA say about sample-size
+re-estimation?'**
+
+*What to watch for.* Plausible summaries of guidance that
+may be out of date. Adaptive design guidance has been
+revised and the details matter.
+
+*Verification.* Read the current guidance document.
+
+## Principle in use
+
+1. **Specify blinded re-estimation in every trial whose
+   variance assumption is uncertain.** Which is most
+   trials. It is nearly free and it addresses the most
+   common cause of underpowering.
+
+2. **Never adapt on unblinded data without a
+   pre-specified mechanism.** There is no way to repair it
+   afterward.
+
+3. **Treat an underpowered trial as an ethical problem,
+   not only a statistical one.** That framing is what
+   gets a re-estimation plan into the protocol at design
+   time, when it is cheap.
+
+## Exercises
+
+1. Simulate blinded variance re-estimation with and
+   without the effect-inflation correction. Quantify the
+   over-enrollment from omitting it.
+
+2. Estimate by simulation the type I error inflation of
+   blinded re-estimation across a range of true variances
+   and interim timings.
+
+3. Simulate a trial that increases its sample size on the
+   basis of an unblinded interim effect, analyzed with the
+   conventional final test. Quantify the type I error
+   inflation.
+
+4. Repeat with an inverse-normal combination test and
+   confirm the error is controlled. Report the effective
+   weight given to a second-stage patient.
+
+5. For the worked example, compute the power the trial
+   would have at true SDs of 9, 10, 12, and 14, with and
+   without the re-estimation rule.
+
+## Further reading
+
+- The compendium `21-repowering-trials`.
+- @friede2006sample, on internal pilot designs and blinded
+  re-estimation.
+- @proschan2005two, a review of nuisance-parameter
+  re-estimation.
+- @mehta2011adaptive, the promising-zone approach.
+- @fda2019adaptive and the EMA reflection paper on
+  methodological issues in confirmatory trials with
+  adaptive designs.
+- @chow2008adaptive, a general review.

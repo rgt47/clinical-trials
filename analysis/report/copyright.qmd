@@ -1,0 +1,27 @@
+# Copyright {.unnumbered}
+
+*Design and Analysis of Clinical Trials: A ten-week
+graduate course* by Ronald 'Ryy' G. Thomas is licensed
+under a
+[Creative Commons Attribution-NonCommercial-NoDerivatives
+4.0 International
+License](https://creativecommons.org/licenses/by-nc-nd/4.0/).
+
+The code samples in this book are licensed under
+[Creative Commons CC0 1.0 Universal (CC0
+1.0)](https://creativecommons.org/publicdomain/zero/1.0/),
+i.e. the public domain.
+
+To cite this book, please use:
+
+> Thomas, R. G. (2026). *Design and Analysis of Clinical
+> Trials: A ten-week graduate course*. Available at
+> <https://clinical-trials.rgtlab.org>.
+
+::: {.content-visible when-format='pdf'}
+```{=latex}
+\clearpage
+\tableofcontents
+\clearpage
+```
+:::

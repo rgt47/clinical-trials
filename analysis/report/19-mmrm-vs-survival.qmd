@@ -1,0 +1,360 @@
+# Continuous or Time-to-Event? Choosing the Endpoint Model {#sec-mmrm-vs-survival}
+
+*Prerequisites: Chapters 2, 8, and 18.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Explain why dichotomizing a continuous trajectory into a
+  time-to-event endpoint discards information, and
+  quantify the loss.
+- Describe the historical reasons two therapeutic areas
+  converged on different default analyses.
+- Identify the conditions under which a time-to-event
+  endpoint is nonetheless the right choice.
+- Recognize interval censoring induced by a visit schedule
+  and its consequences.
+
+## Orientation
+
+Two therapeutic areas with equally serious diseases and
+equally sophisticated statisticians have arrived at
+opposite default analyses. Oncology analyzes time to
+event with Cox regression. Alzheimer disease analyzes
+change in a continuous score with MMRM. The difference is
+not arbitrary and it is not purely statistical; it is the
+product of the endpoints available, the regulatory
+history, and a genuine efficiency argument.
+
+The question this chapter answers is what happens when
+both options are available for the same trial. In
+Alzheimer disease, a patient's CDR score can be analyzed
+as a continuous trajectory, or dichotomized into
+'conversion to CDR at or above 1.0' and analyzed as a
+time to event. Both are legitimate. They are not equally
+efficient.
+
+## Provenance
+
+This chapter follows the research compendium
+`13-mmrm-vs-survival-ad` (project `mmrmsurvival`), which
+combines a historical review of how the two fields
+diverged with an ADEMP simulation comparing MMRM against
+Cox regression applied to CDR data from the same
+simulated trials, in an MCI-to-mild-dementia population
+over 24 months.
+
+## The statistician's contribution {#sec-endpoint-model-human}
+
+**(Judgment 1.) Whether the clinical question is about
+level or about crossing a threshold.** These are different
+questions. 'Does the treatment slow decline' is a question
+about a trajectory. 'Does the treatment delay progression
+to dementia' is a question about a threshold crossing.
+Both are legitimate and the second is often more
+meaningful to patients even though it is less efficient.
+
+**(Judgment 2.) Whether the threshold is clinically
+principled or statistically convenient.** A threshold
+chosen because it is a recognized clinical transition is
+defensible. A threshold chosen because it yields the most
+events is data-driven and inadmissible.
+
+**(Judgment 3.) What the visit schedule does to a
+time-to-event endpoint.** If conversion can only be
+detected at scheduled visits, the data are
+interval-censored, and a standard Cox model analyzing
+time-to-visit-of-detection is fitting the wrong likelihood.
+
+## How the two fields diverged
+
+The compendium's historical review identifies three
+reinforcing forces behind Alzheimer trials' convergence on
+MMRM with change-score estimands.
+
+**The regulatory requirement for continuous co-primaries.**
+The 1990 FDA guidance for Alzheimer drug development
+established a requirement for both a cognitive and a
+functional co-primary endpoint, and the instruments
+available for both are continuous scales. The endpoint
+structure was fixed by regulation before the analysis
+debate began.
+
+**The fall of LOCF.** Last observation carried forward was
+the standard handling of dropout in this literature until
+empirical work demonstrated its bias, and the National
+Research Council panel codified the case against it. What
+replaced it was the likelihood-based longitudinal
+analysis, which is to say MMRM.
+
+**The efficiency argument.** Modeling repeated continuous
+data is more efficient than dichotomizing into a
+time-to-event endpoint, and this was demonstrated
+specifically for Alzheimer endpoints.
+
+Oncology arrived at a different equilibrium for reasons
+equally structural. Its primary endpoint, death, is
+inherently binary and irreversible; the proportional
+hazards framework has deep regulatory precedent; and no
+single continuous severity measure plays the role that a
+cognitive scale plays in Alzheimer disease. There is no
+continuous trajectory to model.
+
+The lesson generalizes. The default analysis in a
+therapeutic area is usually the product of what its
+endpoints permit and what its regulators established
+decades ago, not of a comparison anyone recently ran.
+
+## The efficiency comparison
+
+The compendium simulates trials in an MCI population over
+24 months, generating CDR trajectories, and analyzes the
+same simulated data two ways: MMRM on the continuous CDR
+sum of boxes, and Cox regression on time to first
+conversion to CDR at or above 1.0.
+
+The expected and confirmed result is that MMRM yields
+substantially greater power, and the mechanism is
+information use. The continuous analysis uses the full
+trajectory of scores at every visit for every patient. The
+survival analysis reduces that trajectory to a single
+binary indicator and a time, and for the many patients who
+never cross the threshold within 24 months it reduces to a
+censoring indicator carrying almost no information about
+the treatment effect.
+
+The advantage is most pronounced where conversion rates
+are modest and censoring is heavy, which is exactly the
+MCI-to-mild-dementia setting: most participants in a
+24-month trial will not reach the threshold, so the Cox
+model is fitting to a minority of the sample.
+
+A rough way to see the magnitude: dichotomizing a
+continuous variable at a threshold typically costs 30 to
+50% of the information, and dichotomizing a *trajectory*
+into a first-crossing time costs more, because the timing
+of the crossing is measured coarsely and the pre-crossing
+trajectory is discarded entirely.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: when to accept the inefficiency
+
+**Question.** Given this efficiency gap, why would anyone
+choose the time-to-event endpoint in an Alzheimer trial?
+
+**Answer.**
+
+Three reasons, and the first is decisive when it applies.
+
+*Interpretability to the decision-maker.* 'The treatment
+delayed progression to dementia by seven months' is a
+claim a patient, a clinician, and a payer can act on. 'The
+treatment reduced 18-month CDR-SB decline by 0.45 points'
+requires the listener to know what a CDR-SB point means,
+and most listeners do not. If the trial's purpose is to
+support a decision by non-statisticians, the less
+efficient endpoint may be the more useful one.
+
+*Irreversibility.* If the outcome of interest is a
+transition that does not reverse, the time to it is the
+natural summary and a mean level averages over patients in
+qualitatively different states.
+
+*Regulatory precedent in the indication.* If prior
+approvals in the area used a time-to-event endpoint,
+proposing a continuous one invites a discussion the
+sponsor may not want.
+
+The resolution most trials adopt: the continuous endpoint
+as primary, for power, and the time-to-event endpoint as a
+key secondary, for interpretation, with multiplicity
+controlled by the hierarchy of Chapter 8. That gets the
+efficient test and the communicable claim, in the right
+order.
+:::
+
+## Caveats to the comparison
+
+The compendium is explicit about three.
+
+**The comparison is asymmetric by construction.** MMRM
+uses all visits; Cox uses the first conversion event. That
+is the point of the comparison, and it also means the
+result is not a statement that one method is better than
+the other in general, only that using more information
+yields more power.
+
+**The visit schedule limits the survival endpoint.** True
+conversion may occur between visits, so what is observed
+is interval-censored: the event happened somewhere between
+the last clean visit and the first visit showing
+conversion. A standard Cox model treating the detection
+visit as the event time is fitting the wrong likelihood.
+The consequences are usually modest with frequent visits
+and can be material with annual ones; interval-censoring
+methods are available and are rarely used.
+
+**Relative efficiency depends on the threshold.** A
+threshold that most patients cross gives the survival
+analysis more events and narrows the gap; a threshold few
+cross widens it. Since the threshold also determines what
+the endpoint means clinically, it should not be chosen to
+optimize power, and the sensitivity of the conclusion to
+the threshold should be reported.
+
+## Practical guidance
+
+**Use the continuous longitudinal analysis** when a
+validated continuous measure exists, when the disease
+progresses gradually, when the trial is powered on modest
+effects, and when the audience can interpret the scale.
+
+**Use the time-to-event analysis** when the event is
+discrete and irreversible, when the timing is what
+matters clinically, when the event rate is high enough
+that censoring is not dominant, or when regulatory
+precedent requires it.
+
+**Use both, hierarchically**, when the trial must be both
+efficient and communicable, which is most of the time.
+
+**Consider the intermediate options.** A responder
+analysis at a fixed time point is a dichotomization
+without the timing, and is usually the worst of both
+worlds. A joint model of the longitudinal trajectory and
+the time to event uses all the information and is the
+statistically correct answer to the question 'what does
+the whole record say', at the cost of complexity and of a
+model whose assumptions are harder to check. Restricted
+mean time in a state, or the difference in area under the
+severity curve, is a summary that keeps the continuous
+information while producing a time-scaled quantity that
+communicates well.
+
+## Worked example: endpoint strategy for an MCI trial
+
+A 24-month trial in MCI due to Alzheimer disease, 600
+patients, visits at 6, 12, 18, and 24 months.
+
+**Primary endpoint.** Change in CDR-SB from baseline to
+month 24, analyzed by categorical-time MMRM as in Chapter
+18, since the mechanism suggests delayed onset.
+
+**Key secondary.** Time to conversion to CDR global score
+at or above 1.0, analyzed by Cox regression, tested only
+if the primary is significant, under the hierarchical
+procedure.
+
+**Power.** Simulated for both. At the design effect size,
+the MMRM primary has 90% power; the Cox secondary has 62%.
+The team accepts that the secondary may fail to reach
+significance even when the primary succeeds, and the SAP
+states in advance that this pattern is expected and does
+not undermine the primary conclusion. Saying this in
+advance is what prevents an awkward conversation at the
+results meeting.
+
+**Interval censoring.** With visits every six months, the
+conversion time is known only to within a six-month
+window. A sensitivity analysis using an
+interval-censoring model is pre-specified. If the two
+agree, the simpler analysis is reported; if they differ,
+the interval-censored analysis is the correct one.
+
+**Threshold sensitivity.** The conversion definition is
+fixed at CDR at or above 1.0 on clinical grounds. A
+sensitivity analysis at a CDR-SB-based threshold is
+pre-specified to demonstrate that the conclusion is not an
+artifact of the cut point.
+
+**Communication plan.** The abstract reports both the
+CDR-SB difference and, if the secondary is significant,
+the delay in conversion. If the secondary is not
+significant, the abstract reports the primary and states
+the secondary's result without a claim.
+
+## Collaborating with an LLM on endpoint choice
+
+**Prompt 1: 'Should our endpoint be continuous or
+time-to-event?'**
+
+*What to watch for.* Models give a reasonable summary of
+the trade-off and rarely mention the interval-censoring
+issue induced by the visit schedule, which is the
+technical detail most likely to be missed in a real
+protocol.
+
+*Verification.* Ask how often the outcome is assessed and
+whether the event can be detected between assessments.
+
+**Prompt 2: 'Compare the power of MMRM and Cox on the same
+simulated data.'**
+
+*What to watch for.* Simulations in which the two analyses
+are applied to *different* generated data, which makes the
+comparison meaningless. Both must be applied to the same
+replicates.
+
+*Verification.* Confirm the code generates one dataset per
+replicate and derives the survival endpoint from the same
+trajectories the MMRM analyzes.
+
+**Prompt 3: 'Justify dichotomizing our continuous outcome
+at this threshold.'**
+
+*What to watch for.* Models will supply a justification,
+because that is what was asked. The useful prompt is the
+opposite one: ask for the argument against.
+
+*Verification.* Ask what fraction of patients cross the
+threshold and what the analysis discards.
+
+## Principle in use
+
+1. **Derive both endpoints from the same trajectories when
+   comparing them.** Anything else compares simulations,
+   not analyses.
+
+2. **Never choose the threshold to maximize events.** It is
+   a clinical definition, and choosing it from the data
+   invalidates the analysis.
+
+3. **State in advance that a less powerful secondary may
+   fail.** It prevents a true positive primary from being
+   undermined by a predictable secondary null.
+
+## Exercises
+
+1. Simulate 24-month CDR trajectories for two arms.
+   Analyze with MMRM and with Cox on threshold crossing,
+   and compute the power of each at the same effect size.
+
+2. Vary the conversion threshold and plot the power of the
+   survival analysis against the proportion of patients
+   who convert. Where is it maximized, and why is that not
+   a reason to choose it?
+
+3. Implement an interval-censored analysis of the same
+   simulated data and compare the estimated hazard ratio
+   and its standard error to the naive Cox result.
+
+4. Compute the difference in area under the CDR-SB
+   trajectory between arms as an alternative summary.
+   Compare its power to both other analyses.
+
+5. Fit a joint longitudinal and time-to-event model to one
+   simulated dataset and describe what it estimates that
+   neither separate analysis does.
+
+## Further reading
+
+- The compendium `13-mmrm-vs-survival-ad`.
+- @mallinckrodt2008recommendations, on the MMRM
+  convergence.
+- @nrc2010prevention, on the case against LOCF.
+- @fleming1991counting, for the survival machinery.
+- @ard2001donepezil and @donohue2014estimating, on design
+  and analysis considerations specific to Alzheimer
+  trials.
+- The `survival`, `icenReg`, and `JM` R packages.

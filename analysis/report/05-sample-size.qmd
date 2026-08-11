@@ -1,0 +1,568 @@
+# Sample Size and Power {#sec-sample-size}
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Derive and apply the two-arm sample-size formula for
+  continuous, binary, and time-to-event endpoints.
+- Defend every input to a sample-size calculation and
+  identify which input the answer is most sensitive to.
+- Compute sample size for non-inferiority and equivalence
+  designs and choose a margin defensibly.
+- Adjust for unequal allocation, dropout, and clustering.
+- Set up a simulation-based sample-size calculation when
+  no closed form applies.
+
+## Orientation
+
+The sample size is the most scrutinized number in a
+protocol and often the least defensible. It is scrutinized
+because it determines the cost, the duration, and whether
+the trial can answer its question; it is indefensible
+because at least one of its inputs is usually a guess
+dressed as a citation.
+
+The mathematics is elementary: for the standard two-arm
+comparison it is one formula, applied with different
+variance expressions. What is not elementary is choosing
+the inputs. This chapter spends as much space on where the
+numbers come from as on what to do with them.
+
+One framing to carry through. A sample-size calculation is
+not a prediction that the trial will succeed. It is a
+statement of the form: *if* the true effect is $\delta$
+and the variability is $\sigma$, *then* a trial of this
+size detects the effect with probability $1 - \beta$. Every
+part of that conditional is an assumption, and the
+trial's fate depends on assumptions the calculation cannot
+verify.
+
+## The statistician's contribution {#sec-sample-size-human}
+
+**(Judgment 1.) The effect size is a clinical quantity,
+not a statistical one.** The right $\delta$ is the
+smallest effect that would change practice, and only
+clinicians can say what that is. The recurring failure is
+to insert the effect observed in a small phase II study,
+which is upward-biased by selection (the trial proceeded
+to phase III because the estimate was large) and typically
+imprecise. Trials powered on phase II point estimates fail
+often, and the pattern is well documented.
+
+**(Judgment 2.) Refuse to reverse-engineer.** The team has
+a budget for 200 patients and asks what effect size that
+detects. Answering is fine; recording the answer in the
+protocol as though it were the clinically meaningful
+difference is not. If the feasible sample size cannot
+detect a meaningful effect, the honest conclusions are to
+change the endpoint, change the design, seek more funding,
+or not run the trial.
+
+**(Judgment 3.) Present a sensitivity table, never a
+single number.** The point estimate of required $N$ is
+conditional on inputs that are uncertain. A table showing
+$N$ across a plausible range of $\sigma$ and $\delta$
+communicates the actual state of knowledge and protects
+the trial when the observed variability differs from the
+assumption.
+
+## The two-arm continuous case
+
+Test $H_0: \mu_1 = \mu_2$ against a two-sided alternative
+at level $\alpha$, with equal allocation and common
+within-arm standard deviation $\sigma$. The required
+sample size per arm is
+$$
+n = \frac{2\sigma^2 (z_{1-\alpha/2} + z_{1-\beta})^2}
+         {\delta^2},
+$$
+where $\delta = \mu_1 - \mu_2$ is the effect to be
+detected.
+
+The derivation is worth seeing once. The test statistic is
+$\hat\delta / \mathrm{SE}$ with
+$\mathrm{SE} = \sigma\sqrt{2/n}$. We reject when
+$|\hat\delta| > z_{1-\alpha/2} \mathrm{SE}$. Under the
+alternative $\hat\delta \sim N(\delta, \mathrm{SE}^2)$, so
+power is the probability that a normal variable with mean
+$\delta$ exceeds $z_{1-\alpha/2}\mathrm{SE}$, which
+requires
+$\delta \ge (z_{1-\alpha/2} + z_{1-\beta})\mathrm{SE}$.
+Substituting the standard error and solving for $n$ gives
+the formula.
+
+Three facts follow immediately and are worth memorizing.
+
+**Sample size scales with the square of the effect size.**
+Halving the detectable effect quadruples the trial. This
+single fact explains most of the tension in trial design.
+
+**Sample size scales with the square of the standard
+deviation.** Reducing measurement error is as valuable as
+increasing the effect. Averaging duplicate measurements,
+using a better instrument, or adjusting for a strong
+baseline covariate all reduce $\sigma$ and are usually
+cheaper than enrolling patients.
+
+**The combined quantile term is nearly constant.** For
+two-sided 0.05 and 80% power, $1.96 + 0.84 = 2.80$ and its
+square is 7.85; for 90% power, $1.96 + 1.28 = 3.24$ and
+its square is 10.5. Going from 80% to 90% power costs 34%
+more patients.
+
+```r
+library(pwr)
+
+# sigma = 10, delta = 5, so standardized effect d = 0.5
+pwr.t.test(d = 5 / 10, sig.level = 0.05, power = 0.80,
+           type = 'two.sample')
+#>      n = 63.77
+#> NOTE: n is number in *each* group
+
+# by formula, using the normal approximation
+2 * 10^2 * (qnorm(0.975) + qnorm(0.80))^2 / 5^2
+#> [1] 62.79
+```
+
+The t-based result is slightly larger than the normal
+approximation because it accounts for estimating $\sigma$.
+The difference is negligible above about 30 per arm.
+
+### Using a baseline covariate
+
+If the outcome is measured at baseline and at follow-up
+and the correlation between them is $\rho$, analysis of
+covariance with the baseline as a covariate reduces the
+residual variance to $\sigma^2(1 - \rho^2)$, so
+$$
+n_{\text{ANCOVA}} = n_{\text{unadjusted}} (1 - \rho^2).
+$$
+With $\rho = 0.6$ the required sample size falls by 36%.
+This is the cheapest power available in trial design and
+it is routinely left on the table. Chapter 16 examines
+adjustment in detail.
+
+## The binary case
+
+For proportions $p_1$ and $p_2$,
+$$
+n = \frac{(z_{1-\alpha/2} + z_{1-\beta})^2
+          \left[p_1(1 - p_1) + p_2(1 - p_2)\right]}
+         {(p_1 - p_2)^2}.
+$$
+
+```r
+# 30% vs 20% response
+pwr.2p.test(h = ES.h(0.30, 0.20), sig.level = 0.05,
+            power = 0.80)
+#>      n = 313.4
+
+# by formula
+(qnorm(0.975) + qnorm(0.80))^2 *
+  (0.3 * 0.7 + 0.2 * 0.8) / (0.3 - 0.2)^2
+#> [1] 293.1
+```
+
+The two differ because `pwr.2p.test` works on the
+arcsine-transformed scale, which stabilizes the variance;
+the formula above uses the untransformed scale. Both are
+approximations, they diverge for proportions near 0 or 1,
+and for small trials neither is reliable, which is the
+subject of Chapter 22.
+
+Note how expensive binary endpoints are. Detecting a
+10-percentage-point difference around 25% takes roughly
+300 per arm; the same information as a continuous
+measurement would take a fraction of that. Dichotomizing a
+continuous outcome to make it 'clinically interpretable'
+typically costs 30% or more of the power, and sometimes
+much more.
+
+## Time-to-event endpoints
+
+For a log-rank test, power depends on the number of
+**events**, not the number of patients. The required number
+of events for hazard ratio $\theta$ with 1:1 allocation is
+$$
+d = \frac{4(z_{1-\alpha/2} + z_{1-\beta})^2}
+         {(\log \theta)^2}.
+$$
+
+```r
+# hazard ratio 0.75, two-sided 0.05, 90% power
+4 * (qnorm(0.975) + qnorm(0.90))^2 / log(0.75)^2
+#> [1] 507.8
+```
+
+508 events. The number of *patients* then depends on the
+event rate, the accrual period, and the follow-up duration,
+through the probability that a randomly enrolled patient
+has an event before analysis. With exponential survival at
+rate $\lambda$, uniform accrual over $a$ years and total
+study duration $T$, that probability is
+$$
+P(\text{event}) = 1 - \frac{1}{a\lambda}
+  \left(e^{-\lambda(T-a)} - e^{-\lambda T}\right),
+$$
+and $N = d / \bar{P}$ where $\bar P$ averages across arms.
+
+```r
+library(gsDesign)
+nSurv(lambdaC = log(2) / 3,   # median 3 years in control
+      hr = 0.75, eta = 0.05,  # 5% annual dropout
+      T = 5, minfup = 2,      # 5-year study, 2-year follow-up
+      alpha = 0.025, beta = 0.10)
+#> Sample size: 1128, Events: 508
+```
+
+The lever that is easy to forget: extending follow-up
+generates events without enrolling patients. In a trial
+with slow accrual and a long-tailed event distribution, one
+additional year of follow-up can be far cheaper than 200
+additional patients.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: which input to interrogate
+
+**Question.** A team proposes a trial with $\sigma = 12$
+from a published cohort, $\delta = 4$ chosen as 'clinically
+meaningful', $\alpha = 0.05$ two-sided, 90% power, giving
+190 per arm. Enrollment is feasible. Which input deserves
+the most scrutiny, and what would you ask for?
+
+**Answer.**
+
+$\delta$, by a wide margin, because $n$ scales with
+$1/\delta^2$: if the true meaningful difference is 3
+rather than 4, the required sample size is 338 per arm,
+78% larger. Ask how 4 was chosen. Acceptable answers cite
+an anchor-based minimal clinically important difference
+from the instrument's validation literature, or a
+distribution-based threshold, or a survey of clinicians.
+An unacceptable answer, and the most common one, is that 4
+is what a previous small study observed.
+
+$\sigma$ is second and deserves a specific question: was
+12 the standard deviation of the outcome at a single time
+point, or of the change from baseline? These differ
+substantially, and using the cross-sectional SD when the
+analysis is of change is a frequent and consequential
+error. If the analysis will adjust for baseline, the
+relevant quantity is the residual SD after adjustment,
+smaller still.
+
+$\alpha$ and power are conventions and are rarely the
+issue, though a one-sided 0.025 framing is worth
+confirming with the regulatory group.
+:::
+
+## Unequal allocation
+
+With allocation ratio $k = n_2/n_1$, the total sample size
+is inflated relative to 1:1 by a factor
+$$
+\frac{(1 + k)^2}{4k}.
+$$
+For $k = 2$ this is $9/8 = 1.125$, a 12.5% increase in
+total $N$ for the same power. For $k = 3$ it is 1.33.
+
+Unequal allocation is chosen for reasons outside the
+power calculation: to gather more safety data on the
+experimental drug, to improve enrollment when patients
+prefer a chance at the new treatment, or to satisfy a
+requirement for a minimum exposed population. Those are
+legitimate reasons; the 12.5% cost should be stated
+explicitly rather than absorbed silently. Ratios beyond
+3:1 are rarely worth it. Chapter 24 examines the
+interaction between allocation ratio and exact tests in
+small trials, where the penalty behaves differently.
+
+## Dropout
+
+If a proportion $\pi$ of patients contribute no analyzable
+primary outcome, inflate:
+$$
+N_{\text{enroll}} = \frac{N_{\text{analyzed}}}{1 - \pi}.
+$$
+With 15% dropout and 340 needed, enroll 400.
+
+Two cautions. First, this adjustment is right only when
+dropouts contribute *nothing*. In a longitudinal trial
+analyzed with a mixed model, patients who drop out at week
+12 of a 24-week trial contribute substantial information,
+so the naive inflation over-enrolls. Chapter 21 examines
+the alternatives. Second, the inflation restores the
+sample size and does nothing about the *bias* that
+differential dropout introduces; that is a design and
+analysis problem, not an $N$ problem.
+
+## Cluster randomized trials
+
+When randomization is by clinic, school, or village,
+outcomes within a cluster are correlated. With intracluster
+correlation $\rho$ and $m$ individuals per cluster, the
+variance of the treatment-effect estimate is inflated by
+the **design effect**
+$$
+\mathrm{DE} = 1 + (m - 1)\rho.
+$$
+Multiply the individually randomized sample size by DE.
+
+The design effect is brutal for large clusters. With
+$m = 100$ and a modest $\rho = 0.02$, DE $= 2.98$: the
+trial needs three times as many individuals. This is why
+cluster trials tend to have many small clusters rather
+than few large ones, and why the number of *clusters*,
+not the number of individuals, is the binding constraint
+on power. Below about 15 clusters per arm, the
+between-cluster variance is estimated so poorly that
+inference is unreliable regardless of how many individuals
+are enrolled.
+
+## Non-inferiority and equivalence
+
+A superiority trial asks whether the new treatment is
+better. A **non-inferiority** trial asks whether it is not
+worse by more than a margin $\Delta$, which is the
+question when the new treatment offers an advantage other
+than efficacy: fewer side effects, oral instead of
+intravenous, cheaper.
+
+For outcomes where higher is better,
+$$
+H_0: \mu_T - \mu_C \le -\Delta
+\quad\text{versus}\quad
+H_1: \mu_T - \mu_C > -\Delta,
+$$
+tested one-sided at $\alpha = 0.025$, or equivalently by
+checking that the lower limit of the two-sided 95%
+confidence interval exceeds $-\Delta$.
+
+Sample size uses the same formula with $\delta$ replaced
+by $\Delta + \delta_{\text{expected}}$, where
+$\delta_{\text{expected}}$ is the true difference assumed
+(often zero).
+
+```r
+# non-inferiority, sigma = 10, margin 3, assuming true
+# difference of 0, one-sided 0.025, 90% power
+2 * 10^2 * (qnorm(0.975) + qnorm(0.90))^2 / 3^2
+#> [1] 233.6
+```
+
+234 per arm to rule out a 3-unit decrement, against 85 per
+arm to detect a 5-unit improvement. Non-inferiority trials
+are large, because the margin is smaller than the effect a
+superiority trial targets.
+
+**Choosing the margin** is the hard part and is not a
+statistical decision alone. The standard approach preserves
+a fraction of the active control's own effect: if the
+control beats placebo by 10 units in historical trials, a
+margin of 5 preserves half of that benefit. This requires
+that the historical effect is well estimated and that
+**constancy** holds, meaning the control would have the
+same effect in the current trial's population and era as
+it did historically. Constancy is frequently doubtful:
+background therapy improves, populations shift, and
+diagnostic criteria change. When constancy fails, a
+non-inferiority conclusion can be reached for a treatment
+that is no better than placebo, which is the
+'bio-creep' problem.
+
+Two further points. Poor trial conduct biases a
+non-inferiority trial *toward* the null hypothesis of
+non-inferiority, since noise makes arms look alike. This
+inverts the usual protective relationship between sloppy
+conduct and false positives and is why per-protocol
+analysis is a co-primary here. And **equivalence** trials,
+which require the difference to lie within $(-\Delta,
++\Delta)$ in both directions, are larger still and are
+mainly used for bioequivalence.
+
+## Simulation-based sample size
+
+When the design has no closed form, simulate. This applies
+to longitudinal models with realistic dropout, adaptive
+designs, non-standard endpoints, and any design where the
+analysis model is more complicated than the formula
+assumes.
+
+```r
+simulate_power <- function(n_per_arm, delta, sigma,
+                           n_sim = 5000, seed = 2026) {
+  set.seed(seed)
+  rejections <- replicate(n_sim, {
+    y1 <- rnorm(n_per_arm, delta, sigma)
+    y0 <- rnorm(n_per_arm, 0, sigma)
+    t.test(y1, y0)$p.value < 0.05
+  })
+  mean(rejections)
+}
+
+simulate_power(64, delta = 5, sigma = 10)
+#> [1] 0.8022
+```
+
+The discipline that makes simulation-based sizing
+credible: simulate under the null as well, to confirm the
+type I error is at nominal level; use enough replicates
+that the Monte Carlo standard error is small relative to
+the difference you care about (5,000 replicates gives a
+standard error of about 0.006 near 80% power); fix and
+report the seed; and simulate the data-generating process
+you actually expect, including dropout and the correlation
+structure, rather than the one the formula assumes.
+Chapter 20 develops this for longitudinal trials.
+
+## Worked example: sizing a depression trial
+
+An 8-week trial of an adjunctive treatment for
+treatment-resistant depression. Primary endpoint: change
+in MADRS total score from baseline to week 8.
+
+**Step 1. Effect size.** The literature reports that a
+2-point MADRS difference is at the boundary of
+detectability by clinicians and a 4-point difference is
+clearly meaningful. The team targets 3 points. Sourced to
+two anchor-based studies, cited in the protocol.
+
+**Step 2. Variability.** Published trials report a
+week-8 change-score SD of 9 to 11. Take $\sigma = 10$, and
+present the calculation across 9, 10, and 11.
+
+**Step 3. Baseline adjustment.** Baseline MADRS correlates
+with week-8 change at roughly $\rho = 0.3$ (correlations
+with change scores are lower than with final values). The
+ANCOVA reduction factor is $1 - 0.09 = 0.91$.
+
+**Step 4. Base calculation.** Two-sided 0.05, 90% power:
+$$
+n = \frac{2 \cdot 10^2 \cdot 3.24^2}{3^2} \times 0.91
+  \approx 212 \text{ per arm}.
+$$
+
+**Step 5. Dropout.** Trials in this population lose 20% by
+week 8, but the analysis is MMRM, so patients with any
+post-baseline visit contribute. Assume 8% contribute
+nothing: enroll $212/0.92 \approx 231$ per arm, 462 total.
+
+**Step 6. Sensitivity table.**
+
+| $\sigma$ | $\delta = 2.5$ | $\delta = 3.0$ | $\delta = 3.5$ |
+|---------:|---------------:|---------------:|---------------:|
+| 9        | 247            | 172            | 126            |
+| 10       | 305            | 212            | 156            |
+| 11       | 369            | 257            | 189            |
+
+Per arm, before dropout inflation. The protocol reports
+the 212 and the table. If the observed SD at the blinded
+interim is 11, the team knows immediately what it costs
+and can consider blinded sample-size re-estimation
+(Chapter 9), which uses only the pooled variance and does
+not compromise the type I error.
+
+## Collaborating with an LLM on sample size
+
+**Prompt 1: 'Compute the sample size for this trial.'**
+
+*What to watch for.* The arithmetic is usually right and
+the framing often is not. Common errors: two-sided when
+the regulatory convention is one-sided 0.025; using the
+cross-sectional SD when the endpoint is a change score;
+ignoring clustering; and reporting per-arm as total or
+vice versa.
+
+*Verification.* Recompute by hand from the formula, and
+separately with a package. Three independent routes to the
+same number is a two-minute check that has caught real
+errors.
+
+**Prompt 2: 'What is a defensible non-inferiority margin
+here?'**
+
+*What to watch for.* Fluent discussion of the
+preservation-of-effect principle, with a specific number
+that has no grounding in the historical evidence base
+because the model does not have it.
+
+*Verification.* The margin must come from a documented
+estimate of the active control's effect versus placebo,
+with the constancy assumption examined. Get the historical
+meta-analysis.
+
+**Prompt 3: 'Write a simulation to estimate power for this
+longitudinal design.'**
+
+*What to watch for.* Good scaffolding. Check that the
+correlation structure is what you specified, that dropout
+is generated by the intended mechanism (MCAR versus MAR
+matters), and that the analysis inside the loop is the
+analysis in the SAP.
+
+*Verification.* Run the simulation with the treatment
+effect set to zero and confirm the rejection rate is at
+nominal $\alpha$. A power simulation that has not been
+null-checked should not be trusted.
+
+## Principle in use
+
+1. **Every input has a source, written in the protocol.**
+   Effect size, variance, event rate, dropout,
+   correlation. A calculation whose inputs are unsourced
+   cannot be defended at a review meeting or reconstructed
+   two years later.
+
+2. **Show the sensitivity table.** One number hides the
+   uncertainty that determines whether the trial works.
+
+3. **Check the type I error of whatever you built.** For
+   any calculation more complex than the textbook formula,
+   simulate under the null. This catches the majority of
+   errors in bespoke designs.
+
+## Exercises
+
+1. Derive the two-arm continuous sample-size formula from
+   the power requirement, stating each approximation.
+
+2. A trial needs 90% power to detect a difference of 0.4
+   standard deviations. Compute $n$ per arm. Recompute for
+   allocation ratios 2:1 and 3:1 and report the percentage
+   increase in total sample size.
+
+3. A cluster trial randomizes 30 clinics with 50 patients
+   each, $\rho = 0.03$. Compute the design effect and the
+   effective sample size. How many individually randomized
+   patients would give the same precision?
+
+4. For a time-to-event trial with control median survival
+   of 18 months, target hazard ratio 0.7, three-year
+   accrual and two years of additional follow-up, compute
+   the required events and patients. Then recompute with
+   one additional year of follow-up and comment on the
+   trade-off.
+
+5. Write a simulation that estimates power for a two-arm
+   trial with a binary endpoint, $p_0 = 0.15$, $p_1 =
+   0.25$, using Fisher's exact test, at $n = 100$ per arm.
+   Compare to the normal-approximation formula and explain
+   the discrepancy.
+
+## Further reading
+
+- @lachin1981introduction, the classic introduction to
+  sample size in trials.
+- @friedman2015fundamentals, Chapter 8.
+- @hayes2017cluster, for cluster randomized trials, and
+  @hussey2007design for the stepped-wedge variant.
+- @candel2023best, a compact review of efficient sample
+  sizes across the designs most often encountered.
+- @suissa1985exact, for exact unconditional sample sizes in
+  the small-sample binary case (developed in Chapter 22).
+- The `pwr`, `gsDesign`, `rpact`, and `longpower` package
+  documentation; @iddi2022longpower describes the last of
+  these and its Shiny interface.
+- ICH E9, Section 3.5, on the regulatory expectations for
+  sample-size justification.

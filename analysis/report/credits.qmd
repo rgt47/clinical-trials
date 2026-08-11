@@ -1,0 +1,24 @@
+# Credits {.unnumbered}
+
+The ten-week core (Chapters 1 through 10) was constructed
+by surveying publicly available clinical-trials syllabi
+from graduate biostatistics departments, including the
+courses at Yale, Minnesota, Wisconsin, UCSF, Duke, and the
+University at Buffalo, and adopting the topics common to
+most of them: the justification for randomized experiments,
+protocol and endpoint development, randomization methods,
+blinding and placebos, sample size determination,
+non-inferiority, early-phase designs, the primary analysis
+of parallel-group trials, interim monitoring, adaptive
+designs, missing data, and reporting.
+
+The advanced-topic chapters (11 through 28) derive from the
+author's methodological research compendia. Each such
+chapter names its source compendium in a Provenance
+section.
+
+Cover artwork generated procedurally by the Python script
+at `images/build-cover.py`. Watercolor palette: deep
+oxblood through clay and terracotta to warm sand, anchored
+on a brand oxblood `#7a3b52`. Typography: Avenir family
+(Apple system font); body text in Source Serif 4.

@@ -1,0 +1,520 @@
+# The Protocol, the Estimand, and the Endpoint {#sec-protocol-estimands}
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Describe what a protocol contains and why it is written
+  before any data exist.
+- Choose a primary endpoint and defend the choice on
+  clinical relevance, measurability, and statistical
+  efficiency.
+- Explain the hazards of surrogate endpoints and state the
+  conditions under which a surrogate is credible.
+- Specify an estimand using the five ICH E9(R1) attributes
+  and name a strategy for each anticipated intercurrent
+  event.
+- Distinguish the protocol from the statistical analysis
+  plan and say what belongs in each.
+
+## Orientation
+
+A trial's protocol is a promise made before the data
+exist. It states what will be measured, in whom, how they
+will be assigned, when the data will be examined, and how
+the primary question will be answered. It is a scientific
+document, a regulatory document, and a contract with the
+patients who consent on the basis of what it says.
+
+The reason this matters statistically is subtle and worth
+stating plainly. Almost any dataset can be made to yield a
+significant result by someone willing to try enough
+analyses. The credibility of a trial's conclusion rests
+not on the analysis being clever but on the analysis
+having been chosen before anyone could see which choice
+would be favorable. Pre-specification is not paperwork; it
+is the mechanism that makes the reported $p$-value mean
+what it claims to mean.
+
+The chapter has three parts. **The protocol** and what
+goes into it. **The endpoint**, which is the single most
+consequential choice in the document. **The estimand**,
+the ICH E9(R1) framework that forces precision about what
+quantity the trial is estimating, and which has reshaped
+regulatory statistics since 2019.
+
+## The statistician's contribution {#sec-protocol-human}
+
+**(Judgment 1.) The primary endpoint defines the trial.**
+Everything downstream, the sample size, the analysis
+model, the monitoring plan, the labeling claim, follows
+from it. The choice trades three things against each
+other: clinical relevance (does a change in this outcome
+matter to a patient), measurability (can it be ascertained
+reliably in this setting), and statistical efficiency (how
+much information does each patient contribute). A
+continuous endpoint measured well is efficient and may not
+answer the clinical question; mortality answers it and may
+require ten thousand patients.
+
+**(Judgment 2.) The estimand comes before the estimator.**
+Teams reach for the analysis model first because that is
+what feels statistical. The correct order is: state the
+quantity to be estimated in words, decide how patients who
+deviate will be handled conceptually, and only then choose
+a model. When the order is reversed, the trial reports a
+number no one can interpret, because the population and
+the treatment condition it refers to were never named.
+
+**(Judgment 3.) Anticipate the intercurrent events.**
+Patients will stop treatment, switch, take rescue
+medication, and die. Every one of these is foreseeable
+before enrollment. The protocol must say what each means
+for the estimand, and a protocol that is silent has not
+avoided the decision, it has deferred it to whoever
+analyzes the data under deadline pressure with the
+unblinded results in front of them.
+
+## The protocol
+
+The SPIRIT statement [@chan2013spirit] enumerates what a
+protocol should contain. The sections a statistician owns
+or co-owns:
+
+**Objectives and hypotheses.** The primary objective, in
+one sentence, and its corresponding hypothesis. Secondary
+objectives ranked, not listed alphabetically. Exploratory
+objectives labeled as such.
+
+**Trial design.** Parallel-group, crossover, factorial,
+cluster, adaptive; allocation ratio; whether superiority,
+non-inferiority, or equivalence.
+
+**Eligibility criteria.** The statistician's interest here
+is generalizability and event rate: narrow criteria raise
+the effect size and lower the event rate simultaneously,
+and both affect the sample size.
+
+**Interventions**, including what constitutes
+discontinuation and what rescue medication is permitted.
+These definitions become intercurrent events later, so
+they must be written precisely.
+
+**Outcomes.** The primary outcome with its measurement
+method, the exact time point, and the metric (change from
+baseline, final value, time to event, proportion
+responding). 'Improvement in symptoms' is not an outcome;
+'change in the 24-item score from baseline to week 12' is.
+
+**Sample size** with every input stated and sourced
+(Chapter 5).
+
+**Randomization**: method, allocation ratio, stratification
+factors, concealment mechanism (Chapter 3).
+
+**Statistical methods**: the primary analysis, the handling
+of missing data, the interim analysis plan, and the
+multiplicity strategy.
+
+Amendments are permitted and common, but an amendment that
+changes the primary endpoint or the primary analysis after
+any unblinded data have been seen destroys the
+pre-specification argument, and reviewers will treat the
+resulting analysis as exploratory no matter what the
+document says.
+
+## Choosing the endpoint
+
+**Hard clinical endpoints** are events that matter
+intrinsically: death, stroke, hospitalization, fracture.
+They answer the clinical question directly and are usually
+expensive, because event rates are low.
+
+**Patient-reported outcomes** measure symptoms, function,
+and quality of life on validated instruments. They matter
+to patients and are the natural endpoint in many
+conditions. They are vulnerable to unblinding: a patient
+who knows they received the active drug reports feeling
+better.
+
+**Continuous physiological measures** (blood pressure,
+FEV1, HbA1c) are efficient, because every patient
+contributes a measurement rather than an event indicator,
+and they are one step removed from what the patient
+experiences.
+
+**Composite endpoints** combine several events, usually to
+raise the event rate and lower the sample size. The
+canonical example is major adverse cardiac events: death,
+myocardial infarction, or stroke. The hazard is that
+components differ in importance and in effect. If a
+composite is driven entirely by its least serious
+component, and the serious components move in the wrong
+direction, the trial reports a positive composite and a
+misleading conclusion. Report components separately,
+always.
+
+**Time-to-event endpoints** use both whether and when an
+event occurred, which makes them more efficient than a
+binary indicator at a fixed time, and they handle
+censoring naturally. They require a defined time origin
+(randomization, almost always) and a clear censoring rule.
+
+### Surrogate endpoints
+
+A surrogate substitutes for the clinical endpoint of
+interest: tumor shrinkage for survival, CD4 count for AIDS
+progression, bone density for fracture, amyloid clearance
+for cognitive decline. Surrogates are attractive because
+they occur sooner and more often, sometimes shortening a
+trial by years.
+
+The requirement for a valid surrogate is stronger than
+correlation with the clinical outcome. It is that the
+treatment's effect on the clinical outcome is *captured*
+by its effect on the surrogate: if the drug improves the
+surrogate, the clinical benefit follows, and if the drug
+harms through some other pathway, the surrogate must
+register it.
+
+The failure cases are instructive. Antiarrhythmic drugs
+suppressed ventricular ectopy, a strong predictor of
+sudden death after myocardial infarction; the CAST trial
+found they increased mortality. Fluoride increased bone
+density and increased fracture rates. Torcetrapib raised
+HDL cholesterol substantially and raised mortality. In
+each case the surrogate was genuinely prognostic in
+untreated patients and failed to transmit the treatment
+effect, because the drug acted through additional pathways
+the surrogate could not see.
+
+::: {.callout-warning}
+## Warning
+
+'Biomarker X predicts outcome Y' is evidence about
+prognosis, not about surrogacy. Validating a surrogate
+requires showing that the *treatment effect* on X predicts
+the *treatment effect* on Y, which requires multiple
+trials of multiple treatments. A single-trial correlation
+argument is not sufficient, and the accelerated-approval
+literature is full of cases where it was accepted anyway.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: composite endpoint interpretation
+
+**Question.** A cardiovascular trial reports a significant
+reduction in the composite of cardiovascular death,
+myocardial infarction, stroke, or unplanned
+revascularization (hazard ratio 0.82, 95% CI 0.71 to
+0.94). The component breakdown shows revascularization
+hazard ratio 0.61, and the other three components with
+hazard ratios between 0.95 and 1.10. How should this be
+read?
+
+**Answer.**
+
+The composite result is driven entirely by
+revascularization, the least serious and the most
+subjective component, since the decision to revascularize
+is made by a physician who may be influenced by knowledge
+of treatment assignment or by symptom reports. The hard
+components show no effect. The honest reading is that the
+drug reduces revascularization procedures and has not been
+shown to reduce death, infarction, or stroke. Whether that
+is worthwhile depends on how much a patient values
+avoiding a procedure, which is a real but different claim
+from the one the composite headline suggests. This is why
+component-wise reporting is mandatory and why blinded
+adjudication of subjective components matters.
+:::
+
+## The estimand framework
+
+Before 2019, protocols specified an analysis population
+(intention-to-treat, per-protocol) and an analysis model,
+and left the target quantity implicit. This produced a
+recurring problem: two trials of the same drug reporting
+different numbers, both correctly computed, estimating
+different things, with no vocabulary to say so.
+
+ICH E9(R1) [@ich2019e9r1] supplies the vocabulary. An
+**estimand** is a precise description of the treatment
+effect to be estimated, with five attributes.
+
+1. **Treatment.** The intervention as it will be delivered,
+   including dose, duration, and permitted concomitant
+   therapy, and the comparator described with equal
+   precision.
+2. **Population.** The patients the effect refers to,
+   defined by the eligibility criteria and, occasionally,
+   by a principal stratum.
+3. **Variable (endpoint).** The measurement on each
+   patient.
+4. **Intercurrent events and strategies.** The events
+   occurring after randomization that affect either the
+   existence or the interpretation of the measurement, and
+   how each is handled.
+5. **Population-level summary.** The comparison across
+   arms: difference in means, risk difference, odds ratio,
+   hazard ratio, difference in restricted mean survival
+   time.
+
+The fourth attribute is the innovation. The others were
+always implicit; the handling of post-randomization events
+was the ambiguity the framework exists to remove.
+
+### Intercurrent events and the five strategies
+
+An intercurrent event is anything happening after
+randomization that changes what the outcome means:
+treatment discontinuation, switching to the other arm,
+initiation of rescue medication, surgery, death when death
+is not the endpoint.
+
+E9(R1) defines five strategies.
+
+**Treatment policy.** Use the outcome regardless of the
+intercurrent event. The effect estimated is that of being
+*assigned* to the strategy, which is what intention-to-
+treat delivers, and what a health system implementing the
+treatment would experience. It requires the outcome to be
+collected after the event, which has major operational
+consequences: patients who discontinue must still be
+followed.
+
+**Hypothetical.** Estimate what would have happened if the
+intercurrent event had not occurred, for instance if
+rescue medication had been unavailable. This is a
+counterfactual, requires assumptions, and is often the
+most clinically interpretable target for a
+pharmacological question.
+
+**Composite.** Treat the intercurrent event as part of the
+outcome, for example by classifying any patient who
+discontinues as a non-responder. Simple and defensible
+when discontinuation is itself a bad outcome, as with
+intolerable toxicity.
+
+**While on treatment.** Use the outcome measured up to the
+event only. Natural for symptom control questions where
+the interest is in the effect during exposure.
+
+**Principal stratum.** Restrict to the latent subgroup of
+patients who would not experience the intercurrent event
+under either assignment, for instance those who would
+adhere regardless of arm. Conceptually clean and hard to
+estimate, since membership is unobserved.
+
+The essential point: these are five different questions,
+not five analyses of one question. The protocol chooses,
+and the choice depends on what decision the trial informs.
+A payer deciding whether to reimburse wants treatment
+policy. A physician deciding whether to prescribe to an
+adherent patient may want hypothetical or principal
+stratum. A regulator usually wants treatment policy for
+the primary and one or more of the others as sensitivity.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: writing an estimand
+
+**Question.** In a 26-week trial of a weight-loss drug,
+some patients will stop the drug because of nausea and
+some will start a second weight-loss agent. Write two
+plausible estimands and say which decision each supports.
+
+**Answer.**
+
+*Estimand A (treatment policy for both events).*
+Population: adults with BMI 30 or above meeting entry
+criteria. Treatment: drug versus placebo, each added to
+diet counseling. Variable: percent change in body weight
+from baseline to week 26. Intercurrent events:
+discontinuation and initiation of a second agent, both
+handled by treatment policy, so the week-26 weight is used
+however the patient got there. Summary: difference in mean
+percent change.
+
+*Estimand B (composite for discontinuation, hypothetical
+for the second agent).* Same population, treatment, and
+variable, except that patients who discontinue because of
+adverse effects are classified as treatment failures with
+zero weight loss, and the effect is estimated as though the
+second agent had not been available.
+
+A supports a payer's or health-system decision: what
+happens on average if we make this drug available. B
+supports a clinician's decision about a patient who will
+tolerate the drug and take nothing else. Both are
+legitimate; a trial that fails to say which one it
+targeted has reported an uninterpretable number.
+:::
+
+## The statistical analysis plan
+
+The protocol states the analysis in enough detail for
+review. The **statistical analysis plan** states it in
+enough detail for execution: model formulas, covariates
+and their exact coding, missing-data handling, the testing
+hierarchy, definitions of analysis sets, planned tables
+and figures. It is finalized and signed before database
+lock and before any unblinding.
+
+The two-document structure exists because the level of
+detail needed to prevent analytic flexibility is greater
+than an IRB or a reader needs. A protocol saying 'the
+primary analysis will use a mixed model for repeated
+measures' leaves a dozen choices open, each of which can
+change the answer. The SAP closes them.
+
+The practical test of an SAP: could a competent
+statistician who has never met the team produce the
+primary result from the locked database and the SAP alone,
+and would that result match what the team produces? If
+not, the SAP is incomplete.
+
+## Worked example: an estimand for a COPD trial
+
+A phase III trial in moderate-to-severe COPD compares a
+new inhaled combination to an active comparator. Primary
+endpoint: trough FEV1 at week 24.
+
+**Treatment.** New combination, one inhalation twice
+daily for 24 weeks, versus salmeterol-fluticasone at the
+approved dose, both with rescue albuterol permitted.
+
+**Population.** Adults 40 and older with post-
+bronchodilator FEV1 between 30% and 70% of predicted, a
+smoking history of at least ten pack-years, and at least
+one exacerbation in the prior year.
+
+**Variable.** Change in trough FEV1 (mL) from baseline to
+week 24.
+
+**Intercurrent events.**
+
+- *Study-drug discontinuation.* Treatment policy. Patients
+  who stop remain in follow-up and are measured at week
+  24. This obliges the protocol to require the week-24
+  visit for all randomized patients, and obliges the site
+  budget to pay for it.
+- *Rescue albuterol before a spirometry visit.* While on
+  treatment, implemented as a protocol requirement to
+  withhold rescue for six hours before spirometry, with
+  measurements taken within four hours of rescue use
+  excluded and treated as missing.
+- *Death.* Composite, with death assigned the worst
+  rank in a supportive analysis; the primary analysis
+  treats post-death measurements as non-existent rather
+  than missing, and the small expected number is reported.
+
+**Summary.** Difference between arms in mean change from
+baseline, estimated by a mixed model for repeated measures
+with fixed effects for treatment, visit,
+treatment-by-visit, baseline FEV1, and stratification
+factors, and an unstructured within-patient covariance.
+
+Notice that three of these five attributes generated
+operational requirements: follow-up after discontinuation,
+a rescue-medication washout rule, and a death-handling
+convention. Estimand specification is not a documentation
+exercise; it changes what the sites have to do.
+
+## Collaborating with an LLM on protocols and estimands
+
+**Prompt 1: 'Write the estimand for this trial.'** Supply
+the design summary.
+
+*What to watch for.* The model reliably produces all five
+attributes and reliably under-specifies attribute four. It
+tends to write 'intercurrent events will be handled using
+the treatment policy strategy' without enumerating which
+events, which is the part that matters.
+
+*Verification.* List the intercurrent events yourself from
+the intervention description, then check that the model's
+estimand names a strategy for each.
+
+**Prompt 2: 'Critique this primary endpoint.'**
+
+*What to watch for.* Genuinely useful. Models are good at
+enumerating measurement-property concerns, ceiling
+effects, and the vulnerability of subjective endpoints to
+unblinding. They are weak on what the clinical community
+in a specific field will accept, which is often the
+binding constraint.
+
+*Verification.* Check against endpoints used in recent
+approved trials in the same indication.
+
+**Prompt 3: 'Draft the statistical methods section from
+this protocol synopsis.'**
+
+*What to watch for.* Plausible boilerplate that may not
+match the design: a model with covariates the trial does
+not collect, a multiplicity procedure inconsistent with
+the objective ranking, or missing-data language
+contradicting the estimand.
+
+*Verification.* Read the draft against the estimand
+attribute by attribute. Every element of the analysis
+should be traceable to an attribute.
+
+## Principle in use
+
+1. **Write the estimand in words before writing any
+   model.** If it cannot be said in four sentences without
+   statistical vocabulary, the team does not yet agree on
+   what the trial is for.
+
+2. **Enumerate intercurrent events at the design meeting.**
+   Ask the clinicians what fraction of patients will stop
+   the drug and why. That number, produced from clinical
+   experience before the trial, determines whether the
+   estimand choice matters and how much follow-up costs.
+
+3. **Never change the primary endpoint after unblinding.**
+   If the endpoint turns out to be wrong, say so, report
+   the pre-specified analysis, and present the alternative
+   as exploratory. The credibility cost of the honest
+   version is far lower than the cost of being caught.
+
+## Exercises
+
+1. Take a published trial in your field and reconstruct
+   its estimand from the paper. Which attributes are
+   stated, which are inferable, and which are absent?
+
+2. For the same trial, list every intercurrent event that
+   could have occurred and identify the strategy the
+   authors implicitly used for each.
+
+3. A trial of an antidepressant permits rescue medication
+   after week 4. Write two estimands, one treatment policy
+   and one hypothetical, and describe how the numerical
+   estimates would be expected to differ in direction and
+   magnitude.
+
+4. Find a trial that used a composite primary endpoint.
+   Compute what fraction of the composite events came from
+   each component and assess whether the conclusion is
+   robust to dropping the least serious component.
+
+5. Write a two-page statistical analysis plan for the COPD
+   worked example, complete enough that another
+   statistician could execute it without asking you a
+   question.
+
+## Further reading
+
+- @ich2019e9r1, *ICH E9(R1) Addendum on Estimands and
+  Sensitivity Analysis*. Read the whole addendum; it is
+  short.
+- @lipkovich2020causal, on the relationship between
+  estimands and the causal-inference literature.
+- @chan2013spirit, the SPIRIT statement, for protocol
+  content.
+- @friedman2015fundamentals, Chapter 3, on endpoint
+  selection.
+- @senn2007statistical, on surrogate endpoints and on the
+  difference between prognostic and predictive markers.

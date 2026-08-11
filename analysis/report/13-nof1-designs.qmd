@@ -1,0 +1,466 @@
+# N-of-1 and Hybrid Within-Patient Designs {#sec-nof1}
+
+*Prerequisites: Chapters 3, 5, and 8.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Describe the structure of an N-of-1 trial and state what
+  it estimates for an individual patient and for a
+  population when aggregated.
+- Explain the variance decomposition that gives
+  within-patient designs their efficiency advantage.
+- Recognize carryover as the principal threat and describe
+  washout, period exclusion, and lag adjustment as
+  responses.
+- Compare the power of an aggregated N-of-1 design to a
+  parallel-group trial at matched sample size.
+- Identify the conditions under which an N-of-1 design is
+  inappropriate.
+
+## Orientation
+
+A parallel-group trial estimates an average effect by
+comparing different people. An N-of-1 trial estimates an
+effect by comparing the same person to themselves,
+repeatedly, with the order of treatment periods
+randomized. Each patient is a complete crossover
+experiment; the design is a series of such experiments,
+one per patient.
+
+The appeal is twofold. Clinically, an N-of-1 trial answers
+the question a patient actually has, which is whether
+*this* treatment helps *me*, rather than whether it helps
+on average in a population that may not resemble them.
+Statistically, comparing a patient to themselves removes
+between-patient variability from the comparison, and
+between-patient variability is usually the dominant
+variance component in chronic symptomatic conditions.
+
+The design is restricted to a specific class of problems:
+chronic, stable conditions; treatments with rapid onset
+and rapid offset; outcomes that can be measured
+repeatedly and quickly. Within that class it is
+substantially more efficient than the parallel-group
+alternative, and the size of the advantage is the subject
+of this chapter.
+
+## Provenance
+
+The power comparison reported here comes from the research
+compendium `36-pmsimstats-ng`, report
+`04-treatment-main-effect`, an ADEMP-compliant Monte Carlo
+study comparing an aggregated N-of-1 hybrid design against
+a parallel-group RCT at matched sample size, calibrated to
+a trial of prazosin for PTSD-related nightmares. Related
+reports in the same compendium treat carryover sensitivity
+(`02-carryover-sensitivity`), informative dropout by
+design (`09-informative-dropout-by-design`), and the
+hybrid open-label-plus-blinded design
+(`05-nof1-design-sensitivity`).
+
+## The statistician's contribution {#sec-nof1-human}
+
+**(Judgment 1.) Whether the condition is stable.** The
+entire design rests on the assumption that, absent
+treatment, the patient's status would be the same in
+period 8 as in period 1. In a progressive disease it will
+not be, and a period effect will be confounded with the
+treatment effect unless the randomization and the model
+handle it.
+
+**(Judgment 2.) How carryover is handled, decided before
+the trial.** Washout, period exclusion, and lag adjustment
+are three different answers with three different
+estimands and three different efficiency costs. The
+compendium's primary analysis excludes
+carryover-contaminated placebo periods before fitting,
+which is a defensible choice that must be pre-specified
+because it discards data.
+
+**(Judgment 3.) What is being estimated: the individual
+effect or the population mean.** A single N-of-1 trial
+estimates one patient's effect. A series of them,
+aggregated in a mixed model, estimates the population mean
+effect *and* the between-patient variance of effects,
+which is a quantity parallel-group trials cannot estimate
+at all. The second is often the more valuable output and
+is rarely the stated objective.
+
+## Structure
+
+A patient completes $k$ pairs of treatment periods. Within
+each pair, the order of active and placebo is randomized.
+The outcome is measured repeatedly within each period.
+With $k = 4$ pairs the patient completes 8 periods, which
+is the configuration used in the compendium.
+
+Key design parameters: the number of pairs $k$, the period
+length, the washout duration, the number of patients $n$,
+and whether the design is fully blinded or hybrid, with an
+open-label lead-in followed by blinded pairs.
+
+## The variance argument
+
+Write the outcome for patient $i$ in period $j$ as
+$$
+Y_{ij} = \mu + u_i + \beta Z_{ij} + \pi_j + e_{ij},
+$$
+where $u_i \sim N(0, \sigma_u^2)$ is the patient effect,
+$\pi_j$ a period effect, and $e_{ij} \sim N(0,
+\sigma_e^2)$ within-patient noise.
+
+In a parallel-group trial, the comparison is between
+patients, so the variance of the treatment-effect estimate
+involves $\sigma_u^2 + \sigma_e^2$. In an N-of-1 design
+the comparison is within patient, so $u_i$ cancels and the
+variance involves $\sigma_e^2$ alone, divided further by
+the number of within-patient replicates.
+
+The ratio of these determines the efficiency gain. With
+intraclass correlation $\rho = \sigma_u^2 / (\sigma_u^2 +
+\sigma_e^2)$, an N-of-1 design with $k$ pairs per patient
+has roughly the precision of a parallel-group trial with
+$k / (1 - \rho)$ times as many patients, before accounting
+for carryover losses and dropout. In conditions where
+$\rho = 0.6$, which is unremarkable for symptom scales in
+chronic conditions, four pairs per patient buys the
+precision of ten times the patients.
+
+This is the $n$-versus-$k$ trade-off: for a fixed total
+number of observations, is it better to have more patients
+with fewer periods each, or fewer patients with more
+periods? The answer depends on $\rho$ and on how the
+estimand is defined. For the population mean effect,
+increasing $n$ helps and increasing $k$ helps less once
+the within-patient effect is well estimated. For the
+between-patient variance of effects, $n$ is what matters.
+For an individual patient's effect, only $k$ matters.
+
+## Carryover
+
+Carryover is the persistence of one period's treatment
+into the next, and it is the principal threat. If active
+treatment in period 1 is still exerting an effect during
+placebo in period 2, the placebo periods are contaminated
+and the estimated effect is attenuated.
+
+Three responses.
+
+**Washout.** Insert an untreated interval between periods,
+long enough for the effect to dissipate. Requires knowing
+the offset kinetics, lengthens the trial, and exposes
+patients to untreated intervals.
+
+**Period exclusion.** Discard the observations from the
+early part of each period, or discard entire placebo
+periods that immediately follow active periods. The
+compendium's primary analysis excludes
+carryover-contaminated placebo periods before fitting the
+model. This is clean, transparent, and costs information.
+
+**Lag adjustment or exposure weighting.** Model the
+carryover explicitly, for instance by including a term for
+the previous period's assignment, or by weighting each
+observation by an exponential-decay exposure function. The
+compendium's report `02-carryover-sensitivity` compares
+unadjusted, lag-adjusted, and exposure-weighted analyses
+and finds that the choice matters most in the regime where
+carryover is moderate: with negligible carryover all
+approaches agree, and with severe carryover none of them
+rescues the design.
+
+::: {.callout-warning}
+## Warning
+
+Carryover and period effects are not separately
+identifiable from a two-period crossover. This is the
+classic objection to the two-period design and it is
+resolved in an N-of-1 series by having many periods and
+randomizing their order, which makes period effects
+estimable. It is not resolved by testing for carryover in
+a two-period trial and adjusting if significant; that
+procedure has poor properties and was abandoned in the
+crossover literature decades ago.
+:::
+
+## The power comparison
+
+The compendium's central comparison: an aggregated N-of-1
+hybrid design with 35 patients, each completing 8 periods,
+analyzed with a linear mixed-effects model with
+continuous-time AR(1) residuals, against a parallel-group
+RCT with the same $N = 35$ analyzed by ANCOVA. Both
+calibrated to prazosin for PTSD nightmares. Two thousand
+replicates per cell.
+
+| True effect (nightmares/week) | N-of-1 power | RCT power |
+|------------------------------:|-------------:|----------:|
+| $-2.0$                        | 1.000        | 0.675     |
+| $-1.0$                        | 0.830        | 0.230     |
+
+Monte Carlo standard errors were 0.008 to 0.010. Bias was
+negligible in both designs, and coverage of nominal 95%
+intervals was 0.940 to 0.949 for the N-of-1 arm and 0.939
+for the RCT arm.
+
+Read the second row carefully. At an effect of one
+nightmare per week, a plausible and clinically meaningful
+magnitude, the parallel-group trial at this sample size
+has 23% power, which is to say it is not a trial at all;
+the N-of-1 design has 83%. The efficiency advantage is
+largest exactly in the small-to-moderate effect regime
+where parallel-group trials of this size are hopeless.
+
+Two qualifications the compendium is explicit about. The
+comparison holds *at matched patient sample size*, so the
+N-of-1 design uses many more observations per patient and
+more patient time; the fair currency depends on whether
+patients or observations are the binding constraint.
+And the result depends on the carryover-management
+strategy: the primary analysis excludes contaminated
+placebo periods, and designs that cannot do so perform
+worse.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: when not to use N-of-1
+
+**Question.** For which of these would an N-of-1 design be
+inappropriate, and why? (a) An analgesic for chronic
+osteoarthritis pain. (b) A disease-modifying agent in
+early Parkinson disease. (c) An antibiotic for acute
+pneumonia. (d) A stimulant for ADHD in children.
+
+**Answer.**
+
+(a) Appropriate. Chronic, stable, rapid on and off,
+symptom measurable daily. This is the canonical
+indication.
+
+(b) Inappropriate. A disease-modifying effect is
+cumulative and irreversible by design: the whole point is
+that the effect persists after the drug stops. Carryover
+is total, and the within-patient comparison is destroyed.
+Progression also means the condition is not stable, so
+period effects confound.
+
+(c) Inappropriate. The condition resolves; there is no
+second period in which to compare. Acute self-limiting
+conditions cannot be studied within patient.
+
+(d) Appropriate, and in fact N-of-1 designs are used
+clinically in this setting. Rapid onset and offset,
+repeated measurement by teacher and parent ratings,
+chronic condition. The practical difficulties are
+behavioral rather than statistical.
+
+The general rule: within-patient designs require the
+condition to return to its baseline state between periods.
+Ask whether stopping the drug returns the patient to where
+they started. If the answer is no, the design does not
+apply.
+:::
+
+## Analysis
+
+For a single patient, the analysis is a paired comparison
+across the $k$ pairs, or a regression of the outcome on
+treatment with period effects.
+
+For a series, the standard analysis is a mixed model with
+a random patient intercept and, importantly, a random
+patient-by-treatment interaction:
+$$
+Y_{ijt} = \mu + u_i + (\beta + v_i) Z_{ij} + \pi_j
+          + e_{ijt},
+$$
+where $v_i \sim N(0, \sigma_v^2)$ captures genuine
+between-patient variation in the treatment effect. The
+estimate of $\sigma_v^2$ is the output that no
+parallel-group trial can produce: direct evidence about
+whether the treatment effect is homogeneous across
+patients or whether the population average conceals
+responders and non-responders.
+
+Within-period serial correlation should be modeled; the
+compendium uses continuous-time AR(1) residuals, which
+handles unequally spaced daily measurements naturally.
+
+A Bayesian formulation is natural here. The individual
+patient's effect is estimated with shrinkage toward the
+population mean, which is exactly what a clinician
+deciding for that patient wants: their own data, weighted
+by how much of it there is, combined with what is known
+about patients in general.
+
+## Regulatory and practical status
+
+N-of-1 designs sit awkwardly with regulatory frameworks
+built around parallel-group trials, but they are not
+excluded: the FDA has accepted aggregated N-of-1 evidence
+in rare disease contexts, and the design is explicitly
+discussed in the personalized-medicine literature
+[@schork2015personalized]. The PCORI-funded work on
+patient-centered comparative effectiveness has used series
+of N-of-1 trials as its primary design
+[@duan2013single].
+
+The practical obstacles are operational rather than
+statistical: repeated blinded dispensing, patient burden
+from daily measurement, and the difficulty of maintaining
+adherence across many periods.
+
+## Worked example: designing a series for chronic pain
+
+A trial of a topical agent for chronic neuropathic pain.
+Daily 0-to-10 pain score. Onset within two days, offset
+within three days.
+
+**Design.** Series of N-of-1 trials, 40 patients, four
+pairs each, period length 14 days with the first 3 days of
+each period excluded as washout, order randomized within
+pair, double-blind with identical vehicles.
+
+**Estimands.** Primary: the population mean treatment
+effect on mean daily pain. Secondary and equally
+important: the between-patient standard deviation of
+individual treatment effects, $\sigma_v$. Tertiary: for
+each patient, a posterior distribution for their own
+effect, returned to them and their clinician.
+
+**Analysis.** Mixed model with random intercept, random
+treatment effect, fixed period effects, and continuous-time
+AR(1) residuals on the daily scores. Contaminated
+observations from the first three days of each period
+excluded a priori.
+
+**Power.** Simulated at 2,000 replicates. With
+within-patient residual SD 1.6, between-patient SD 2.2,
+and between-patient treatment-effect SD 0.6, the design
+has 91% power to detect a mean effect of 0.8 points. A
+parallel-group trial of 40 patients with the same variance
+components has 34% power.
+
+**Sensitivity.** The design is re-simulated with carryover
+half-lives of 1, 3, and 7 days. At 7 days the three-day
+washout is inadequate and power falls to 71% with the
+estimate attenuated by 18%; the protocol therefore
+pre-specifies a lag-adjusted sensitivity analysis and
+states that period length would be extended if pilot data
+suggested slower offset.
+
+**Dropout.** Patients who withdraw after two complete
+pairs still contribute a within-patient comparison. This
+is a structural advantage of the design over parallel
+groups, where a dropout before the primary endpoint
+contributes nothing directly.
+
+## Collaborating with an LLM on within-patient designs
+
+**Prompt 1: 'Design an N-of-1 trial for this condition.'**
+
+*What to watch for.* Models produce a reasonable skeleton
+and are unreliable on the pharmacokinetic input that
+determines period length and washout. They also tend to
+omit the random treatment-by-patient term, which is the
+scientific point of the design.
+
+*Verification.* Check period length against the drug's
+half-life and the outcome's response time, from
+pharmacology sources.
+
+**Prompt 2: 'Simulate power for an aggregated N-of-1
+versus a parallel-group trial.'**
+
+*What to watch for.* The comparison is only meaningful if
+both arms of it use the same variance components. A common
+error is generating the parallel-group data without the
+between-patient variance that makes the N-of-1 design
+efficient, which produces a comparison that flatters
+whichever design the code was written for first.
+
+*Verification.* Confirm both simulations draw from the
+same $\sigma_u$, $\sigma_e$, and effect size, and check
+the null-case type I error for both.
+
+**Prompt 3: 'How should we handle carryover?'**
+
+*What to watch for.* Competent enumeration of washout,
+exclusion, and modeling. Models frequently suggest testing
+for carryover and adjusting if significant, which is the
+discredited two-stage procedure.
+
+*Verification.* The strategy must be pre-specified, and
+its cost in information should be quantified by
+simulation.
+
+## Principle in use
+
+1. **Ask whether stopping returns the patient to
+   baseline.** This single question determines whether the
+   design is applicable.
+
+2. **Report the between-patient variance of effects.** It
+   is the unique output of the design and it answers the
+   heterogeneity question that subgroup analyses in
+   parallel trials cannot.
+
+3. **Pre-specify the carryover strategy and simulate its
+   cost.** Period exclusion is clean and discards data;
+   the protocol should say how much.
+
+## Exercises
+
+1. Derive the variance of the within-patient treatment
+   effect estimate for a series of N-of-1 trials with $n$
+   patients and $k$ pairs, and compare to the
+   parallel-group variance at the same $n$.
+
+2. For $\rho = 0.3, 0.6, 0.85$, compute the number of
+   parallel-group patients equivalent in precision to 30
+   patients completing four pairs each.
+
+3. Simulate a series of N-of-1 trials with exponential
+   carryover of half-life $h$. Plot the attenuation of the
+   estimated effect against $h$ for washouts of 0, 3, and
+   7 days.
+
+4. Extend the simulation to include a random
+   patient-by-treatment interaction. How many patients are
+   needed to estimate $\sigma_v$ to within 20% relative
+   precision?
+
+5. Take a chronic condition in your field and write a
+   one-page protocol synopsis for a series of N-of-1
+   trials, including the period length justification and
+   the carryover strategy.
+
+## Further reading
+
+- The compendium `36-pmsimstats-ng`, reports
+  `04-treatment-main-effect`, `02-carryover-sensitivity`,
+  and `05-nof1-design-sensitivity`.
+- @duan2013single, on N-of-1 trials as a decision
+  methodology, and @kravitz2008nof1, on heterogeneity of
+  treatment effects and the trouble with averages.
+- @schork2015personalized, the argument for one-person
+  trials.
+- @senn2019sample, on sample size for N-of-1 trials, and
+  @senn2024analysis, a tutorial on the paired-cycles
+  analysis that is the natural starting point for the
+  chapter's variance argument.
+- @araujo2016understanding, on variation in sets of N-of-1
+  trials, which is where the between-patient
+  treatment-effect variance is developed.
+- @zucker2010individual, on combining individual trials to
+  estimate population effects.
+- @schmid2021bayesian, on Bayesian models for N-of-1
+  trials, the natural framework for returning an individual
+  posterior to a patient.
+- @hendrickson2020optimizing, on aggregated N-of-1 designs
+  for predictive biomarker validation.
+- @vohra2015cent, the CENT reporting extension, which is
+  the CONSORT analogue for these designs.
+- @senn2002crossover, *Cross-over Trials in Clinical
+  Research*, which remains the authority on carryover.

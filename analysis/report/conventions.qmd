@@ -1,0 +1,120 @@
+# Conventions {.unnumbered}
+
+This page summarizes the visual conventions used
+throughout the book.
+
+## Code
+
+R code appears in syntax-highlighted blocks. Output is
+prefixed with `#>` to make the boundary between input and
+output explicit:
+
+```r
+mean(c(1, 2, 3, 4, 5))
+#> [1] 3
+```
+
+Code blocks are display-only: they are not executed when
+the book is rendered, so numeric output shown after `#>`
+is the output observed when the block was written, not a
+value regenerated at build time. Blocks that report
+simulation results state the number of replicates and the
+seed so that the reader can reproduce them.
+
+Inline code is in `monospace`. Function calls always
+include parentheses (`mean()` rather than `mean`) so that
+they are unambiguously functions. Package-qualified calls
+(`gsDesign::gsDesign`) appear when the function is not
+universally known, when there is name-collision risk, or
+when the chapter is teaching package usage.
+
+## Callouts
+
+Three callout types appear:
+
+::: {.callout-tip}
+## Tip
+
+A small practical recommendation.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: example
+
+A short question testing comprehension of the just-read
+material. Click to expand the answer.
+:::
+
+::: {.callout-warning}
+## Warning
+
+A pitfall the reader may otherwise hit.
+:::
+
+## Cross-references
+
+Within this book, sections, figures, and tables are
+referenced by their Quarto label
+(`@sec-randomization-human`, `@fig-boundary`,
+`@tbl-comparison`). These resolve to clickable links in
+HTML and proper section numbers in PDF.
+
+References to the companion volumes use **prose pointers**
+rather than Quarto cross-references, because
+cross-references do not resolve across separate books. For
+example: 'see the Survival Analysis chapter of the
+companion *Statistical Computing in the Age of AI*
+volume'.
+
+## Mathematical notation
+
+Conventional notation throughout. Vectors are bold
+lower-case ($\mathbf{x}$); matrices are bold upper-case
+($\mathbf{X}$); scalars and parameters are non-bold.
+Estimators carry hats ($\hat\theta$). Total sample size is
+$N$; per-arm sample size is $n$; the number of
+randomization strata is $S$; the number of measurement
+occasions in a longitudinal trial is $J$. Treatment
+assignment is $Z \in \{0, 1\}$ with $Z = 1$ denoting the
+experimental arm. Potential outcomes are $Y(1)$ and
+$Y(0)$.
+
+Trial-specific conventions: $\alpha$ is the one-sided type
+I error rate unless stated otherwise (the convention in
+confirmatory drug trials, where the two-sided 0.05 test is
+usually described as one-sided 0.025); $1 - \beta$ is
+power; $\Delta$ is a non-inferiority margin; $\delta$ is
+the targeted treatment effect.
+
+## Chapter structure
+
+Every content chapter follows the same template:
+
+1. **Learning objectives.** What you will be able to do
+   after reading.
+2. **Orientation.** A short prose framing.
+3. **The statistician's contribution.** What no tool can
+   automate. The judgments at the center of the chapter.
+4. **Content sections** with **Check-your-understanding**
+   callouts at natural pauses.
+5. **Worked example.** One trial, carried through.
+6. **Collaborating with an LLM on the chapter topic.**
+   Prompt / Watch for / Verification triples for AI
+   assistance.
+7. **Principle in use.** Two or three habits to carry
+   forward.
+8. **Exercises.** The work.
+9. **Further reading.** Where to go next on the topic.
+
+The pattern repeats deliberately. By the third chapter you
+know where to find each component.
+
+## The advanced-topic chapters
+
+Chapters 11 through 28 differ from the ten course chapters
+in one respect: each is built on a specific research
+compendium from the author's own methodological work, and
+each reports simulation results from that compendium. Those
+chapters carry an additional **Provenance** section naming
+the compendium so that a reader can trace every number
+back to the code that produced it.

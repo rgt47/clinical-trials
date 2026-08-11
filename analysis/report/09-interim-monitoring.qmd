@@ -1,0 +1,506 @@
+# Interim Monitoring and Adaptive Designs {#sec-interim-monitoring}
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Explain why repeated significance testing inflates the
+  type I error and quantify the inflation.
+- Construct group-sequential boundaries using
+  O'Brien-Fleming and Pocock spending functions and
+  interpret the resulting design.
+- Compute conditional power and use it for futility
+  monitoring.
+- Describe the role, composition, and procedures of a data
+  monitoring committee.
+- Distinguish the main families of adaptive design and
+  state what each requires to preserve the type I error.
+
+## Orientation
+
+A trial that runs for four years accumulates evidence
+continuously, and the ethical obligation to patients does
+not permit ignoring it. If the treatment is clearly
+working, continuing to randomize patients to control is
+hard to justify; if it is clearly harmful, continuing at
+all is indefensible; if it cannot possibly succeed,
+continuing wastes patients and money.
+
+Interim monitoring is the machinery for acting on
+accumulating data without destroying the trial's
+inferential properties. The central statistical fact is
+that looking repeatedly at accumulating data and testing
+each time inflates the type I error, and the inflation is
+large. The solutions are all variations on one idea:
+decide in advance how many looks there will be and spend
+the total type I error across them.
+
+The chapter covers group-sequential designs, conditional
+power, the DMC as an institution, and the wider family of
+adaptive designs. Chapter 23 examines exact conditional
+power in small trials, and Chapter 24 revisits fully
+sequential monitoring.
+
+## The statistician's contribution {#sec-interim-human}
+
+**(Judgment 1.) How many looks, and when.** Each look
+costs alpha and imposes an operational burden: a database
+snapshot, cleaning, a closed report, a meeting. The
+default of two or three looks is a compromise, and the
+timing should be driven by when a decision could actually
+change, which is usually later than teams propose.
+
+**(Judgment 2.) The asymmetry between efficacy and
+futility.** Stopping for efficacy requires overwhelming
+evidence, because the result will change practice on the
+basis of partial data. Stopping for futility requires
+only that success has become improbable. The boundaries
+should reflect this, and binding futility boundaries,
+which lower the required efficacy boundary in exchange for
+a commitment to stop, are usually a bad trade because
+teams rarely honor them.
+
+**(Judgment 3.) Protecting the trial's integrity around
+the DMC.** The unblinded interim results must not reach
+the study team. Leakage changes enrollment patterns,
+site behavior, and the team's analytic choices, and once
+it has happened it cannot be undone. This is an
+operational matter that is a statistical responsibility.
+
+## Why repeated testing inflates alpha
+
+Suppose we test at $\alpha = 0.05$ after each of $k$
+equally spaced looks and stop the first time we reject.
+
+| Looks | Overall type I error |
+|------:|---------------------:|
+| 1     | 0.05                 |
+| 2     | 0.083                |
+| 3     | 0.107                |
+| 5     | 0.142                |
+| 10    | 0.193                |
+| 20    | 0.248                |
+| ∞     | 1.000                |
+
+The last row deserves attention: with continuous
+monitoring at a fixed nominal level, the trial rejects the
+null with probability 1 even when the null is true
+[@armitage1969repeated]. The random walk of the test
+statistic crosses any fixed boundary eventually. This is
+the fact that makes 'we peeked and it was significant'
+worthless as evidence.
+
+The inflation is less than $k$ times $\alpha$ because
+successive test statistics are highly correlated; the
+statistic at look $j$ is based on data that includes all
+of the data at look $i < j$. Specifically, with
+information fractions $t_1 < \dots < t_k$, the standardized
+statistics $Z_1, \dots, Z_k$ are multivariate normal with
+$\mathrm{corr}(Z_i, Z_j) = \sqrt{t_i / t_j}$. All of
+group-sequential theory follows from this covariance
+structure.
+
+## Group-sequential boundaries
+
+Choose critical values $c_1, \dots, c_k$ so that
+$$
+P\left(\bigcup_{j=1}^{k} \{|Z_j| > c_j\}
+  \;\middle|\; H_0\right) = \alpha.
+$$
+
+**Pocock** boundaries use a constant $c_j = c$, which
+spends alpha evenly across looks. Early stopping is
+relatively easy; the price is a final critical value
+substantially above 1.96, so a trial that reaches the end
+needs stronger evidence than a fixed-sample trial would.
+
+**O'Brien-Fleming** boundaries use
+$c_j = c^* / \sqrt{t_j}$, which is very stringent early
+and close to the fixed-sample value at the end. Early
+stopping requires overwhelming evidence; the final
+critical value is barely above 1.96, so almost nothing is
+lost if the trial runs to completion. This is why OBF is
+the default in confirmatory trials.
+
+**The alpha-spending function** approach
+[@lan1983discrete] generalizes both by specifying a
+function $\alpha(t)$ giving the cumulative type I error
+spent by information fraction $t$, with $\alpha(0) = 0$
+and $\alpha(1) = \alpha$. Boundaries are then computed
+sequentially. The critical practical advantage: the
+number and timing of looks need not be fixed in advance,
+only the spending function, so a DMC meeting that slips by
+two months does not invalidate the design.
+
+```r
+library(gsDesign)
+
+design <- gsDesign(k = 3, test.type = 4,
+                   alpha = 0.025, beta = 0.10,
+                   sfu = sfLDOF,        # OBF-like efficacy
+                   sfl = sfHSD, sflpar = -2)  # futility
+gsBoundSummary(design)
+#>   Analysis               Value  Efficacy  Futility
+#>   IA 1: 33%                 Z     3.7103    0.0000
+#>            p (1-sided)    0.0001    0.5000
+#>   IA 2: 67%                 Z     2.5114    1.4130
+#>            p (1-sided)    0.0060    0.0788
+#>   Final                     Z     1.9930    1.9930
+#>            p (1-sided)    0.0231    0.0231
+```
+
+Read this design. At the first look, one third of the
+information, the trial stops for efficacy only if
+$Z > 3.71$, a one-sided $p$ below 0.0001. At the final
+analysis the critical value is 1.993 rather than 1.960, so
+the cost of two interim looks is a barely perceptible
+increase in the final hurdle. The maximum sample size is
+inflated by about 2% relative to a fixed design, and the
+expected sample size under the alternative is
+substantially smaller.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: interpreting a boundary crossing
+
+**Question.** A trial with the design above crosses the
+efficacy boundary at the second interim, with an observed
+hazard ratio of 0.62 and $Z = 2.7$. The team wants to
+report the hazard ratio and its usual confidence interval.
+What is the problem?
+
+**Answer.**
+
+The naive estimate is biased away from the null. Stopping
+occurred *because* the statistic was extreme, so the
+observed effect at a stopping boundary overstates the true
+effect, and the standard confidence interval does not have
+its nominal coverage. The bias is largest when stopping
+occurs early and when the boundary is aggressive.
+
+The correct approach uses the sequential sampling
+distribution: a median-unbiased estimate based on the
+stagewise ordering, and a confidence interval derived from
+the same ordering. `gsDesign::gsCP` and the `rpact`
+package compute these, and the adjusted interval is wider
+and shifted toward the null.
+
+The magnitude is not negligible. Stopping at one third
+information with an OBF boundary can inflate the observed
+effect by 20% or more. Trials stopped early for efficacy
+systematically report larger effects than trials that run
+to completion, and meta-analyses that include them are
+biased upward. This is one reason for the conservative OBF
+boundary early: it makes stopping rare, and rare stops are
+less biased because the boundary is far out only when the
+true effect is genuinely large.
+:::
+
+## Conditional power and futility
+
+**Conditional power** is the probability that the trial
+will reject the null at its final analysis, given the data
+so far and an assumption about the future treatment
+effect.
+
+Let $Z_t$ be the statistic at information fraction $t$ and
+$c$ the final critical value. Under an assumed drift
+parameter $\theta$,
+$$
+\mathrm{CP}(\theta) = 1 - \Phi\!\left(
+  \frac{c - \sqrt{t}\,Z_t - \theta(1 - t)}{\sqrt{1 - t}}
+\right).
+$$
+
+The choice of $\theta$ determines what is being computed.
+Under the *original design alternative*, conditional power
+answers 'if the drug works as well as we hoped, will we
+detect it'. Under the *current estimate*, it answers 'if
+the drug works as well as it appears to, will we detect
+it'. The second is more realistic and less flattering, and
+both should be reported.
+
+```r
+library(gsDesign)
+gsCP(design, i = 2, zi = 1.1)$upper$prob
+#> conditional power at the current estimate: 0.283
+```
+
+Conventional futility thresholds are conditional power
+below 0.20 under the design alternative, or below 0.10
+under the current estimate. Two properties make futility
+monitoring attractive: stopping for futility never inflates
+the type I error, since it only removes opportunities to
+reject, and a non-binding futility boundary can be ignored
+by the DMC without any inferential consequence.
+
+The **predictive power** alternative averages conditional
+power over the posterior for the treatment effect, which
+avoids conditioning on a single assumed value and is
+generally the more honest summary.
+
+## Sample-size re-estimation
+
+Two kinds, and the distinction is essential.
+
+**Blinded re-estimation** uses only the pooled variance or
+the overall event rate, not the treatment difference. If
+the observed variance is larger than assumed, the sample
+size is increased. This does not inflate the type I error
+in any material way, requires no adjustment, and is
+strongly recommended whenever the variance assumption is
+shaky [@friede2006sample]. It should be pre-specified with
+a cap and a rule.
+
+**Unblinded re-estimation** uses the observed treatment
+effect, typically increasing the sample size when interim
+results are promising but not conclusive
+[@mehta2011adaptive]. This *does* inflate the type I error
+if the conventional test is used at the end, because the
+sample size is now a function of the interim effect. Valid
+approaches use a combination test that weights the stages
+by their pre-planned information fractions rather than
+their realized sample sizes, or the conditional-error
+function approach. The weighting has an uncomfortable
+consequence: patients in the second stage are down-weighted
+relative to their number, so two patients can contribute
+unequally depending on when they enrolled. Regulators
+accept the method and are skeptical of its overuse.
+
+## The data monitoring committee
+
+An independent group, typically three to seven members,
+comprising clinicians in the therapeutic area, a
+statistician, and often an ethicist, none of whom have a
+stake in the outcome.
+
+**What it sees.** Unblinded efficacy and safety data by
+arm, prepared by an unblinded statistician who is
+organizationally separate from the trial team. Reports are
+usually structured in open and closed sessions: open
+material (enrollment, data quality, protocol deviations,
+pooled safety) can be shared with the sponsor; closed
+material (by-arm results) cannot.
+
+**What it recommends.** Continue, continue with
+modification, or stop. Stopping recommendations come from
+efficacy crossing, harm, futility, or the trial having
+become unable to answer its question, for example when
+accrual has collapsed.
+
+**What it is not.** A DMC does not run the trial and does
+not make the final decision; it advises the sponsor or
+steering committee. Nor is it a substitute for a design:
+a DMC with no pre-specified boundaries is a committee
+making ad hoc judgments about noisy interim data, which is
+how trials get stopped for effects that later prove
+illusory.
+
+**The charter** is written before the first interim and
+specifies membership, meeting frequency, the report
+content, the statistical boundaries, the voting procedure,
+and the confidentiality arrangements.
+
+Trials that need a DMC: those with mortality or major
+morbidity endpoints, long follow-up, vulnerable
+populations, or a plausible safety concern. A short trial
+of a well-characterized drug with a symptom endpoint
+usually does not need one, and requiring one anyway
+consumes resources for no protection.
+
+::: {.callout-warning}
+## Warning
+
+The most damaging monitoring failure is not stopping too
+early or too late; it is leakage. If the study team learns
+that the trial is trending positive, enrollment behavior
+changes, sites become less rigorous about eligibility, and
+the team's subsequent choices, including analytic ones,
+are contaminated. The separation between the unblinded
+statistician and the trial statistician exists for this
+reason and should be organizational, not merely a promise.
+:::
+
+## Adaptive designs
+
+'Adaptive' covers any design that uses accumulating data
+to modify itself according to a pre-specified rule. The
+FDA guidance [@fda2019adaptive] is the reference.
+
+**Group-sequential**: adapt by stopping. The oldest and
+best-understood family, covered above.
+
+**Sample-size re-estimation**: adapt the size.
+
+**Adaptive dose or arm selection**: start with several
+doses, drop the losers at an interim, continue with the
+survivors. Requires a closed-testing or combination-test
+framework, since selection is a form of multiplicity.
+
+**Adaptive enrichment**: start in a broad population, and
+if the interim suggests the effect is confined to a
+biomarker-defined subgroup, restrict subsequent enrollment
+to that subgroup. Powerful and hazardous: the selection
+must be pre-specified with its own error control, and the
+final claim is restricted to the enriched population
+unless the broad hypothesis is also tested.
+
+**Response-adaptive randomization**: shift the allocation
+ratio toward the better-performing arm as data accumulate.
+Ethically attractive in principle. In practice it
+introduces bias when there is a temporal trend in patient
+characteristics, reduces power relative to fixed 1:1
+allocation for the same total $N$, and complicates
+inference. It is best suited to trials with many arms and
+a short-term endpoint, such as platform trials. Chapter 14
+examines allocation adaptivity and its analysis
+consequences directly.
+
+**Platform and master protocols**: multiple treatments
+tested against a shared control under one protocol, with
+arms added and dropped over time. RECOVERY and STAMPEDE
+are the canonical successes. The efficiency comes from the
+shared control and shared infrastructure; the difficulties
+are in the control of type I error across a growing family
+of comparisons and in the use of non-concurrent controls,
+where patients randomized to control before an arm opened
+are used in that arm's comparison.
+
+The requirement common to all of them: **pre-specification
+and simulation**. The adaptation rule must be written
+before the trial, and the design's type I error must be
+demonstrated by simulation across scenarios, because
+analytic results are unavailable for most of these
+designs.
+
+## Worked example: monitoring the COPD trial
+
+The trial from Chapter 2, 780 patients, primary endpoint
+FEV1 change at week 24.
+
+**Monitoring plan.** Two interim analyses at 33% and 67%
+of patients completing week 24. Efficacy boundaries from
+the Lan-DeMets O'Brien-Fleming spending function at
+one-sided $\alpha = 0.025$. Non-binding futility
+boundaries from a Hwang-Shih-DeCani spending function with
+$\gamma = -2$, corresponding to conditional power of
+roughly 0.15 under the current estimate.
+
+**Blinded sample-size re-estimation** at the first
+interim, using the pooled within-arm standard deviation
+only. If the observed SD exceeds 220 mL against the
+assumed 200 mL, the sample size increases up to a cap of
+950. The DMC is not involved; an independent statistician
+computes the pooled SD without treatment labels.
+
+**DMC.** Three members: two pulmonologists and a
+statistician. Meetings at the two interims plus a safety
+review at six months. Charter specifies open and closed
+sessions and prohibits any transmission of by-arm efficacy
+data to the sponsor.
+
+**At the first interim.** $Z = 1.4$, well inside both
+boundaries. Pooled SD is 214 mL, below the re-estimation
+trigger. Conditional power under the design alternative is
+0.81; under the current estimate, 0.52. Recommendation:
+continue unchanged.
+
+**At the second interim.** $Z = 2.6$, above the efficacy
+boundary of 2.51. The DMC recommends stopping for
+efficacy. The final report gives the median-unbiased
+estimate and the stagewise-ordering confidence interval
+alongside the naive ones, and states that the naive
+estimate is biased upward by approximately 8% based on the
+design's sampling distribution.
+
+## Collaborating with an LLM on monitoring
+
+**Prompt 1: 'Design a group-sequential trial with these
+parameters.'**
+
+*What to watch for.* Usually correct in structure. Verify
+`test.type`, which controls whether futility is binding
+and whether the design is one- or two-sided, and confirm
+the alpha convention matches the trial's.
+
+*Verification.* Reproduce with `gsDesign` or `rpact` and
+check that the final critical value is close to the
+fixed-sample value for an OBF design; if it is far above,
+the spending function is not what was intended.
+
+**Prompt 2: 'Compute conditional power at this interim.'**
+
+*What to watch for.* The formula is easy to get almost
+right. The most common error is conditioning on the wrong
+future effect without saying which was used, which changes
+the answer by a factor of two or more.
+
+*Verification.* Compute under both the design alternative
+and the current estimate, and check against `gsCP`.
+
+**Prompt 3: 'Draft the DMC charter.'**
+
+*What to watch for.* Reasonable boilerplate that omits the
+firewall details: who prepares the closed report, who may
+see it, what happens if a member has a conflict, and how
+the recommendation is transmitted.
+
+*Verification.* The charter must answer who sees what and
+when. That is its function.
+
+## Principle in use
+
+1. **Fewer looks than the team wants.** Each look costs
+   alpha, money, and integrity risk. Two is usually
+   enough; three is a lot.
+
+2. **Futility monitoring is nearly free; use it.** No type
+   I error cost, no adjustment, and it stops trials that
+   cannot succeed. Make it non-binding.
+
+3. **Report the adjusted estimate after early stopping.**
+   The naive estimate is biased and the trial team will
+   want to quote it. Provide both and explain the
+   difference before the manuscript is drafted.
+
+## Exercises
+
+1. Verify by simulation the type I error inflation table
+   at the start of this chapter for $k = 2, 3, 5$ looks.
+
+2. Construct OBF and Pocock designs with four looks at
+   $\alpha = 0.025$ and 90% power. Compare the maximum
+   sample size and the expected sample size under the null
+   and the alternative.
+
+3. Derive the correlation $\mathrm{corr}(Z_i, Z_j) =
+   \sqrt{t_i/t_j}$ for the standardized statistics under
+   independent increments.
+
+4. At an interim with 40% information and $Z = 0.8$,
+   compute conditional power under the design alternative
+   and under the current estimate. Would you stop?
+
+5. Simulate a trial with unblinded sample-size
+   re-estimation using the conventional final test.
+   Quantify the type I error inflation, then repeat using
+   an inverse-normal combination test and confirm it is
+   controlled.
+
+## Further reading
+
+- @jennison2000group, *Group Sequential Methods with
+  Applications to Clinical Trials*. The definitive text.
+- @lan1983discrete, the alpha-spending paper.
+- @obrien1979multiple and @pocock1977group, the original
+  boundaries.
+- @ellenberg2019data, on data monitoring committees in
+  practice.
+- @asakura2020interim, on futility monitoring by prediction
+  when there are two co-primary endpoints, a common
+  complication the standard treatments omit.
+- @proschan2005two and @mehta2011adaptive, on
+  nuisance-parameter and promising-zone sample-size
+  re-estimation, developed further in Chapter 26.
+- @fda2019adaptive, the adaptive-design guidance.
+- The `gsDesign` and `rpact` packages, both excellent and
+  both with extensive vignettes.

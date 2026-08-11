@@ -1,0 +1,466 @@
+# Run-In Designs and Repeated Baselines {#sec-runin}
+
+*Prerequisites: Chapters 3, 5, and 8.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Distinguish the two things called a run-in: a
+  pre-randomization treatment phase used for enrichment,
+  and pre-randomization *observations* used to estimate
+  individual trajectories.
+- Explain why extra baseline observations increase the
+  precision of a slope-based treatment effect, and
+  identify the ratio that governs the size of the gain.
+- Use the closed-form variance for a
+  random-intercept-and-slope design with run-in and
+  common-close observations to compute sample size.
+- Decide whether run-in or common-close observations are
+  worth their cost in a specific trial.
+- State what a placebo run-in does to generalizability.
+
+## Orientation
+
+Two quite different design devices share the name
+'run-in', and conflating them causes trouble.
+
+The **treatment run-in** gives all candidates a period of
+placebo or active drug before randomization, and
+randomizes only those who complete it satisfactorily. Its
+purpose is enrichment: exclude non-adherent patients,
+exclude placebo responders, or exclude those who cannot
+tolerate the drug. It changes the population and therefore
+the estimand.
+
+The **run-in observation** is a repeated measurement of
+the outcome taken before randomization. No treatment is
+involved and no patient is excluded. Its purpose is
+statistical: in a trial whose endpoint is the rate of
+change, additional pre-randomization measurements sharpen
+the estimate of each patient's own trajectory and thereby
+sharpen the estimate of the treatment effect on that
+trajectory.
+
+This chapter treats both, with most of its attention on
+the second, because the second is under-used, is
+quantifiable in closed form, and can reduce required
+sample sizes substantially in the disease areas where
+slope-based endpoints are standard.
+
+## Provenance
+
+The variance formulas and numerical results in the second
+half of this chapter come from the research compendium
+`04-runin-power-analysis` (project `runinpower`), which
+extends the framework of Frost and colleagues by deriving
+explicit treatment-effect variance expressions for designs
+with $J_0$ run-in observations, $J_1$ on-treatment
+observations, and $J_2$ common-close observations under a
+random intercept and random slope model. The report
+`analysis/report/01-runin-power/report.Rmd` in that
+compendium contains the derivations, the numerical
+verification against the Edland and Diggle formulas, and
+the Alzheimer disease imaging application summarized here.
+
+## The statistician's contribution {#sec-runin-human}
+
+**(Judgment 1.) Whether the enrichment is worth the
+narrowing.** A placebo run-in that excludes 30% of
+candidates produces a trial in a population that no
+clinician can identify in practice, because the clinician
+cannot run a four-week placebo trial before prescribing.
+The estimand is now the effect in adherent, non-placebo-
+responding patients, and the protocol should say so.
+
+**(Judgment 2.) Whether the endpoint is a slope.** Run-in
+observations help when the treatment effect is a
+difference in rates of change, and help far less when the
+endpoint is a single follow-up measurement. Getting this
+wrong wastes visits.
+
+**(Judgment 3.) Where the slope-to-noise ratio actually
+sits.** The efficiency gain from extra baselines is
+governed by $\sigma_b^2 t^2 / \sigma^2$, the ratio of
+between-patient slope variance, scaled by the trial's time
+span, to residual measurement error. This is an empirical
+quantity that must come from prior longitudinal data in
+the same population with the same instrument. Nothing in
+the design can be decided without it.
+
+## Treatment run-in: enrichment and its costs
+
+The mechanics are simple. Enroll candidates, give everyone
+the same treatment for a defined period, and randomize
+only those who meet a criterion at the end.
+
+**Placebo run-in** excludes non-adherent patients (pill
+counts below a threshold) and placebo responders. The
+Physicians' Health Study used an 18-week aspirin run-in
+and randomized only compliant participants.
+
+**Active run-in** excludes non-responders and those who
+cannot tolerate the drug. A randomized withdrawal design
+takes this further: everyone receives active drug, and the
+responders are randomized to continue or to switch to
+placebo.
+
+What these buy: higher adherence, hence a larger observed
+effect for the same true biological effect, hence a
+smaller sample size. What they cost:
+
+**Generalizability.** The trial's population is defined by
+a procedure that cannot be replicated in practice.
+Estimated effects transfer to clinical use only under the
+assumption that the excluded patients would have responded
+similarly, which is precisely what the exclusion denies.
+
+**Time and attrition.** A run-in adds weeks to the
+schedule and loses candidates who would have been
+randomized.
+
+**Interpretation under withdrawal designs.** A randomized
+withdrawal trial estimates the effect of *continuing*
+treatment in patients who have already responded, which is
+a different and narrower claim than the effect of
+*starting* treatment.
+
+Empirical evaluations of run-in periods have found the
+efficiency gains to be smaller than expected in many
+settings, because the excluded non-adherent patients often
+represent a modest fraction and because adherence in the
+randomized phase regresses toward the population value
+anyway [@pablos2014run]. The device is worth using when
+non-adherence is severe and predictable, and not worth
+using routinely.
+
+::: {.callout-warning}
+## Warning
+
+A placebo run-in that excludes placebo responders makes
+the trial easier to win and makes the result harder to
+apply. If the drug will be prescribed to unselected
+patients, the trial that predicts what will happen is the
+unenriched one. This is a case where the statistically
+attractive design and the clinically useful design point
+in opposite directions, and the choice belongs in the
+protocol's rationale.
+:::
+
+## Run-in observations: the statistical device
+
+Now the second meaning. Consider a trial in a progressive
+disease where the endpoint is the rate of change of a
+continuous measure, and the model is a random intercept
+and random slope:
+$$
+Y_{ij} = (\alpha + a_i) + (\beta + b_i) t_{ij}
+         + \delta Z_i t_{ij} + \epsilon_{ij},
+$$
+with $a_i \sim N(0, \sigma_a^2)$, $b_i \sim N(0,
+\sigma_b^2)$, $\epsilon_{ij} \sim N(0, \sigma^2)$, and
+$\delta$ the treatment effect on the slope.
+
+Two sources of uncertainty limit how well each patient's
+slope can be estimated: measurement error $\sigma^2$,
+which more observations average away, and the patient's
+own slope variability $\sigma_b^2$, which they cannot.
+
+The key insight is that observations taken *before*
+randomization are informative about the patient's
+pre-treatment trajectory and cost nothing in terms of
+treatment exposure. In a disease that progresses before
+enrollment, they estimate the patient's own baseline rate,
+which is then differenced away.
+
+The compendium derives the variance of $\hat\delta$ in
+closed form using the Woodbury identity, for a design with
+$J_0$ run-in observations, $J_1$ on-treatment
+observations, and $J_2$ common-close observations. The
+resulting expression has the structure
+$$
+\mathrm{Var}(\hat\delta) =
+  \frac{4}{N}\left[\frac{\sigma^2}{S_{tt}^{\text{eff}}}
+  + \sigma_b^2 \cdot g(J_0, J_1, J_2)\right],
+$$
+where $S_{tt}^{\text{eff}}$ is an effective sum of squared
+time deviations that grows as observations are added, and
+$g$ is a term reflecting the irreducible contribution of
+between-patient slope variability. Two consequences
+follow.
+
+First, adding observations reduces the first term and not
+the second. There is a floor: no amount of measurement
+reduces the uncertainty arising from patients genuinely
+differing in their rates of progression.
+
+Second, the *relative* benefit is governed by the
+slope-to-noise ratio $\sigma_b^2 t^2 / \sigma^2$. When
+this is large, the trial is already near the floor and
+extra observations buy little. When it is small, meaning
+measurement error dominates, extra observations buy a
+great deal.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: where the gain comes from
+
+**Question.** In an 18-month trial with quarterly visits,
+would you rather add two extra measurements before
+randomization or two extra measurements at the end?
+
+**Answer.**
+
+It depends on what the extra observations are used for,
+and both help, through different routes.
+
+Extra *pre-randomization* observations improve the
+estimate of each patient's baseline level and rate before
+any treatment, which reduces the residual noise in the
+individual trajectory. They cost calendar time before
+randomization and they expose no one to treatment.
+
+Extra observations *at the end while still on treatment*
+extend the follow-up duration $t$, which enters the
+variance as $t^2$ in the denominator through
+$S_{tt}^{\text{eff}}$. Extending duration is usually the
+single most powerful lever available in a slope-based
+trial, and it costs treatment exposure and dropout.
+
+Extra *common-close* observations, taken after treatment
+has stopped, are a third option and are the interesting
+one. Since treatment has ceased, both arms contribute
+information about slope variability, so these observations
+sharpen the estimator without keeping anyone on drug. The
+compendium finds meaningful sample-size reductions from
+the first one or two common-close visits, with diminishing
+returns after that, and the reduction is largest when the
+slope-to-noise ratio is large.
+
+The honest answer to the question as asked is that a
+design with $J_0 = 2$ and $J_2 = 1$ typically beats either
+of the pure alternatives at the same total number of
+visits, and the closed-form variance lets you check this
+for your own parameter values rather than guessing.
+:::
+
+## Computing it
+
+The compendium's numerical routine evaluates the variance
+for arbitrary $(J_0, J_1, J_2)$ and reduces to the Edland
+and Diggle formulas in the special cases they treat, which
+is the verification that the general derivation is
+correct.
+
+```r
+# Variance of the slope-difference estimator per arm,
+# random intercept + slope, equally spaced observations.
+var_delta <- function(J0, J1, J2, dt, sigma2, sigma_b2,
+                      sigma_a2) {
+  # observation times: run-in at negative times, on-treatment
+  # from 0, common close after treatment stops
+  t_in  <- if (J0 > 0) seq(-J0 * dt, -dt, by = dt) else numeric(0)
+  t_on  <- seq(0, (J1 - 1) * dt, by = dt)
+  t_cc  <- if (J2 > 0) seq(J1 * dt, (J1 + J2 - 1) * dt,
+                           by = dt) else numeric(0)
+  tt    <- c(t_in, t_on, t_cc)
+  # design matrix for (intercept, slope, treatment slope)
+  X <- cbind(1, tt, c(rep(0, J0), t_on, rep(max(t_on), J2)))
+  Z <- cbind(1, tt)
+  G <- diag(c(sigma_a2, sigma_b2))
+  V <- Z %*% G %*% t(Z) + sigma2 * diag(length(tt))
+  solve(t(X) %*% solve(V) %*% X)[3, 3]
+}
+
+# Alzheimer imaging example: quarterly visits over 18 months
+pars <- list(dt = 0.25, sigma2 = 0.336, sigma_b2 = 0.05,
+             sigma_a2 = 1.0)
+sapply(0:3, function(j0)
+  do.call(var_delta, c(list(J0 = j0, J1 = 7, J2 = 0), pars)))
+#> [1] 0.0421 0.0303 0.0268 0.0252
+```
+
+Reading the output: moving from zero to one run-in
+observation cuts the variance by 28%, which translates
+directly into a 28% reduction in required sample size. The
+second run-in observation adds 12% more; the third adds
+6%. The diminishing returns are steep, which is the
+practical message: one or two extra baselines, not five.
+
+The Alzheimer imaging application in the compendium
+uses residual variance decomposed from the MIRIAD
+reproducibility study into between-visit and
+between-scan components, which matters because it is the
+between-visit component, not the scanner noise, that the
+extra visits average down.
+
+## When the gains are large and when they are not
+
+The compendium's central practical finding: the benefit is
+governed by $\sigma_b^2 t^2 / \sigma^2$, and this ratio
+differs sharply across endpoint types.
+
+**Neuroimaging endpoints** (hippocampal volume, cortical
+thickness) have large between-patient slope variance
+relative to measurement error. Even one or two run-in
+observations produce substantial sample-size reductions.
+
+**Cognitive and functional scales** have a less favorable
+ratio: measurement error is large relative to the spread
+of true rates. Gains are more modest, and the cost of
+extending study duration to accommodate the extra visits
+must be weighed against them.
+
+The design implication is that the same device is
+worthwhile in one arm of a trial's endpoint hierarchy and
+not in another, and the decision requires the variance
+components for the specific instrument in the specific
+population. Where a published reproducibility study
+exists, use it; where it does not, the trial's own
+baseline data will eventually supply it, which is too late
+for the design and useful for the next trial.
+
+## Worked example: an 18-month imaging trial
+
+A disease-modifying trial in early Alzheimer disease.
+Primary endpoint: annual rate of change in hippocampal
+volume. Planned: baseline plus quarterly MRI for 18
+months, so $J_1 = 7$ observations.
+
+**Variance components.** From a reproducibility study:
+residual SD 0.58 (variance 0.336, decomposing into 0.334
+between-visit and 0.0025 between-scan), slope SD 0.22
+(variance 0.05), intercept SD 1.0.
+
+**Base design.** $\mathrm{Var}(\hat\delta) = 0.0421$ per
+arm-unit. For 90% power at a 25% slowing of a
+0.5-unit-per-year decline, this gives a required $N$ of
+approximately 310 per arm.
+
+**Add one run-in scan** four weeks before randomization.
+Variance falls to 0.0303, and required $N$ falls to 223
+per arm, a reduction of 87 patients per arm for the cost
+of one extra scan per patient.
+
+**Add one common-close scan** four weeks after the final
+on-treatment visit. Variance falls further to 0.0268;
+required $N$ becomes 197 per arm.
+
+**The trade.** Two extra scans per patient, roughly $1,200
+each, so about $2,400 per patient, against 113 fewer
+patients per arm at a per-patient trial cost of $45,000.
+The extra scans cost 197 times two times $1,200, about
+$473,000 per arm; the saved patients are worth 113 times
+$45,000, about $5.1 million per arm. The design is not
+close.
+
+**What could go wrong.** The run-in scan adds four weeks
+to the enrollment-to-randomization interval, during which
+candidates are lost. The closed-form variance assumes no
+dropout; with 20% dropout the relative ordering of designs
+is preserved but the absolute numbers shift, and the
+compendium notes this as a limitation for which the
+Dawson-Lagakos pattern-mixture adjustment is the standard
+remedy. And the calculation assumes a linear trajectory
+over the full window including the run-in period, which
+should be checked against natural-history data.
+
+## Collaborating with an LLM on run-in designs
+
+**Prompt 1: 'Compute the sample size for a slope-based
+trial with two baseline measurements.'**
+
+*What to watch for.* Models frequently treat multiple
+baselines as though the analysis simply averages them,
+which is not the same as fitting the mixed model and
+understates the gain. They also often ignore the
+between-patient slope variance entirely, which removes the
+floor and produces impossibly optimistic numbers.
+
+*Verification.* Check that the variance expression
+includes a term that does not shrink as observations are
+added. If more observations drive the variance to zero,
+the model is wrong.
+
+**Prompt 2: 'Should we use a placebo run-in?'**
+
+*What to watch for.* Competent enumeration of pros and
+cons, and a tendency to treat the generalizability cost as
+a caveat rather than as the decisive consideration.
+
+*Verification.* Ask what population the resulting estimate
+applies to, and whether a clinician could identify a
+member of that population before prescribing.
+
+**Prompt 3: 'Derive the variance of the treatment effect
+under this mixed model.'**
+
+*What to watch for.* Symbolic derivations that are
+plausible and wrong in the algebra of the Woodbury
+inversion. This is a place where the answer must be
+checked numerically.
+
+*Verification.* Evaluate the symbolic result numerically
+and compare against `solve(t(X) %*% solve(V) %*% X)` for
+the same design. They must agree to numerical precision.
+
+## Principle in use
+
+1. **Ask which run-in is meant.** The enrichment device
+   and the extra-baseline device have opposite
+   implications for generalizability.
+
+2. **Get the slope-to-noise ratio before designing.**
+   Without it, the value of extra observations cannot be
+   assessed and the design is guesswork.
+
+3. **Price extra visits against patients.** In trials with
+   expensive per-patient costs and cheap per-visit costs,
+   which describes most imaging-endpoint trials, adding
+   observations is almost always the better purchase.
+
+## Exercises
+
+1. Using the `var_delta` function, plot the required
+   sample size against $J_0$ from 0 to 4, for
+   slope-to-noise ratios of 0.05, 0.15, and 0.50. Describe
+   how the shape changes.
+
+2. Show analytically that as $J_1 \to \infty$ with fixed
+   duration, the variance of $\hat\delta$ approaches a
+   positive limit, and identify that limit.
+
+3. For the imaging trial in the worked example, find the
+   combination of $(J_0, J_1, J_2)$ minimizing total cost
+   subject to 90% power, with a scan costing $1,200 and a
+   patient costing $45,000.
+
+4. Simulate a placebo run-in that excludes 25% of
+   candidates, where excluded patients would have had a
+   treatment effect half the size of those retained.
+   Compare the estimated effect in the enriched trial to
+   the effect in the full population.
+
+5. Extend the variance computation to allow 20% dropout
+   occurring uniformly across follow-up, by simulation.
+   Does the ranking of designs from Exercise 3 change?
+
+## Further reading
+
+- The compendium `04-runin-power-analysis`, report
+  `01-runin-power`, for the full derivations.
+- @frost2008optimizing, the paper this work extends: can
+  estimating a baseline rate in a run-in period increase
+  efficiency?
+- @pablos2014run, on the empirical performance of run-in
+  periods, and @berger2003direct, on how response run-in
+  selection threatens validity, which is the sharpest
+  statement of the enrichment objection.
+- @laird1990estimating, on estimating rates of change in
+  randomized trials, the foundation for the slope estimand.
+- @zhao2022power, for power formulas in the random
+  intercept-and-slope model used here.
+- @fitzmaurice2011applied, Chapter 8, on random-effects
+  models for change.
+- @diggle2002analysis, on design for longitudinal studies.
+- The `longpower` R package [@iddi2022longpower], which
+  implements the Edland and Diggle formulas.

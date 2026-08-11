@@ -1,0 +1,581 @@
+# The Trial as an Experiment {#sec-trial-enterprise}
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Explain why a randomized experiment answers a causal
+  question that an observational comparison answers only
+  under untestable assumptions.
+- Recount the historical episodes that established the
+  randomized trial as the standard for evaluating
+  treatments, and name what each one taught.
+- State the ethical principles that govern human
+  experimentation and explain what equipoise requires of
+  an investigator.
+- Describe the regulatory architecture (FDA, EMA, ICH,
+  IRB) and locate the statistician's obligations within
+  it.
+- Distinguish the phases of drug development and identify
+  the design question each phase answers.
+
+## Orientation
+
+A clinical trial is an experiment on people. That sentence
+contains both the reason trials work and the reason they
+are constrained in ways no other experiment is. They work
+because the investigator, not nature and not the patient's
+physician, assigns the treatment; the assignment is made
+by a chance mechanism that no one can predict or
+manipulate; and the resulting comparison is therefore free
+of the confounding that makes observational treatment
+comparisons so difficult to interpret. They are
+constrained because the units of the experiment are
+patients who may be harmed, who must consent, and whose
+interests are not identical to the interests of the
+question.
+
+This chapter sets up the rest of the book. It is the least
+technical chapter and the one whose ideas recur most
+often. The technical chapters that follow all answer some
+version of a single question: given that we get exactly
+one shot at this experiment, and given that we must commit
+to the design before we see the data, what is the best
+design?
+
+Three threads run through the chapter. **Why randomize**:
+the logical argument for the randomized comparison and the
+precise sense in which it is superior to the alternatives.
+**How we got here**: the historical trials and the
+scandals that produced the modern regulatory and ethical
+system. **Who is watching**: the institutions that
+constrain trial design, and what they require.
+
+## The statistician's contribution {#sec-trial-enterprise-human}
+
+Three judgments belong to the statistician from the first
+study-team meeting.
+
+**(Judgment 1.) Whether the question is answerable by a
+trial at all.** Not every clinical question should be a
+randomized trial. If the treatment effect is enormous and
+immediate (insulin for diabetic ketoacidosis,
+defibrillation for ventricular fibrillation), a trial is
+unnecessary and unethical. If the outcome is so rare that
+no feasible trial could observe enough events, a trial is
+futile and an observational design with careful causal
+analysis is the honest choice. If clinicians are not in
+equipoise, the trial will not enroll. The statistician is
+usually the first person on the team in a position to say
+so, because the statistician is the one computing how many
+patients it would take.
+
+**(Judgment 2.) What comparison actually answers the
+question.** A trial compares something to something else.
+Placebo answers 'does this work at all'; active control
+answers 'is this better than what we do now'; usual care
+answers 'would adopting this improve outcomes in
+practice'. These are three different questions with three
+different sample sizes and three different regulatory
+consequences. Teams frequently arrive with a treatment in
+mind and no articulated comparator; the statistician
+should force the choice into the open before anything else
+is decided.
+
+**(Judgment 3.) Whether the design protects the
+randomization.** Randomization is the source of a trial's
+credibility, and almost everything that goes wrong in
+practice erodes it: unblinded assessors, differential
+dropout, post-randomization exclusions, unplanned
+subgroup reporting. Recognizing these threats at the
+design stage, when they can still be prevented, is a
+statistical responsibility even though every one of them
+looks operational.
+
+## Why randomize
+
+Suppose we observe that patients taking drug A live longer
+than patients taking drug B. The difficulty is that the
+patients were not assigned to A and B by us. Sicker
+patients may have been given the more aggressive drug;
+wealthier patients may have had access to the newer one;
+physicians may have prescribed A to the patients they
+judged most likely to benefit. Any of these produces a
+difference in survival that has nothing to do with the
+drugs.
+
+The formal statement uses potential outcomes. For each
+patient $i$ define $Y_i(1)$, the outcome that would occur
+under treatment, and $Y_i(0)$, the outcome that would
+occur under control. We only ever see one of them: if
+$Z_i = 1$ the patient receives treatment and we observe
+$Y_i = Y_i(1)$. The causal effect we want is the average
+treatment effect
+$$
+\tau = E[Y(1) - Y(0)],
+$$
+which is a comparison of two hypothetical worlds, not of
+two groups of patients. What we can compute from data is
+the observed difference
+$$
+E[Y \mid Z = 1] - E[Y \mid Z = 0].
+$$
+These two quantities are equal only if treatment
+assignment is independent of the potential outcomes,
+$\{Y(1), Y(0)\} \perp Z$. Randomization makes that
+independence true by construction, because the assignment
+is generated by a coin, and a coin cannot know a patient's
+prognosis.
+
+Two consequences deserve emphasis.
+
+First, randomization balances *unmeasured* prognostic
+factors, not merely the ones recorded in the case report
+form. Propensity-score methods and regression adjustment
+can balance what was measured; nothing in an observational
+design balances what was not. This is the entire
+comparative advantage of the randomized trial and it is
+worth defending vigorously against the recurring claim
+that a large enough observational database substitutes for
+it.
+
+Second, randomization balances in *expectation*, not in
+every trial. Any single randomization can produce a
+prognostic imbalance by chance, and in a small trial that
+imbalance can be substantial. This is why Chapter 3
+discusses restricted randomization and Chapter 16
+discusses covariate adjustment: both are responses to the
+gap between balance in expectation and balance in the
+trial you actually ran.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what randomization does and does not fix
+
+**Question.** A registry study finds that patients who
+received early physical therapy after stroke recovered
+better than those who did not. The authors adjust for age,
+stroke severity, comorbidity index, and hospital. A
+reviewer says the finding is still not causal. Why not?
+Would a randomized trial fix the specific problem the
+reviewer has in mind?
+
+**Answer.**
+
+The adjustment handles the four recorded variables. It
+cannot handle the unrecorded ones, and here the obvious
+unrecorded variable is the clinician's judgment: patients
+who looked likely to recover were referred to early
+therapy, and patients who looked moribund were not. That
+judgment integrates dozens of cues that never enter the
+registry. Adjusting for measured severity captures part of
+it and leaves the rest as confounding, biased in the
+direction of making early therapy look better than it is.
+
+A randomized trial fixes exactly this. If a coin decides
+who gets early therapy, the clinician's prognostic
+judgment cannot influence assignment, so it cannot
+confound the comparison, whether or not it was ever
+written down. Note what the trial does not fix: it does
+not tell us whether the effect generalizes to patients who
+would have refused randomization, and it does not remove
+bias arising after randomization, such as differential
+loss to follow-up.
+:::
+
+## How we got here
+
+**Scurvy, 1747.** James Lind assigned twelve sailors with
+scurvy to six treatments, two sailors each, under
+comparable conditions of diet and berth. The pair given
+oranges and lemons recovered. Lind's study is usually
+called the first controlled trial; it was not randomized,
+but it isolated the comparison by holding everything else
+fixed, and it demonstrated that a deliberate comparison
+can settle in weeks a question that had been open for
+centuries.
+
+**Streptomycin, 1948.** The UK Medical Research Council
+trial of streptomycin for pulmonary tuberculosis is the
+first properly randomized clinical trial. Allocation used
+sealed envelopes drawn from a random sequence held
+centrally, radiographs were read by assessors who did not
+know the assignment, and the analysis was pre-specified.
+The design elements we now take for granted are all
+present. The trial was randomized partly for a reason that
+should be recorded honestly: streptomycin was scarce, and
+random allocation was the fairest way to distribute a
+scarce drug.
+
+**Thalidomide, 1961.** A sedative marketed for morning
+sickness caused severe limb malformations in thousands of
+infants. It was never approved in the United States,
+because a reviewer at the FDA declined to approve it on
+the evidence submitted. The consequence was the 1962
+Kefauver-Harris Amendment, which for the first time
+required manufacturers to demonstrate *efficacy*, not
+merely safety, and to do so with 'adequate and
+well-controlled investigations'. Modern drug regulation,
+and the modern demand for randomized evidence, dates from
+this episode.
+
+**Tuskegee, 1932 to 1972.** The US Public Health Service
+followed several hundred Black men with syphilis for forty
+years without treating them and without informing them of
+their diagnosis, continuing after penicillin became
+standard care in the 1940s. The study was ended only after
+a journalist exposed it. It produced the National Research
+Act, the Belmont Report, and the institutional review
+board system. It also produced a legacy of justified
+distrust that continues to affect trial participation, and
+it is the reason that the ethics of trials cannot be
+treated as a formality appended to the design.
+
+**Willowbrook and the Jewish Chronic Disease Hospital.**
+Institutionalized children deliberately infected with
+hepatitis; cancer cells injected into elderly patients
+without consent. Together with Tuskegee and the Nazi
+medical experiments documented at Nuremberg, these
+established that consent must be informed and voluntary,
+and that vulnerable populations require additional
+protection rather than being treated as convenient.
+
+The pattern in this history is worth naming. Almost every
+element of modern trial regulation exists because someone
+was harmed. The requirements can feel bureaucratic from
+inside a study team under deadline pressure; they are the
+residue of specific injuries.
+
+## Ethics and equipoise
+
+Three documents govern.
+
+The **Nuremberg Code** (1947) established voluntary
+consent as an absolute requirement. The **Declaration of
+Helsinki** (World Medical Association, 1964, revised many
+times since) is the professional standard for physicians
+conducting research; it introduced the requirement for
+independent protocol review and addresses the use of
+placebo, post-trial access, and registration. The
+**Belmont Report** (1979) states the three principles that
+structure US regulation: respect for persons (consent,
+protection of those with diminished autonomy),
+beneficence (favorable risk-benefit), and justice (fair
+distribution of the burdens and benefits of research).
+
+The operational requirement that most affects design is
+**equipoise**. A patient may be randomized only when there
+is genuine uncertainty about which arm is better. The
+modern formulation is *clinical equipoise*: uncertainty in
+the expert community, not necessarily in the individual
+investigator. A physician who privately believes the new
+drug is better may still enroll a patient, provided the
+profession as a whole is undecided, because the
+profession's uncertainty is what the trial resolves.
+
+Equipoise has direct design consequences. It bounds when
+placebo control is acceptable: withholding a treatment of
+established benefit is not permissible merely because it
+would make the statistics cleaner. It requires interim
+monitoring, since equipoise can be destroyed mid-trial by
+the accumulating data itself, which is the ethical basis
+for the data monitoring committee of Chapter 9. And it
+constrains unbalanced allocation, run-in periods, and
+enrichment strategies, each of which trades some patient's
+interest against the trial's efficiency.
+
+::: {.callout-warning}
+## Warning
+
+'The trial is ethical because the IRB approved it' is not
+an argument. The IRB reviews what the protocol says.
+Whether the sample size is large enough for the trial to
+answer its question is a statistical judgment, and a trial
+too small to answer its question exposes patients to risk
+for no scientific return. Underpowering is an ethical
+failure, not merely a technical one. Chapter 26 takes up
+what to do about a trial already underway that turns out
+to be underpowered.
+:::
+
+## The regulatory architecture
+
+**The IRB** (institutional review board, called a research
+ethics committee elsewhere) reviews and must approve the
+protocol, the consent form, and any amendments, at every
+participating institution. Its charge is protection of
+human subjects.
+
+**The FDA** regulates drugs, biologics, and devices in the
+United States. An investigational new drug application
+(IND) must be in effect before a new drug is given to
+humans; a new drug application (NDA) or biologics license
+application (BLA) is the submission that seeks approval.
+The evidentiary standard is 'substantial evidence' of
+effectiveness from 'adequate and well-controlled
+investigations', which in practice has usually meant two
+independent positive trials, though a single trial with
+supporting evidence is accepted in some settings.
+
+**The EMA** performs the corresponding function in the
+European Union, with a centralized procedure and national
+competent authorities.
+
+**ICH**, the International Council for Harmonisation,
+issues the technical guidelines both agencies use. Three
+matter to statisticians. **E6** is Good Clinical Practice,
+which governs conduct, documentation, and data integrity.
+**E9** is *Statistical Principles for Clinical Trials*,
+the foundational document for trial statistics. Its 2019
+addendum **E9(R1)** introduced the estimand framework that
+Chapter 2 covers in detail, and it is the single most
+consequential regulatory document of the last two decades
+for how trials are analyzed.
+
+**Registration** is required before enrollment.
+ClinicalTrials.gov registration is a condition of
+publication at journals following ICMJE policy and a legal
+requirement for most US trials. Registration exists to
+make selective reporting visible: a pre-registered primary
+endpoint that vanishes from the publication is now
+detectable by anyone.
+
+**The DSMB or DMC** (data safety monitoring board or data
+monitoring committee) is an independent group that sees
+unblinded accumulating data and advises on continuation.
+Chapter 9 covers its statistical machinery.
+
+## Phases of development
+
+The phase vocabulary comes from drug development and is
+used loosely elsewhere. Each phase answers a different
+question, and the design follows from the question.
+
+**Phase I: is it tolerable, and at what dose?** Small (20
+to 80 participants), often healthy volunteers, except in
+oncology and other settings where toxicity makes healthy
+exposure unethical. Endpoints are safety and
+pharmacokinetics; the objective is a recommended dose for
+further study. Designs are dose-escalation: the 3+3, the
+continual reassessment method, BOIN. Chapter 6.
+
+**Phase II: does it do anything in patients?** Fifty to
+two hundred patients with the disease. Endpoints are often
+short-term or surrogate: tumor response, biomarker change,
+symptom scores. The purpose is screening, deciding whether
+a phase III investment is justified. Designs are
+single-arm two-stage, randomized selection, or Bayesian
+adaptive. Chapter 7.
+
+**Phase III: does it work, and is the effect worth the
+harms?** Hundreds to thousands of patients, randomized,
+usually blinded, powered for a clinically meaningful
+endpoint. This is the phase that supports approval, and
+most of this book's core chapters are calibrated to it.
+Chapters 5, 8, 9, and 10.
+
+**Phase IV: what happens in the real world?** Post-
+approval studies of long-term safety, comparative
+effectiveness, and use in populations that were excluded
+from the pivotal trials. Often pragmatic, often large,
+often embedded in routine care.
+
+The phases are a convenience, not a law. Seamless phase
+I/II and II/III designs combine them; platform trials run
+several comparisons under one protocol; publicly funded
+trials of behavioral or surgical interventions often skip
+the vocabulary entirely. What survives across all of them
+is the sequence of questions: tolerable, promising,
+effective, useful.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: matching phase to question
+
+**Question.** A team has a repurposed generic drug, widely
+used for another indication for thirty years, that they
+believe reduces hospitalization in heart failure. What
+phase of trial should they run, and what does the drug's
+history let them skip?
+
+**Answer.**
+
+Effectively a phase III trial, and possibly a pragmatic
+one. Thirty years of use at known doses in a comparable
+population supplies what phase I would have provided:
+tolerability and dosing are established. The unanswered
+question is exactly the phase III question, whether the
+drug reduces a hard clinical endpoint relative to current
+care. A phase II screening study could be argued for if a
+short-term surrogate exists and the phase III cost is
+large, but with an inexpensive generic and a hard endpoint
+the screening step often costs more time than it saves. In
+the US such a trial may still require an IND if the new
+indication changes the risk profile; the regulatory
+question is separate from the design question.
+:::
+
+## Worked example: from question to trial sketch
+
+A neurology group believes that a widely available
+anti-inflammatory slows disability progression in early
+multiple sclerosis. Take the question through this
+chapter's checkpoints.
+
+**Is it answerable by a trial?** Disability progression is
+slow and measured on an ordinal scale with substantial
+measurement error. A trial would need several hundred
+patients followed for at least two years. That is
+expensive but feasible; the question survives.
+
+**Is there equipoise?** Neurologists do not currently
+prescribe the drug for MS and there is no established
+benefit, so withholding it is not withholding known
+therapy. However, disease-modifying therapies of proven
+benefit do exist, and a placebo-only design withholding
+them would be unethical. The trial must be add-on: all
+patients receive standard disease-modifying therapy, and
+are randomized to the anti-inflammatory or to matching
+placebo on top of it.
+
+**What is the comparison?** Add-on placebo, as just
+determined. That answers 'does adding this drug to
+standard care help', which is the question a treating
+neurologist actually faces.
+
+**What phase?** Phase III in substance. The drug's safety
+profile is known at the doses proposed, so no phase I is
+needed; whether a phase II screening step is worthwhile
+depends on whether a short-term MRI lesion endpoint is
+credible enough to gate the decision, which is a
+substantive neurology question the statistician should
+raise but not decide alone.
+
+**What governs?** IRB approval at every site, IND if the
+new indication changes risk assessment, registration on
+ClinicalTrials.gov before the first patient, a protocol
+following SPIRIT, a DSMB because the follow-up is long and
+the population is chronically ill, and eventual reporting
+following CONSORT.
+
+Nothing in this sketch is a calculation, and yet it has
+already determined most of the trial: add-on design,
+placebo control, two-year follow-up, several hundred
+patients, independent monitoring. Chapter 2 turns the
+sketch into an estimand, and Chapter 5 turns the estimand
+into a number.
+
+## Collaborating with an LLM on trial fundamentals
+
+Three patterns.
+
+**Prompt 1: 'Summarize the regulatory pathway for this
+product in this indication.'**
+
+*What to watch for.* Language models are reasonably good
+at the general architecture and unreliable on specifics:
+which guidance applies, whether a particular pathway
+(accelerated approval, breakthrough designation) is
+available, what the current requirements are. Regulatory
+guidance is revised frequently and model knowledge is
+dated.
+
+*Verification.* Read the current guidance document on the
+agency website. Never cite a regulatory requirement from a
+model without confirming it against the source.
+
+**Prompt 2: 'Is a placebo control ethical for this
+trial?'**
+
+*What to watch for.* The model will produce a competent
+recitation of the Declaration of Helsinki position and
+will usually reach a defensible conclusion. It will not
+know the local standard of care, which is what the
+question actually turns on, and it will not know what the
+IRB at your institution has accepted before.
+
+*Verification.* The clinical members of the study team
+decide this, informed by the guidance. Use the model to
+enumerate considerations, not to reach the conclusion.
+
+**Prompt 3: 'Draft the background and rationale section of
+the protocol.'**
+
+*What to watch for.* Fluent prose with fabricated or
+misattributed citations. This is the single most common
+failure mode in regulated documents and the one with the
+worst consequences, since a protocol with invented
+references will be read by an IRB and possibly an agency.
+
+*Verification.* Check every citation against PubMed
+individually. Treat model-supplied references as claims to
+be verified, never as sources.
+
+The meta-pattern for this chapter: models are useful for
+structure and enumeration, and dangerous for facts with
+dates attached. Regulations, guidance versions, approval
+histories, and citations all have dates attached.
+
+## Principle in use
+
+Three habits.
+
+1. **Name the comparator out loud in the first meeting.**
+   Teams say 'we want to test drug X'. Ask 'against
+   what, in whom, measured how'. Most design pathology is
+   visible at that moment and invisible six months later.
+
+2. **Treat equipoise as a design constraint, not a
+   formality.** It determines whether placebo is
+   available, whether the design can be add-on, whether
+   interim monitoring is required, and whether the trial
+   will enroll. Each of those is a design parameter.
+
+3. **Assume every regulatory requirement is a scar.**
+   When a requirement looks pointless, the useful question
+   is which failure produced it. The answer is usually
+   instructive and occasionally changes how you comply.
+
+## Exercises
+
+1. Explain, in language a patient could follow, why a
+   randomized comparison is more trustworthy than a
+   comparison of patients who happened to receive
+   different treatments. Do not use the words confounding
+   or bias.
+
+2. Find a published observational study reporting a
+   treatment effect. List three prognostic variables that
+   plausibly influenced treatment assignment and were not
+   adjusted for. State the likely direction of the bias
+   from each.
+
+3. Read the CONSORT flow diagram of a published randomized
+   trial. Identify how many patients were assessed for
+   eligibility, randomized, and analyzed, and account for
+   every discrepancy between those numbers.
+
+4. Take a treatment question in your own field and write a
+   one-page trial sketch following the worked example:
+   answerable, equipoise, comparator, phase, governance.
+   Identify the single decision most likely to be
+   contested by your study team.
+
+5. Locate the ICH E9 guideline and read Section 2 (overall
+   considerations for design). List three requirements
+   that you would not have anticipated, and explain what
+   each is protecting against.
+
+## Further reading
+
+- @friedman2015fundamentals, *Fundamentals of Clinical
+  Trials* (5th edition), Chapters 1 through 3. The
+  standard applied introduction.
+- @piantadosi2017clinical, *Clinical Trials: A
+  Methodologic Perspective* (3rd edition). More
+  methodological, excellent on the logic of design.
+- @senn2007statistical, *Statistical Issues in Drug
+  Development*. Opinionated, frequently correct, and the
+  best available corrective to received wisdom.
+- The Belmont Report and the current Declaration of
+  Helsinki. Short, and worth reading in full once.
+- @ich2019e9r1, *ICH E9(R1)*. The regulatory text that
+  Chapter 2 unpacks.

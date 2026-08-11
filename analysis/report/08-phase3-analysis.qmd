@@ -1,0 +1,602 @@
+# Phase III: The Primary Analysis {#sec-phase3-analysis}
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- State the intention-to-treat principle and relate it to
+  the treatment-policy estimand.
+- Choose and justify a primary analysis model for
+  continuous, binary, time-to-event, and repeated-measures
+  endpoints.
+- Explain why covariate adjustment increases power in
+  linear models and changes the estimand in nonlinear
+  ones.
+- Construct a multiplicity strategy across endpoints,
+  arms, and time points using hierarchical and closed
+  testing.
+- Interpret subgroup analyses correctly and test
+  interaction rather than reporting within-subgroup
+  significance.
+
+## Orientation
+
+Everything in the trial has been arranged so that this
+analysis can be run and believed. The design fixed the
+estimand, the randomization created comparability, the
+blinding preserved it, and the SAP removed analytic
+freedom. The primary analysis is, if the preceding work
+was done, almost anticlimactic: one model, one number, one
+confidence interval.
+
+What makes the chapter necessary is that 'one model' hides
+a set of choices, each of which is defensible and each of
+which changes the answer somewhat: which covariates, which
+covariance structure, which handling of missing values,
+which scale for the effect. This chapter works through
+them.
+
+Two principles organize the material. **Analyze as you
+randomized**, which governs the analysis population and
+the model's relationship to the design. And **the analysis
+estimates the estimand**, which governs everything else:
+the model is a tool for estimating a quantity that was
+specified before the data existed, not a search for the
+best fit.
+
+## The statistician's contribution {#sec-phase3-human}
+
+**(Judgment 1.) Refusing to move the primary analysis.**
+The pressure to reconsider after seeing the result is
+enormous and is usually framed reasonably: a covariate
+turned out to be imbalanced, the distribution is skewed, a
+site enrolled implausible patients. The pre-specified
+analysis is the primary result. Alternatives are
+sensitivity analyses and are reported as such.
+
+**(Judgment 2.) Choosing the effect scale before
+unblinding.** Risk difference, risk ratio, and odds ratio
+give different pictures of the same data, and only one of
+them was specified. For nonlinear models the choice also
+determines whether covariate adjustment changes the target
+of estimation (see below), so it cannot be deferred.
+
+**(Judgment 3.) Presenting the result honestly when it is
+ambiguous.** Most trials do not produce a clean answer. A
+$p$-value of 0.06 on the primary with consistent secondary
+endpoints, or 0.03 on the primary with a safety signal, is
+the normal case. The statistician's contribution is a
+faithful account of what the evidence supports, delivered
+before the team's narrative hardens.
+
+## Intention to treat
+
+The ITT principle: analyze every randomized patient in the
+arm to which they were assigned, regardless of what
+happened afterward.
+
+The justification is that any post-randomization criterion
+for exclusion or reclassification is potentially related
+to prognosis, so applying it destroys the comparability
+randomization created. A patient who never took the drug
+because they deteriorated immediately is not exchangeable
+with a patient who never took it because of a pharmacy
+error.
+
+In the estimand vocabulary of Chapter 2, ITT implements a
+treatment-policy strategy for the intercurrent events of
+non-adherence and discontinuation. This reframing is
+clarifying. ITT is not a universal principle floating
+above the analysis; it is the analysis that corresponds to
+one particular estimand, the one asking what happens if we
+assign this treatment. That estimand is usually the right
+primary one in a superiority trial, and it is not always
+the right one.
+
+Two consequences follow.
+
+**ITT requires outcome data on patients who discontinue.**
+The single most common failure is to invoke the ITT
+principle while having collected no data on the patients
+who stopped, leaving an ITT analysis that is really a
+completers analysis with imputation. The protocol must
+require follow-up after discontinuation, and the budget
+must pay for it.
+
+**ITT is conservative in a superiority trial and
+anti-conservative in a non-inferiority trial.**
+Non-adherence dilutes the difference between arms, which
+makes a superiority conclusion harder and a
+non-inferiority conclusion easier. In non-inferiority
+trials, ITT and per-protocol are usually co-primary for
+this reason.
+
+## Continuous endpoints
+
+The workhorse is ANCOVA: regress the follow-up outcome on
+treatment and the baseline value of the same measure,
+plus stratification factors.
+$$
+Y_i = \beta_0 + \beta_1 Z_i + \beta_2 X_{i} +
+      \boldsymbol{\gamma}^\top \mathbf{s}_i + \epsilon_i.
+$$
+
+```r
+fit <- lm(week12 ~ treatment + baseline + factor(site),
+          data = trial)
+summary(fit)$coefficients['treatment', ]
+#>   Estimate Std. Error    t value   Pr(>|t|)
+#>     -3.214      1.087     -2.957      0.003
+confint(fit)['treatment', ]
+#>      2.5 %     97.5 %
+#>     -5.351     -1.077
+```
+
+Three alternatives are common and inferior.
+
+**Change score analysis**, regressing $Y - X$ on treatment,
+is ANCOVA with $\beta_2$ forced to 1. When the true
+regression coefficient is less than 1, which it is
+whenever there is measurement error or regression to the
+mean, the change score analysis is less efficient.
+
+**Post-only analysis** ignores the baseline entirely and
+is less efficient than ANCOVA by a factor $1 - \rho^2$.
+
+**Percent change from baseline** is the worst of the
+common options: it has poor distributional properties, is
+undefined or unstable when baseline values approach zero,
+and induces a spurious relationship with baseline. It
+persists because it is easy to explain.
+
+ANCOVA is valid whether or not the baseline happens to be
+balanced. The occasional practice of testing for baseline
+imbalance and adjusting only if the test is significant is
+incoherent: the test is uninformative, since any imbalance
+in a randomized trial is by construction due to chance,
+and the decision rule makes the type I error depend on a
+data-driven model choice [@senn1994testing].
+
+## Binary endpoints
+
+Three effect measures.
+
+The **risk difference** is directly interpretable and
+gives the number needed to treat as its reciprocal. Its
+disadvantage is that it is not constant across baseline
+risk levels, so it transfers poorly across populations.
+
+The **risk ratio** is often more stable across baseline
+risk, and it is asymmetric between the event and the
+non-event.
+
+The **odds ratio** falls naturally out of logistic
+regression, is symmetric, and is not collapsible: the
+population odds ratio differs from the average of
+subgroup-specific odds ratios even when there is no
+confounding.
+
+Non-collapsibility is the source of a frequent confusion.
+When a logistic model is adjusted for a strong prognostic
+covariate, the treatment coefficient becomes *larger* in
+magnitude, and this is not confounding being removed, it
+is a change in the quantity being estimated: from the
+population-averaged (marginal) odds ratio to the
+covariate-conditional odds ratio. Both are valid; they are
+different. If the estimand specifies a marginal effect,
+the analysis should be a g-computation-style standardized
+estimate rather than the raw coefficient from an adjusted
+model [@fda2021covariate].
+
+```r
+fit <- glm(response ~ treatment + baseline_risk + site,
+           family = binomial, data = trial)
+
+# marginal risk difference by standardization
+p1 <- predict(fit, transform(trial, treatment = 1),
+              type = 'response')
+p0 <- predict(fit, transform(trial, treatment = 0),
+              type = 'response')
+mean(p1) - mean(p0)
+#> [1] 0.0847
+```
+
+The standard error requires the delta method or a
+bootstrap; `margins`, `marginaleffects`, and `RobinCar`
+implement this correctly, and the last of these is written
+specifically for covariate adjustment in randomized
+trials.
+
+## Time-to-event endpoints
+
+The log-rank test is the standard, and the Cox model
+provides the corresponding estimate.
+
+```r
+library(survival)
+
+survdiff(Surv(time, event) ~ treatment, data = trial)
+#>  Chisq = 7.9  on 1 degrees of freedom, p = 0.005
+
+fit <- coxph(Surv(time, event) ~ treatment + strata(site),
+             data = trial)
+summary(fit)$conf.int
+#>            exp(coef) exp(-coef) lower .95 upper .95
+#> treatment      0.742      1.348     0.601     0.916
+```
+
+Three cautions.
+
+**The hazard ratio assumes proportional hazards.** Check
+it: plot the scaled Schoenfeld residuals against time, and
+inspect the log-log survival curves. Under
+non-proportional hazards the reported hazard ratio is a
+weighted average of time-varying hazard ratios whose
+weights depend on the censoring distribution, which makes
+it awkward to interpret and not comparable across trials.
+
+**Non-proportional hazards are common in immunotherapy and
+in any setting with delayed effects or a cured fraction.**
+Alternatives: the restricted mean survival time
+difference, which is a difference in area under the
+survival curves up to a fixed horizon $\tau$ and requires
+no proportionality assumption; a weighted log-rank test
+targeting late differences; or a milestone survival
+comparison at a fixed time.
+
+```r
+library(survRM2)
+rmst2(time = trial$time, status = trial$event,
+      arm = trial$treatment, tau = 24)
+#> RMST (arm=1) 18.4 ; RMST (arm=0) 15.9
+#> RMST difference 2.5 (95% CI 0.7 to 4.3), p = 0.006
+```
+
+The horizon $\tau$ must be pre-specified, since it is
+chosen from the data otherwise.
+
+**Informative censoring breaks everything.** Standard
+methods assume censoring is independent of the event
+process given covariates. Patients censored because they
+were about to progress violate this. Administrative
+censoring at a data cutoff is generally fine.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: reading a non-proportional result
+
+**Question.** An immunotherapy trial reports a hazard
+ratio of 0.85 (95% CI 0.72 to 1.00, $p = 0.049$). The
+Kaplan-Meier curves overlap for eight months, then
+separate widely. What does the 0.85 mean, and what would
+you report instead?
+
+**Answer.**
+
+The 0.85 is an average of a hazard ratio near 1.0 during
+the first eight months and a hazard ratio well below 1
+afterward, weighted by the number at risk over time. It
+understates the benefit for patients who survive the first
+eight months and overstates it for those who do not, and
+its value depends on the follow-up duration: with longer
+follow-up, the same biology produces a smaller hazard
+ratio. It is not a stable summary of anything.
+
+Better summaries, all of which must be pre-specified.
+Restricted mean survival time difference at a clinically
+chosen horizon, which is interpretable as months of life
+gained on average within that horizon. Milestone survival
+at 12 and 24 months, which is what patients ask about. A
+piecewise hazard ratio before and after the separation
+point, if the separation time can be justified externally
+rather than chosen from these data.
+
+If the trial pre-specified the log-rank test as primary,
+report it as primary; the log-rank test is still a valid
+test of the null of no difference at any time, merely a
+low-powered one against a delayed alternative. The
+alternative summaries belong in the same paper as
+pre-specified secondary analyses.
+:::
+
+## Repeated-measures endpoints
+
+When the outcome is measured at several visits and the
+estimand concerns one of them, usually the last, the
+standard analysis is the **mixed model for repeated
+measures**: all visits are modeled jointly, with an
+unstructured within-patient covariance, and the treatment
+effect at the visit of interest is extracted.
+
+```r
+library(mmrm)
+
+fit <- mmrm(
+  change ~ treatment * visit + baseline + site +
+    us(visit | subject),
+  data = long_data)
+
+# treatment effect at the final visit
+emmeans::emmeans(fit, ~ treatment | visit,
+                 at = list(visit = 'week24')) |>
+  emmeans::contrast('revpairwise')
+#> contrast          estimate    SE   df t.ratio p.value
+#> active - placebo     -42.1  12.6  248  -3.341  0.0010
+```
+
+Why MMRM rather than a $t$-test on the final visit? Because
+patients with a missing final visit but observed earlier
+visits contribute information about the treatment effect
+through the within-patient correlation. Under the missing
+at random assumption, MMRM gives valid inference without
+imputation [@mallinckrodt2008recommendations]. The
+unstructured covariance is preferred because it makes no
+assumption about the correlation pattern; simpler
+structures (compound symmetry, AR(1)) are more efficient
+when correct and biased in the standard error when not,
+and with a handful of visits there is little reason to
+economize. Chapter 18 examines the robustness of these
+choices in detail.
+
+The degrees-of-freedom method matters in small trials:
+Kenward-Roger or Satterthwaite, not the residual method,
+which is anti-conservative.
+
+Alternatives. **Generalized estimating equations** with a
+robust variance are valid under MCAR only unless weights
+are used, so they are less suitable when dropout is
+outcome-related. **Random-slope models** are more
+parsimonious and impose linearity of the mean trajectory,
+which is either a substantial efficiency gain or a source
+of bias depending on whether the trajectory is linear;
+Chapter 18 quantifies both sides.
+
+## Covariate adjustment
+
+Adjustment for baseline covariates that are prognostic for
+the outcome increases the precision of the treatment
+effect. In a linear model the mechanism is direct:
+residual variance falls by the factor $1 - R^2$ of the
+covariates, and the standard error falls accordingly. This
+is free power, and regulators encourage it
+[@fda2021covariate].
+
+Three requirements.
+
+**Pre-specify the covariates.** Selecting them after
+seeing the data invalidates the inference. A short list of
+strongly prognostic variables, named in the SAP, is the
+standard.
+
+**Adjust for the stratification factors.** Not doing so
+leaves the standard error too large, as noted in Chapter 3.
+
+**Do not adjust for post-baseline variables.** Adjusting
+for anything measured after randomization can be affected
+by treatment, and conditioning on it destroys the
+randomized comparison. This includes adherence,
+concomitant medications, and intermediate outcomes.
+
+For nonlinear models, adjustment changes the estimand, as
+discussed above. The current regulatory guidance is to
+adjust and then standardize back to the marginal estimand,
+which recovers the precision gain while preserving
+interpretability. Chapter 16 develops this.
+
+## Multiplicity
+
+Type I error inflates whenever more than one comparison
+can produce a claim. Three sources:
+
+**Multiple endpoints.** A primary and several key
+secondary endpoints, each of which could support a label
+claim.
+
+**Multiple arms.** Two doses versus control produce two
+comparisons.
+
+**Multiple looks.** Interim analyses, covered in Chapter 9.
+
+The standard solution in confirmatory trials is a
+**hierarchical (fixed-sequence) procedure**: order the
+hypotheses in advance and test them in order at full
+$\alpha$, stopping at the first failure. It costs nothing
+in power for the first hypothesis and requires that the
+ordering be defensible.
+
+**Bonferroni** splits $\alpha$ across hypotheses;
+**Holm** is uniformly more powerful and equally simple;
+**Hochberg** is more powerful still under positive
+dependence. **Gatekeeping** and **graphical approaches**
+[@dmitrienko2009multiple] generalize the hierarchy to
+allow $\alpha$ to be recycled from rejected hypotheses to
+others, which is now standard in complex confirmatory
+programs.
+
+```r
+p <- c(primary = 0.008, key_sec1 = 0.021, key_sec2 = 0.048)
+p.adjust(p, method = 'holm')
+#>  primary key_sec1 key_sec2
+#>    0.024    0.042    0.048
+```
+
+What does *not* require adjustment: exploratory analyses
+that will not support a claim, safety analyses where the
+concern is false negatives rather than false positives,
+and secondary endpoints reported descriptively with the
+multiplicity stated. Honest labeling is a legitimate
+alternative to adjustment when no claim is being made, and
+it is better than the pretense of a claim made at an
+unadjusted 0.05. Chapter 25 examines the size of tests
+under multiplicity by simulation.
+
+## Subgroups
+
+Subgroup analyses are requested in every trial and are
+almost always over-interpreted.
+
+The statistical point is simple. Testing the treatment
+effect within each of $k$ subgroups asks the wrong
+question and inflates the type I error. The right question
+is whether the effect *differs* across subgroups, which is
+an interaction test:
+
+```r
+fit <- lm(outcome ~ treatment * subgroup + baseline,
+          data = trial)
+anova(fit)['treatment:subgroup', ]
+#>                    Df Sum Sq Mean Sq F value Pr(>F)
+#> treatment:subgroup  1   12.4    12.4    1.31   0.253
+```
+
+Interaction tests have low power, typically requiring four
+times the sample size to detect an interaction of a given
+size than to detect a main effect of the same size. A
+non-significant interaction is therefore weak evidence of
+homogeneity, and a significant within-subgroup effect with
+a non-significant interaction is no evidence of
+heterogeneity at all.
+
+The presentation convention: a forest plot of subgroup
+estimates with the overall effect, interaction $p$-values
+shown, and text stating that subgroup analyses are
+exploratory unless one was pre-specified with a
+multiplicity allowance. The ISIS-2 example, in which
+aspirin appeared not to work in patients born under Gemini
+and Libra, remains the most economical way to explain the
+problem to a study team [@ema2015subgroup].
+
+## Worked example: analyzing the depression trial
+
+The trial sized in Chapter 5: 462 patients, MADRS change
+from baseline to week 8, visits at weeks 1, 2, 4, 6, 8.
+
+**Primary analysis, from the SAP.** MMRM on change from
+baseline, fixed effects for treatment, visit,
+treatment-by-visit, baseline MADRS, and the two
+stratification factors (site, baseline severity);
+unstructured covariance; Kenward-Roger degrees of freedom;
+treatment effect at week 8 as the estimand; treatment
+policy for rescue medication, so all observations are used
+regardless of rescue use.
+
+**Result.** Treatment difference $-3.4$ points (95% CI
+$-5.2$ to $-1.6$), $p < 0.001$. Observed dropout 17%, with
+20% on placebo and 14% on active.
+
+**Sensitivity analyses, all pre-specified.** A
+tipping-point analysis over departures from MAR (Chapter
+10); a per-protocol analysis; an analysis with the
+last-observation-carried-forward convention for
+comparability with older literature, reported with the
+caveat that it is biased; and a model with an AR(1)
+covariance, to confirm the result does not depend on the
+covariance structure.
+
+**Multiplicity.** Hierarchical: MADRS at week 8, then
+response rate (50% reduction), then remission (MADRS at or
+below 10), then CGI-I. Testing stops at the first
+non-significant result. The third hypothesis fails, so the
+fourth is reported descriptively without a claim.
+
+**Subgroups.** Pre-specified: sex, age above and below 50,
+baseline severity, number of prior failed treatments.
+Forest plot with interaction $p$-values, all above 0.15,
+reported as exploratory.
+
+**Interpretation.** A 3.4-point MADRS difference against a
+3-point target. Statistically significant, at the boundary
+of clinical meaningfulness, with a consistent pattern
+across secondary endpoints and a dropout imbalance
+favoring the active arm that the MMRM handles under MAR
+and the tipping-point analysis bounds. That paragraph, not
+the $p$-value, is the result.
+
+## Collaborating with an LLM on the primary analysis
+
+**Prompt 1: 'Write the MMRM code for this SAP
+specification.'**
+
+*What to watch for.* Generally reliable. Check the
+covariance structure, the degrees-of-freedom method (often
+omitted, defaulting to something anti-conservative), and
+whether the contrast extracted is at the intended visit.
+
+*Verification.* Confirm the number of observations used
+matches the expected count, and that the estimated
+treatment effect at the final visit matches a
+simple descriptive difference to within a plausible
+adjustment.
+
+**Prompt 2: 'Is our multiplicity strategy adequate?'**
+
+*What to watch for.* Competent enumeration of procedures.
+Models frequently miss that the trial has multiple arms as
+well as multiple endpoints, so the strategy must cover the
+cross-product.
+
+*Verification.* Enumerate every hypothesis that could
+support a claim and confirm the procedure controls the
+family-wise error over that entire set.
+
+**Prompt 3: 'Interpret these subgroup results.'**
+
+*What to watch for.* Models will often narrate
+within-subgroup significance, exactly the error the
+chapter warns against, particularly when the prompt
+supplies subgroup $p$-values without interaction tests.
+
+*Verification.* Supply the interaction tests, and require
+that any claim of heterogeneity rest on them.
+
+## Principle in use
+
+1. **The pre-specified analysis is the result.**
+   Everything else is a sensitivity analysis, labeled as
+   such, in the same table.
+
+2. **Adjust for the stratification factors, always.**
+   The precision was paid for at design time; failing to
+   claim it in the analysis is a pure loss.
+
+3. **Report the effect with its confidence interval, and
+   discuss the interval.** A trial that reports only
+   $p < 0.05$ has withheld the information the reader
+   needs to judge clinical importance.
+
+## Exercises
+
+1. Simulate a trial with $\rho = 0.5$ between baseline and
+   outcome. Compare the empirical power of ANCOVA, change
+   score, and post-only analyses at $n = 100$ per arm.
+
+2. For a binary outcome, fit an unadjusted and an adjusted
+   logistic regression to simulated data with no
+   confounding. Explain why the adjusted coefficient is
+   larger, and compute the standardized marginal risk
+   difference from the adjusted model.
+
+3. Generate survival data with a delayed treatment effect.
+   Compare the power of the log-rank test, a weighted
+   log-rank test, and an RMST comparison.
+
+4. Construct a graphical multiplicity strategy for a trial
+   with two doses and three endpoints, and verify by
+   simulation that it controls the family-wise error rate.
+
+5. Take a published trial's forest plot of subgroups.
+   Recompute the interaction tests where possible and
+   assess whether the authors' claims about subgroup
+   effects are supported.
+
+## Further reading
+
+- @ich2019e9r1 and ICH E9, on the principles governing the
+  primary analysis.
+- @mallinckrodt2008recommendations, on MMRM as the default
+  for longitudinal continuous endpoints.
+- @fda2021covariate, the FDA covariate-adjustment guidance.
+- @lin2013agnostic and @freedman2008regression, on
+  adjustment in randomized experiments.
+- @dmitrienko2009multiple, on multiplicity in
+  pharmaceutical trials.
+- @pocock2002subgroup, on subgroup analysis and reporting.

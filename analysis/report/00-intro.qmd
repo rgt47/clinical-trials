@@ -1,0 +1,101 @@
+# How to use this book {.unnumbered}
+
+We begin with a short orientation in which we explain the
+structure of the book, the chapter template, and the two
+distinct kinds of chapter it contains. The template is the
+same as the one used in the sister volumes of the rgtlab
+curriculum series.
+
+## Two kinds of chapter
+
+**Chapters 1 through 10 are the course.** They are written
+to be read one per week over a ten-week quarter, in order,
+and they assume nothing beyond one graduate methods course.
+Each carries roughly two hours of lecture material and
+four to six hours of assigned work. A reader who works
+through these ten chapters and their exercises has the
+working knowledge expected of a junior statistician
+joining a trial team, or of a clinical investigator who
+must read a protocol critically.
+
+**Chapters 11 through 28 are advanced topics.** Each one
+takes a question that the course chapters raise but do not
+settle, and pursues it to a defensible answer using
+simulation evidence from a specific research compendium.
+Should a run-in period be used, and what does it cost in
+power? Where should the visits be placed in a longitudinal
+trial? Is site a covariate or a random effect? When does an
+exact test beat its asymptotic approximation? These
+chapters are self-contained and may be read in any order;
+each names its prerequisite course chapters at the top.
+
+The division is deliberate. A first-year student reads the
+first ten. A second-year student, a doctoral student, or a
+practicing statistician reads the ones that bear on the
+trial in front of them.
+
+## Chapter template
+
+Every content chapter follows the same nine-section
+structure:
+
+1. **Learning objectives.** A bulleted list of the
+   capabilities the reader should have after working
+   through the chapter.
+2. **Orientation.** Two to four paragraphs of prose
+   framing, setting out what the chapter is, why it
+   matters, and how it relates to adjacent chapters.
+3. **The statistician's contribution.** A front-loaded
+   section articulating the judgments at the center of the
+   chapter that no software and no language model can make
+   on the reader's behalf.
+4. **Content sections.** The substantive material, broken
+   into sections with descriptive headings. Collapsible
+   *Check your understanding* callouts appear at natural
+   pauses.
+5. **Worked example.** A concrete trial, carried end to
+   end through the chapter's tools.
+6. **Collaborating with an LLM.** Three prompt patterns
+   paired with what to watch for and how to verify.
+7. **Principle in use.** Two or three habits that define
+   defensible work in this area.
+8. **Exercises.** Five exercises ranging from short
+   conceptual checks to extended applied work.
+9. **Further reading.** Canonical references, modern
+   applied treatments, and software documentation.
+
+Advanced-topic chapters add a **Provenance** section
+naming the research compendium behind their simulation
+results.
+
+## Conventions
+
+The visual cues used throughout the book are described on
+the [Conventions](conventions.qmd) page. Code blocks
+default to R and are display-only: they show what to run
+and what the run produced, but they are not re-executed
+when the book is rendered.
+
+## A note for the medical and epidemiology readers
+
+Two habits will make the statistical chapters easier. The
+first is to read every formula as a sentence before
+reading it as algebra. The sample-size formula in Chapter 5
+says that the number of patients needed goes up with the
+noise in the measurement and down with the size of the
+effect you are looking for, squared; the algebra only makes
+that sentence precise. The second is to keep asking what
+decision the number supports. A $p$-value supports a
+regulatory decision; a confidence interval supports a
+clinical one; a conditional power calculation supports a
+monitoring committee's decision to continue or to stop.
+The book is organized around those decisions.
+
+## Companion repositories
+
+The book repository at
+<https://github.com/rgt47/clinical-trials> contains the
+book source and its bibliography. The advanced-topic
+chapters cite research compendia maintained separately;
+each Provenance section names the compendium and the
+report within it that carries the full analysis.

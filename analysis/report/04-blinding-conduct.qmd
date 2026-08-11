@@ -1,0 +1,457 @@
+# Blinding, Bias, and Trial Conduct {#sec-blinding-conduct}
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Name the principal sources of bias in a randomized
+  trial and identify at which stage each enters.
+- Distinguish the levels of blinding and describe
+  double-dummy designs and other techniques for blinding
+  dissimilar interventions.
+- Explain what to do when blinding is impossible, and
+  which design features substitute for it.
+- Describe the operational structures that protect the
+  design: monitoring, adjudication, protocol-deviation
+  handling, and database lock.
+- Explain why the statistician should care about data
+  quality processes that appear purely operational.
+
+## Orientation
+
+Randomization creates comparable groups at the moment of
+assignment. Everything that happens afterward can
+un-create them. Patients who know they received placebo
+drop out at different rates; clinicians who know the
+assignment prescribe co-interventions differently;
+assessors who know it grade an ambiguous radiograph
+differently; and analysts who know it choose among models
+differently. Blinding is the general defense.
+
+This chapter is the least mathematical in the book and one
+of the most important. Most trials that fail do not fail
+because the sample-size formula was wrong. They fail
+because enrollment was slower than projected, the event
+rate was lower than assumed, the data were of poor
+quality, or the protocol was applied inconsistently across
+sites. The statistician who treats these as someone else's
+department will be the one explaining, two years later,
+why the primary analysis cannot be interpreted.
+
+## The statistician's contribution {#sec-blinding-human}
+
+**(Judgment 1.) Which biases the design cannot prevent,
+and what to do about them.** In an unblindable trial
+(surgery, behavioral intervention, device), some biases
+are structural. The statistician's job is to name them,
+choose design features that mitigate what can be mitigated
+(objective endpoints, blinded assessors, blinded
+adjudication), and state plainly in the protocol what
+remains.
+
+**(Judgment 2.) What counts as a protocol deviation, and
+how deviations enter the analysis.** The temptation is to
+exclude deviating patients, which breaks randomization.
+The estimand framework of Chapter 2 handles this properly:
+most deviations are intercurrent events with a
+pre-specified strategy, not reasons for exclusion.
+
+**(Judgment 3.) When the blind may be broken, and by
+whom.** The trial needs a written unblinding plan covering
+medical emergencies, the DSMB's access, the unblinded
+statistician's role, and the final unblinding at database
+lock. Without one, ad hoc unblinding happens and is not
+documented.
+
+## A taxonomy of bias
+
+**Selection bias** enters at enrollment: who is offered
+the trial, who consents, and, when concealment fails,
+which arm a given patient is steered toward. Concealment
+addresses the last of these; the first two limit
+generalizability rather than internal validity.
+
+**Performance bias** enters during treatment: patients in
+one arm receive different care apart from the assigned
+intervention. Physiotherapy given more often to the
+surgical arm, closer monitoring of the arm believed to be
+active, differential use of rescue medication.
+
+**Detection or ascertainment bias** enters at outcome
+measurement: an unblinded assessor grades a subjective
+endpoint differently by arm. Its magnitude tracks the
+subjectivity of the endpoint, which is why all-cause
+mortality is nearly immune and a clinician-rated global
+impression score is highly vulnerable.
+
+**Attrition bias** enters through differential dropout. If
+patients on placebo leave the study because they are not
+improving, and the analysis uses only completers, the
+placebo arm is enriched for responders and the treatment
+effect is understated. If patients on active drug leave
+because of side effects and those patients were the
+sickest, the effect is overstated. Chapter 10 and Chapter
+21 take this up in detail.
+
+**Reporting bias** enters at publication: outcomes measured
+and not reported, analyses run and not shown. Registration
+and pre-specified analysis plans are the structural
+defenses.
+
+The useful mental model: randomization protects the
+comparison at time zero, and every subsequent stage of the
+trial needs its own protection.
+
+## Levels of blinding
+
+**Open-label.** Everyone knows. Sometimes unavoidable, and
+occasionally appropriate when the endpoint is entirely
+objective and the intervention cannot be masked, as in a
+mortality trial of two surgical approaches.
+
+**Single-blind.** The patient does not know. Removes
+patient expectancy effects on reported outcomes and on
+dropout.
+
+**Double-blind.** Neither patient nor treating clinician
+knows. The standard for drug trials.
+
+**Triple-blind.** Outcome assessors and the analysis team
+are also blinded. The analysis team's blinding is
+underused and cheap: the statistician receives the data
+with arms labeled X and Y, finalizes the SAP and even
+runs the analysis, and the labels are revealed afterward.
+Some organizations require signing off on all tables
+before unblinding.
+
+The terminology is used inconsistently in the literature,
+so the CONSORT recommendation is to state explicitly who
+was blinded rather than to use a label.
+
+## Blinding dissimilar interventions
+
+**Double-dummy.** Comparing an oral drug to an inhaled one:
+every patient receives both an oral agent and an inhaler,
+one active and one placebo. Doubles the pill burden and
+preserves the blind.
+
+**Matched placebo.** Requires identical appearance, taste,
+smell, and, when the drug has a distinctive side effect,
+some thought about whether patients will deduce their
+assignment anyway. Drugs producing an obvious effect
+(flushing with niacin, discoloration with rifampin, dry
+mouth with anticholinergics) are functionally unblinded
+unless an active placebo is used, and active placebos have
+their own ethical and interpretive complications.
+
+**Sham procedures.** A sham injection, sham surgery, or
+sham stimulation. Ethically contested in proportion to
+their invasiveness; sham arthroscopy trials have been done
+and have overturned established practice, which is an
+argument that the information can be worth the risk when
+consent is genuinely informed.
+
+**Blinded assessment without blinded treatment.** When the
+intervention cannot be masked, the outcome assessment
+often still can. A physiotherapy trial cannot blind the
+patient or the therapist and can have outcomes measured by
+an assessor who did not deliver the treatment and who asks
+patients not to mention their assignment. This is the
+PROBE design (prospective, randomized, open, blinded
+endpoint) and it is the standard compromise for surgical
+and behavioral trials.
+
+::: {.callout-tip}
+## Tip
+
+Assess whether the blind held. Ask patients and clinicians
+at the end of follow-up which arm they believe they were
+in, and report the agreement. A trial where 80% of
+patients guess correctly has an unblinding problem worth
+knowing about, and the guesses themselves are informative
+about whether the endpoint was affected. Interpret
+cautiously: correct guessing may reflect the treatment
+working rather than a failure of masking.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: designing around unblindability
+
+**Question.** A trial compares acupuncture to usual care
+for chronic low back pain, with the primary endpoint a
+patient-reported pain score at 12 weeks. Blinding the
+patient is impossible against usual care. What design
+changes would you propose?
+
+**Answer.**
+
+The critical problem is that the primary endpoint is
+patient-reported and the patient knows they received an
+elaborate hands-on intervention, so expectancy alone can
+move the score. Three changes.
+
+First, change the comparator from usual care to sham
+acupuncture, which holds the ritual constant and isolates
+the needling. This changes the question from 'does
+acupuncture help compared to nothing' to 'does needle
+placement matter', and the team must decide which question
+they want; both are legitimate and the second is the one
+that tests the mechanism.
+
+Second, add an objective or semi-objective secondary
+endpoint: analgesic consumption, return to work, a
+performance-based function measure. Concordance across
+endpoints of differing subjectivity is the main evidence
+available when the blind cannot hold.
+
+Third, blind the outcome assessor and the analyst even
+though the patient cannot be blinded, and measure the
+patient's belief about assignment so that the degree of
+unblinding is documented rather than assumed.
+
+If the team insists on usual care as comparator, the
+resulting estimate is of the whole treatment package
+including expectancy, and the protocol should say so
+rather than implying a specific effect of needling.
+:::
+
+## Trial conduct: the machinery that protects the design
+
+**Site selection and training.** Effects vary less across
+sites than enrollment does. A trial with 40 sites often
+finds half of them enrolling two patients each; those
+sites still consume monitoring resources and contribute
+variation in protocol application. Fewer, better-trained
+sites is usually the better design, and the statistician
+has standing to say so, because site heterogeneity is a
+variance component (Chapter 15).
+
+**Monitoring.** Traditionally, 100% source-data
+verification, a monitor visiting sites to compare case
+report forms against medical records. Modern practice is
+risk-based monitoring: concentrate effort on the critical
+data (eligibility, consent, primary endpoint, safety) and
+on sites flagged by central statistical monitoring.
+Central monitoring is itself a statistical activity;
+unusual digit patterns, implausibly low variability, and
+outlying enrollment rates have all detected fabrication.
+
+**Adjudication.** Subjective or complex endpoints
+(myocardial infarction, cause of death, disease
+progression on imaging) are reviewed by a blinded
+committee applying a written charter, using source
+documents with treatment labels removed. Adjudication
+converts an endpoint vulnerable to detection bias into one
+that is largely protected, and it is a design decision
+with a budget attached.
+
+**Protocol deviations.** Recorded, classified as major or
+minor, and reviewed blind to assignment before database
+lock. The important discipline is that the classification
+is made without knowledge of arm and outcome, because a
+deviation list compiled after unblinding is not credible.
+
+**Database lock.** The point at which the data are frozen:
+queries resolved, deviations classified, analysis
+populations defined, SAP signed. Only then is the treatment
+code released. Everything decided after unblinding is
+post hoc, and the sequencing exists to make the boundary
+auditable.
+
+## Analysis populations
+
+Three sets recur, and the estimand framework has made
+their role clearer than it once was.
+
+**The randomized set (ITT)** is everyone randomized,
+analyzed in the arm to which they were assigned,
+regardless of what they received. This is the analysis set
+that preserves randomization.
+
+**The full analysis set** is the randomized set with a
+small number of pre-specified exclusions, most defensibly
+patients who were randomized and never treated and who
+contributed no post-baseline data. Every exclusion is a
+crack in the randomization argument and should be
+justified and counted.
+
+**The per-protocol set** excludes patients with major
+deviations: non-adherence, eligibility violations,
+prohibited medication. It is not randomized, because
+adherence is a post-randomization characteristic related
+to prognosis, and it should be labeled a sensitivity
+analysis. The exception noted in Chapter 2 is
+non-inferiority, where an ITT analysis diluted by
+non-adherence biases *toward* the alternative and the
+per-protocol analysis is a necessary co-primary.
+
+**The safety set** is everyone who received any study
+treatment, analyzed by the treatment actually received.
+Safety asks what happened to patients exposed to the drug,
+so as-treated is the correct principle here even though it
+is the wrong principle for efficacy.
+
+::: {.callout-warning}
+## Warning
+
+Post-randomization exclusion is the most common way
+otherwise well-designed trials lose credibility. If
+patients are excluded after randomization for any reason
+related to what happened after randomization, including
+'did not receive the assigned treatment' when the reason
+for not receiving it was clinical, the comparison is no
+longer randomized. Count them, report them by arm, and
+include them in the primary analysis under a stated
+strategy.
+:::
+
+## Worked example: conduct plan for a surgical trial
+
+A trial compares a new minimally invasive procedure to
+open surgery for a specific fracture. Primary endpoint:
+function score at 12 months. Neither patient nor surgeon
+can be blinded.
+
+**Bias inventory and mitigation.**
+
+- *Selection at entry.* Central randomization after
+  consent and after the surgeon has confirmed the patient
+  is a candidate for both procedures. Eligibility is
+  determined and recorded before the assignment is
+  requested; the system will not issue an assignment
+  without the eligibility record.
+- *Performance.* Standardized rehabilitation protocol,
+  identical in both arms, specified in the protocol with
+  a checklist completed at each session. Co-interventions
+  recorded and reported by arm.
+- *Detection.* Function score is collected by an assessor
+  who did not perform the surgery, is not told the
+  assignment, and is instructed to leave the room if the
+  patient mentions it. Patients wear a dressing over the
+  incision at assessment visits through month 3. A
+  radiographic co-primary is read by a central blinded
+  panel.
+- *Attrition.* Retention plan with scheduled contact,
+  travel reimbursement, and a minimum-dataset postal
+  questionnaire for patients who withdraw from visits.
+  Target dropout under 10%; monitored monthly by arm,
+  blinded to outcome.
+- *Reporting.* Registered before enrollment; SAP posted;
+  all pre-specified outcomes reported.
+
+**Residual bias.** Patient expectancy on a self-reported
+function score cannot be removed. The protocol states this
+explicitly, presents the blinded radiographic endpoint and
+the objective grip-strength measure alongside the primary,
+and records patients' beliefs about their assignment at
+month 12.
+
+**Conduct.** Eight high-volume centers rather than twenty
+mixed-volume ones; surgeon credentialing with a minimum
+case count for the new procedure to avoid a learning-curve
+effect; a run-in of five unrandomized cases per surgeon
+before their first randomized patient.
+
+That last item is a design decision with a statistical
+consequence: it removes learning-curve cases from the
+comparison, which increases the estimated effect of the
+new procedure relative to what a health system adopting it
+would experience. The protocol should say which question
+is being answered.
+
+## Collaborating with an LLM on conduct and bias
+
+**Prompt 1: 'List the sources of bias in this trial design
+and how to mitigate each.'**
+
+*What to watch for.* This is one of the better uses of a
+model. The enumeration is usually thorough and correctly
+categorized. It will not know which mitigations your
+budget or your sites can support.
+
+*Verification.* Check each proposed mitigation against
+feasibility with the operations lead.
+
+**Prompt 2: 'Draft the blinding and unblinding section of
+the protocol.'**
+
+*What to watch for.* Drafts often cover blinding and omit
+the emergency unblinding procedure, the DSMB's access, and
+who holds the code. They also tend to state that the
+statistician is blinded without saying until when.
+
+*Verification.* The section must answer: who is blinded,
+by what mechanism, who can unblind, under what
+circumstances, how it is documented, and when the trial as
+a whole is unblinded.
+
+**Prompt 3: 'Classify these protocol deviations as major or
+minor.'**
+
+*What to watch for.* Reasonable classifications, but the
+model has no access to the therapeutic context that
+determines severity. More important, if the deviation list
+includes outcome data, using a model on it after
+unblinding recreates exactly the bias the blinded
+classification process exists to prevent.
+
+*Verification.* Classification is done by the study team,
+blinded, against written criteria fixed in advance. A
+model can help draft the criteria; it should not apply
+them to real cases with outcomes attached.
+
+## Principle in use
+
+1. **Blind the analyst, not just the patient.** It costs
+   nothing, it is rarely done, and it removes the most
+   sophisticated available source of bias.
+
+2. **Every post-randomization exclusion is a defect.**
+   Sometimes an unavoidable one. Count them, report them
+   by arm, and never let the number appear only in a flow
+   diagram no one reads.
+
+3. **Read the deviation log before database lock, blinded.**
+   The pattern of deviations tells you whether the trial
+   you designed is the trial that was run, and it is the
+   last moment at which the answer can still change the
+   analysis honestly.
+
+## Exercises
+
+1. For a published open-label trial, list each of the five
+   bias types and state what the design did, if anything,
+   to address it.
+
+2. A trial of a drug with a distinctive side effect
+   reports that 74% of patients correctly guessed their
+   assignment. Discuss what this implies for a
+   patient-reported primary endpoint and what analyses
+   might bound the resulting bias.
+
+3. Write the unblinding section of a protocol for a
+   double-blind trial with a DSMB and a planned interim
+   analysis. Cover emergency unblinding at sites.
+
+4. Design an adjudication charter for the endpoint
+   'hospitalization for heart failure': what documents the
+   committee sees, what criteria apply, and how
+   disagreements are resolved.
+
+5. Simulate a trial with differential dropout, where
+   placebo patients with poor outcomes leave at twice the
+   rate of others. Compare the completers-only estimate to
+   the full-data estimate and quantify the attrition bias.
+
+## Further reading
+
+- @schulz2010consort, the CONSORT 2010 statement and its
+  explanation-and-elaboration paper, which is the better
+  read of the two.
+- @friedman2015fundamentals, Chapters 6 and 7, on blinding
+  and conduct.
+- @piantadosi2017clinical, on trial operations and quality.
+- ICH E6(R2), Good Clinical Practice, for the formal
+  conduct requirements.
+- @ellenberg2019data, on the interaction between conduct,
+  monitoring, and the DSMB.

@@ -1,0 +1,367 @@
+# Summary Statistics for Treatment Efficacy {#sec-summary-statistics}
+
+*Prerequisites: Chapters 8, 18, and 20.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Describe the summary-measures approach and state what it
+  estimates.
+- Identify the design features under which a
+  summary-statistic analysis matches or exceeds MMRM.
+- Explain why the summary approach is robust to covariance
+  misspecification and MMRM is not.
+- Choose between the two for a specific trial and defend
+  the choice.
+
+## Orientation
+
+Before mixed models were computationally routine, the
+standard analysis of a longitudinal trial was the
+summary-measures approach: reduce each patient's series of
+measurements to a single number, then analyze those
+numbers with a simple two-sample method. The summary might
+be the mean over the follow-up period, the slope from a
+per-patient regression, the area under the curve, the peak
+value, or the time to a threshold.
+
+The approach has an unfashionable reputation, and this
+chapter argues that the reputation is undeserved. The
+summary-measures analysis is simple, transparent, robust
+to covariance misspecification, and, under conditions that
+describe a substantial fraction of real trials,
+essentially as powerful as MMRM.
+
+The chapter is not an argument against mixed models. It is
+an argument that the choice should be made on the trial's
+features rather than by default, and a specification of
+which features matter.
+
+## Provenance
+
+This chapter follows the research compendium
+`09-summary-stats-efficacy` (project `summarystats`),
+which synthesizes the theoretical and empirical literature
+comparing summary-statistic and MMRM approaches,
+identifies the design features favoring summary
+statistics, and conducts an ADEMP simulation comparing the
+operating characteristics of summary-statistic ANCOVA and
+MMRM across design parameters relevant to practice.
+
+## The statistician's contribution {#sec-summary-human}
+
+**(Judgment 1.) What the summary measure should be.** The
+choice encodes the scientific question. A per-patient
+slope answers 'does the treatment change the rate'; a mean
+over follow-up answers 'is the patient better off on
+average across the period'; an area under the curve
+answers a cumulative-burden question. These are different
+estimands and the choice should precede the analysis.
+
+**(Judgment 2.) Whether the trial's features favor the
+simple approach.** The compendium's list, reproduced
+below, is the checklist. Working through it takes ten
+minutes and can save an analysis that depends on a
+covariance structure the data will not support.
+
+**(Judgment 3.) How much the transparency is worth.** A
+summary-measure analysis can be described completely in
+two sentences and reproduced by any reader with the
+per-patient summaries. An MMRM cannot. In settings where
+the audience is clinical and the result is contested, that
+matters.
+
+## The approach
+
+For each patient $i$, compute a summary $S_i$ from their
+observed measurements. Then compare $S_i$ between arms
+with a $t$-test or, better, ANCOVA adjusting for baseline.
+
+```r
+library(dplyr)
+
+summaries <- long_data |>
+  filter(visit > 0) |>
+  group_by(id, arm, baseline) |>
+  summarize(
+    slope = coef(lm(y ~ time))[2],
+    mean_post = mean(y),
+    auc = pracma::trapz(time, y),
+    .groups = 'drop')
+
+summary(lm(slope ~ arm + baseline, data = summaries))
+```
+
+Three points about this code. The per-patient regression
+uses whatever observations that patient has, so patients
+with partial data still contribute a summary, though a
+noisier one. The subsequent ANCOVA treats all summaries as
+equally precise, which they are not, and this is the
+approach's main statistical weakness. And weighting the
+second-stage analysis by the precision of each summary
+recovers most of the loss, which is the two-stage
+weighted variant.
+
+## When summary statistics are adequate
+
+The compendium's synthesis identifies six conditions.
+Under them, summary statistics are as effective as MMRM.
+
+1. **The treatment effect diverges linearly or reaches a
+   stable plateau.** A constant treatment effect after an
+   initial period is well captured by a mean or a slope.
+   Chapter 18's $\kappa$ parameterization is the same
+   consideration from the other side.
+
+2. **The number of repeated measurements is moderate to
+   large.** More measurements per patient means each
+   patient's summary is stable, which is what the second
+   stage assumes.
+
+3. **Missing data rates are low to moderate, below about
+   20%, and not strongly informative.** This is the main
+   restriction. MMRM's advantage is precisely in its
+   principled handling of MAR dropout, and where dropout
+   is substantial the mixed model earns its complexity.
+
+4. **Sample sizes are small to moderate.** This condition
+   surprises people. MMRM's degrees-of-freedom
+   approximations, Kenward-Roger and Satterthwaite, are
+   least reliable in small samples, and the unstructured
+   covariance has many parameters to estimate. A
+   two-sample comparison of summaries has exact
+   small-sample theory.
+
+5. **Multiple pre-treatment measurements are available**,
+   enabling precise baseline adjustment. Chapter 11's
+   run-in observations feed directly into this.
+
+6. **The question concerns the overall rate of change or
+   cumulative benefit**, rather than the effect at one
+   specific visit. If the estimand is the difference at
+   week 24, the categorical-time MMRM targets it directly
+   and the summary does not.
+
+## Robustness
+
+The comparative literature the compendium reviews reaches
+a consistent verdict: the summary-measures approach
+performs close to the best-fitting mixed model, and
+**when the mixed model's covariance structure is
+misspecified, the mixed model produces unreliable results
+while the summary approach remains robust**.
+
+The mechanism is straightforward. The summary approach
+makes no assumption about the within-patient covariance
+structure at all: the per-patient summary is computed from
+that patient's data, and the second-stage comparison
+treats the summaries as independent, which they are. A
+mixed model with a mis-specified covariance can produce
+standard errors that are wrong in either direction, and
+the misspecification is difficult to detect with the
+number of patients most trials have.
+
+The efficiency cost of this robustness is generally
+negligible, which is the surprising part. The published
+simulation comparisons find the loss relative to the
+best-fitting mixed model to be small, and the summary
+approach dominating the unstructured multivariate
+alternative outright.
+
+In the Alzheimer trial literature specifically, the
+comparison between MMRM and slope models finds that both
+maintain proper type I error, that the slope model has a
+moderate power advantage when true progression is linear
+or near-linear, and that MMRM's semiparametric treatment
+of time retains an advantage when progression is
+nonlinear. This is precisely the trade-off of Chapter 18,
+arrived at from a different direction.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: which analysis for this trial?
+
+**Question.** A 60-patient trial in a rare neurological
+disease, monthly measurements over 12 months, expected
+dropout 10%, endpoint the rate of functional decline,
+disease known to progress approximately linearly.
+
+**Answer.**
+
+Summary statistics, specifically a per-patient slope
+compared by ANCOVA with baseline adjustment.
+
+Check the six conditions. Linear divergence: yes, stated.
+Moderate to large number of measurements: 12, yes. Low
+dropout: 10%, yes. Small to moderate sample: 60, yes, and
+this is where MMRM's degrees-of-freedom approximations are
+least trustworthy and the unstructured covariance has 78
+parameters to estimate from 60 patients, which is not
+feasible. Multiple pre-treatment measurements: not stated,
+and adding one or two would help (Chapter 11). Question
+concerns the rate of change: yes, stated.
+
+Six for six, or five and a half. The summary analysis is
+simpler, has exact small-sample theory, makes no
+covariance assumption, and is fully reproducible from a
+table of 60 numbers.
+
+What would change the answer: dropout of 30% rather than
+10%, which would make the MAR handling of a mixed model
+worth its complexity; or an estimand defined at month 12
+rather than as a rate, which the summary does not target;
+or a nonlinear trajectory, which would make the
+per-patient slope a poor summary of anything.
+:::
+
+## The weighted two-stage refinement
+
+The main statistical objection to the summary approach is
+that patients contribute summaries of differing precision:
+a patient with 12 observations has a better-estimated
+slope than one with 4. Treating them equally in the second
+stage is inefficient and, when the number of observations
+is related to the outcome, potentially biased.
+
+The refinement weights each patient's summary by the
+inverse of its estimated variance, which is available from
+the per-patient regression. This recovers most of the
+efficiency that the naive version loses under unequal
+follow-up, and it connects the approach to the
+two-stage-adjustment methods of Chapter 21, where the
+same weighting logic determines the sample-size
+adjustment.
+
+The remaining objection, which the weighting does not
+answer, is that patients who drop out early have summaries
+that are both noisy and potentially informative about
+their outcome. This is the dropout condition again, and it
+is the boundary of the method's applicability.
+
+## Worked example: choosing the analysis for a rate-of-decline trial
+
+An 18-month trial in a progressive neuromuscular disease,
+80 patients, quarterly assessments of a functional scale,
+expected dropout 15%, natural history approximately
+linear, primary question whether the treatment slows the
+rate of decline.
+
+**Estimand.** Difference in the mean rate of change over
+18 months. Note this is a rate estimand, not a
+final-visit estimand, chosen because the clinical question
+is about disease modification.
+
+**Primary analysis.** Per-patient slope from an ordinary
+least-squares regression of the functional scale on time,
+using all available observations for that patient,
+compared between arms by ANCOVA adjusting for baseline
+scale value and the two stratification factors, with
+inverse-variance weights from the per-patient fits.
+
+**Why not MMRM.** Eighty patients and seven visits give an
+unstructured covariance with 28 parameters, estimated on
+80 patients. It is feasible and it is not comfortable, and
+the Kenward-Roger correction will be doing substantial
+work. The summary approach has exact small-sample theory
+and no covariance assumption.
+
+**Sensitivity analyses.** A random-slopes mixed model,
+pre-specified as a sensitivity analysis; a categorical-time
+MMRM at the final visit, to check that a
+final-visit framing gives a consistent picture; and an
+unweighted summary analysis, to confirm the weighting is
+not driving the result.
+
+**Missing data.** At 15% dropout the summary approach is
+within its range, but patients who drop out contribute
+slopes estimated from fewer points. The SAP specifies that
+patients with fewer than three post-baseline observations
+are handled by multiple imputation of their trajectory
+before the summary is computed, with the number of such
+patients reported.
+
+**Reporting.** The per-patient slopes are plotted by arm,
+which is a figure any clinician can read, and the analysis
+is described completely in three sentences.
+
+## Collaborating with an LLM on summary measures
+
+**Prompt 1: 'Should we use MMRM or a summary-measures
+analysis?'**
+
+*What to watch for.* Models default to MMRM and rarely
+mention the robustness argument or the small-sample
+degrees-of-freedom problem.
+
+*Verification.* Work through the six conditions
+explicitly. Ask the model to argue the other side.
+
+**Prompt 2: 'Compute per-patient slopes and compare
+arms.'**
+
+*What to watch for.* Code that computes slopes correctly
+and then compares them without weighting or baseline
+adjustment. Also check the handling of patients with too
+few observations for a slope; silent `NA` propagation is
+common.
+
+*Verification.* Count how many patients contribute a
+slope, and confirm it matches the expected number.
+
+**Prompt 3: 'Is the summary approach less powerful?'**
+
+*What to watch for.* An unqualified yes, which is the
+conventional belief and is not what the comparative
+literature shows.
+
+*Verification.* Simulate both analyses on the same data
+under the trial's expected conditions and compare the
+empirical power directly.
+
+## Principle in use
+
+1. **Work through the six conditions before defaulting to
+   MMRM.** It takes ten minutes and it is the difference
+   between a chosen analysis and an inherited one.
+
+2. **Weight the summaries by their precision.** It costs
+   one line and recovers most of the efficiency lost to
+   unequal follow-up.
+
+3. **Prefer the transparent analysis when the audience is
+   clinical.** A method the reader can verify from a table
+   of numbers has a value that does not appear in any
+   simulation.
+
+## Exercises
+
+1. Simulate a trial with linear divergence, seven visits,
+   and complete data. Compare the power of the per-patient
+   slope analysis, the weighted version, and MMRM.
+
+2. Repeat with the mixed model's covariance structure
+   mis-specified as compound symmetry when the truth is
+   AR(1) plus measurement error. Which analysis retains
+   nominal coverage?
+
+3. Vary the dropout rate from 0% to 40% and find the point
+   at which MMRM's advantage becomes material.
+
+4. Compute the analytic variance of a per-patient slope
+   from $J$ equally spaced observations and use it to
+   derive the inverse-variance weights.
+
+5. For a trial in your own field, work through the six
+   conditions and state which analysis you would
+   pre-specify and why.
+
+## Further reading
+
+- The compendium `09-summary-stats-efficacy`.
+- Matthews and colleagues on the analysis of serial
+  measurements in medical research, the classic statement
+  of the summary-measures approach.
+- @fitzmaurice2011applied, Chapter 4, on derived variables.
+- @ard2001donepezil, on slope models in Alzheimer trials.
+- @mallinckrodt2008recommendations, for the MMRM side of
+  the argument.

@@ -1,0 +1,508 @@
+# Missing Data, Sensitivity, and Reporting {#sec-missing-reporting}
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Classify missing-data mechanisms as MCAR, MAR, or MNAR
+  and explain why the classification is not testable from
+  the observed data.
+- Relate missing data to the estimand framework and
+  explain why prevention is a design activity.
+- Implement multiple imputation, including
+  reference-based imputation, for a longitudinal trial.
+- Construct a tipping-point sensitivity analysis and
+  interpret it.
+- Report a trial following CONSORT and identify the
+  reporting practices that most often mislead.
+
+## Orientation
+
+Missing data is where trials most often lose their claim
+to unbiasedness. Randomization guarantees comparability at
+baseline; missing outcomes reintroduce exactly the
+selection that randomization removed, because the patients
+who fail to provide data are not a random subset.
+
+The chapter has three movements. **Prevention**, which is
+a design activity and by far the most effective response.
+**Analysis**, covering what MMRM assumes and what to do
+when that assumption is doubtful. **Sensitivity**, which
+is the honest treatment of an assumption that cannot be
+verified. The chapter closes with reporting, because the
+credibility of everything in the book depends on the trial
+being described completely enough for a reader to judge
+it.
+
+## The statistician's contribution {#sec-missing-human}
+
+**(Judgment 1.) Distinguishing missing outcomes from
+intercurrent events.** A patient who discontinues the drug
+but attends the week-24 visit has no missing data; the
+outcome exists and the estimand determines how it is used.
+A patient who discontinues and is never seen again has
+missing data. Conflating these is the most common error in
+this area, and the estimand framework of Chapter 2 is what
+keeps them apart.
+
+**(Judgment 2.) Which departure from MAR to explore, and
+how far.** Sensitivity analysis is only meaningful if the
+departures examined are plausible. A tipping point of a
+30-point penalty on a 60-point scale is not reassuring
+merely because it is large; the question is whether a
+30-point penalty is clinically conceivable.
+
+**(Judgment 3.) Insisting on prevention at the design
+stage.** Retention plans, minimum-dataset collection,
+follow-up after discontinuation, and realistic visit
+schedules are cheaper than every statistical remedy and
+strictly better. The statistician is usually the only
+person in the design meeting who knows how much a 25%
+dropout rate costs.
+
+## Mechanisms
+
+Following Rubin's taxonomy, let $Y$ be the outcome, $X$
+observed covariates, and $R$ the indicator of being
+observed.
+
+**MCAR**: $P(R \mid Y, X) = P(R)$. Missingness is unrelated
+to anything. A patient moves away for a new job. Complete-
+case analysis is unbiased, merely less efficient.
+
+**MAR**: $P(R \mid Y, X) = P(R \mid X_{\text{obs}},
+Y_{\text{obs}})$. Missingness depends only on observed
+data. Patients whose week-4 score was poor drop out more
+often, and week-4 score is recorded. Likelihood-based
+methods using all observed data, including MMRM and
+multiple imputation, are valid.
+
+**MNAR**: missingness depends on the unobserved value
+itself. Patients drop out *because* they are doing badly
+at the moment of the missed visit, and that value was
+never recorded. No analysis of the observed data alone is
+valid; assumptions about the unobserved distribution are
+required.
+
+The essential and often-missed point: **the observed data
+cannot distinguish MAR from MNAR.** Any observed-data
+pattern is consistent with both, under suitable
+assumptions about the unobserved values. Tests of MCAR
+exist and are of limited use; there is no test for MAR.
+This is why sensitivity analysis is not optional
+housekeeping but the core of a credible missing-data
+strategy [@nrc2010prevention].
+
+## Prevention
+
+Every percentage point of missing data is a percentage
+point of the trial's credibility, and prevention is a
+design activity.
+
+**Follow-up after discontinuation.** Under a
+treatment-policy estimand the outcome is required whether
+or not the patient continued treatment. This must be in
+the protocol, in the consent form, in the site budget, and
+in the site's training. Retrofitting it is impossible: a
+patient who consented to a protocol that ended at
+discontinuation cannot be contacted later.
+
+**Minimum dataset.** For patients who will not attend
+visits, define a reduced collection: a phone call, a
+postal questionnaire, a records check for hospitalization
+and vital status. Something is enormously better than
+nothing, and often sufficient for the primary endpoint.
+
+**Realistic visit schedules.** A protocol with twelve
+visits in six months will have missing visits. Fewer
+visits, better attended, usually yields more information.
+
+**Retention practices.** Reimbursement, flexible
+scheduling, home visits, reminder systems, and continuity
+of study staff. These have larger effects on the final
+analysis than any statistical method.
+
+**Monitoring dropout by arm, blinded to outcome, during
+the trial.** A dropout rate diverging between arms is
+detectable early and is the signal that the missing-data
+plan is failing.
+
+::: {.callout-tip}
+## Tip
+
+At the design stage, compute the trial's power with the
+assumed dropout rate and with twice that rate. The
+difference is the budget justification for the retention
+plan. Teams that see 'power falls from 90% to 74%' fund
+retention; teams that see only 'we will inflate the
+sample size by 15%' do not.
+:::
+
+## Analysis under MAR
+
+**MMRM** (Chapter 8) is the default for continuous
+longitudinal endpoints. It uses all observed measurements,
+requires no imputation, and is valid under MAR given the
+variables in the model. Its implicit imputation for a
+missing final visit is based on the patient's own earlier
+trajectory and the population mean structure, which is
+usually reasonable and is precisely the MAR assumption.
+
+**Multiple imputation** [@vanbuuren2011mice] generates $M$
+completed datasets by drawing missing values from their
+posterior predictive distribution, analyzes each, and
+combines by Rubin's rules: the estimate is the average,
+and the variance is the within-imputation variance plus
+$(1 + 1/M)$ times the between-imputation variance.
+
+```r
+library(mice)
+
+imp <- mice(trial_wide, m = 50, method = 'pmm',
+            printFlag = FALSE, seed = 2026)
+fit <- with(imp, lm(week24 ~ treatment + baseline + site))
+summary(pool(fit), conf.int = TRUE)
+#>          term estimate std.error statistic    df p.value
+#>     treatment   -3.184     1.121    -2.840 187.4   0.005
+```
+
+MI is more flexible than MMRM in one important respect:
+the imputation model can include variables not in the
+analysis model, such as post-discontinuation measurements,
+reasons for withdrawal, and auxiliary variables correlated
+with the outcome. Including good auxiliary variables makes
+MAR more plausible, which is the main practical route to
+strengthening the assumption.
+
+Use $M = 50$ or more; the old advice of $M = 5$ gives
+unstable standard errors when the fraction of missing
+information is substantial.
+
+**What not to use.** Last observation carried forward
+assumes the patient's outcome froze at the moment of
+dropout, which is nearly always false and is biased in an
+unpredictable direction: conservative in a trial where
+patients improve over time, anti-conservative in a
+degenerative disease where they decline. Single mean
+imputation understates the variance. Complete-case
+analysis is valid only under MCAR and discards
+information. These methods appear in older literature and
+in regulatory precedent, and none of them should be a
+primary analysis today.
+
+## Reference-based imputation
+
+The most useful development for regulatory trials
+[@carpenter2013analysis]. The idea: impute missing values
+in the active arm using the distribution from the control
+arm, encoding an explicit and conservative assumption
+about what happens after discontinuation.
+
+Three common variants.
+
+**Jump to reference (J2R).** After discontinuation, the
+patient's mean profile jumps immediately to the control
+arm's. Encodes complete and immediate loss of treatment
+benefit.
+
+**Copy reference (CR).** The patient's entire profile is
+modeled as if they had been in the control arm.
+
+**Copy increments in reference (CIR).** The patient keeps
+the benefit accrued to the point of discontinuation and
+thereafter changes at the control arm's rate.
+
+```r
+library(rbmi)
+
+draws <- draws(data = long_data, vars = vars,
+               method = method_bayes())
+imputed <- impute(draws,
+                  references = c(active = 'placebo',
+                                 placebo = 'placebo'))
+ana <- analyse(imputed, fun = ancova)
+pool(ana)
+#>   parameter   est    se  lci  uci  pval
+#>   trt_week24 -2.71 1.18 -5.03 -0.39 0.022
+```
+
+These methods are attractive because the assumption is
+stated in clinical language ('patients who stop the drug
+lose its benefit immediately') rather than in terms of a
+sensitivity parameter no one can interpret. They are
+conservative relative to MAR, which suits a regulatory
+primary or a principal sensitivity analysis. Note that the
+standard variance from reference-based imputation under
+Rubin's rules is known to be conservative; `rbmi` provides
+alternatives.
+
+## Tipping-point analysis
+
+The most transparent sensitivity analysis available. Add a
+penalty $\delta$ to every imputed value in the active arm
+and vary $\delta$ until the conclusion changes. The
+tipping point is the value of $\delta$ at which
+significance is lost.
+
+```r
+tipping <- sapply(seq(0, 8, by = 0.5), function(d) {
+  imp_shift <- shift_imputed(imp, arm = 'active', delta = d)
+  fit <- with(imp_shift, lm(week24 ~ treatment + baseline))
+  summary(pool(fit))$p.value[2]
+})
+data.frame(delta = seq(0, 8, by = 0.5), p = round(tipping, 3))
+#>   delta     p
+#> 1   0.0 0.005
+#> ...
+#> 9   4.0 0.048
+#> 10  4.5 0.061
+```
+
+The tipping point is 4.5 points on the outcome scale.
+Now the substantive question: is it plausible that
+patients in the active arm who dropped out would have
+scored 4.5 points worse than the MAR-based imputation
+predicts? Given that the treatment effect itself is 3.2
+points, a departure of 4.5 is larger than the entire
+treatment effect, and would require dropouts in the active
+arm to be doing dramatically worse than everything
+observed about them suggests. That is a defensible
+statement of robustness, and it is far more informative
+than a single sensitivity analysis under one arbitrary
+alternative.
+
+For binary outcomes the analogous device is a two-way
+table over assumed response rates among the missing in
+each arm, shaded by whether the conclusion holds.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: diagnosing a dropout pattern
+
+**Question.** In a 24-week trial, 8% of the active arm and
+22% of the placebo arm have no week-24 measurement. Reasons
+recorded: 'lack of efficacy' accounts for most placebo
+withdrawals, 'adverse event' for most active ones. Is MAR
+plausible, and what should the analysis do?
+
+**Answer.**
+
+MAR is plausible but not comfortable, and the two arms
+require different reasoning.
+
+Placebo withdrawals for lack of efficacy: if the
+withdrawal follows visible non-response at weeks 4 and 8,
+which are recorded, the missingness depends on observed
+data, and MAR is defensible. If the patient withdrew
+because of deterioration between visits that was never
+measured, the mechanism is MNAR. The recorded reason and
+the observed trajectory before withdrawal are the evidence
+available, and the trajectory should be plotted by arm and
+by withdrawal status.
+
+Active-arm withdrawals for adverse events: these may be
+unrelated to efficacy, in which case something close to
+MCAR holds within that group, or they may be
+concentrated among patients receiving a higher effective
+dose, which could correlate with response either way.
+
+Note that the *direction* of the two mechanisms differs,
+which is what makes the imbalance dangerous: MAR-based
+analysis imputes placebo dropouts as continuing their poor
+trajectory, which is right, and imputes active dropouts as
+continuing their good one, which may be optimistic if they
+stopped the drug and lost its benefit.
+
+The analysis: MMRM as primary under MAR, with the
+withdrawal reason and post-baseline trajectory in the
+model. Then jump-to-reference imputation for active-arm
+discontinuations as the principal sensitivity analysis,
+which directly encodes 'they lost the benefit'. Then a
+tipping point. And report the dropout rates and reasons by
+arm prominently, since a reader who does not see the 8%
+against 22% cannot judge the analysis at all.
+:::
+
+## Reporting
+
+**CONSORT** [@schulz2010consort] is the reporting standard
+for parallel-group randomized trials: a 25-item checklist
+and a flow diagram accounting for every patient from
+assessment for eligibility through analysis. Journals
+following the ICMJE require it. The extensions cover
+cluster, non-inferiority, pragmatic, and adaptive designs,
+among others.
+
+The items most often reported badly:
+
+**The flow diagram.** Numbers must reconcile. Patients
+randomized must equal patients analyzed plus patients
+excluded, with every exclusion explained and counted by
+arm.
+
+**The primary outcome as pre-specified.** Comparing the
+registration record to the publication reveals outcome
+switching in a substantial fraction of published trials.
+Report the registered primary outcome, whatever it showed.
+
+**Harms.** Reported with the same rigor as efficacy, in a
+table, by arm, with denominators. Not 'the drug was
+generally well tolerated'.
+
+**Missing data.** Amount, by arm, by reason, with the
+handling method and the sensitivity analyses.
+
+**Effect sizes with confidence intervals**, not $p$-values
+alone. A confidence interval communicates precision and
+allows the reader to assess clinical importance; a
+$p$-value does neither.
+
+Registration before enrollment, and posting of results
+within a year of completion, are legal requirements in the
+US for most trials and are enforced unevenly. Data sharing
+is increasingly expected: individual participant data
+under a controlled-access mechanism, with a data-sharing
+statement in the publication.
+
+## Worked example: the missing-data plan for a two-year trial
+
+An Alzheimer disease trial, 18-month follow-up, primary
+endpoint the change in a cognitive-functional composite.
+Expected dropout in this population is 25 to 30%, with
+death and institutionalization contributing.
+
+**Prevention.** Study partner required at enrollment,
+since patients with a committed partner attend visits.
+Home visits offered for patients who cannot travel. A
+reduced assessment (cognitive scale only, by telephone
+where necessary) defined for patients withdrawing from the
+full protocol. Follow-up continues after study-drug
+discontinuation, with this stated in the consent form.
+Vital status ascertainment at 18 months for everyone.
+
+**Estimand.** Treatment policy for study-drug
+discontinuation. Death handled as a composite: a patient
+who dies is assigned the worst rank in a supportive
+rank-based analysis, and the primary MMRM analysis uses
+data up to death with the number of deaths reported by
+arm. Institutionalization is recorded and treated as an
+intercurrent event with a while-on-treatment strategy for
+the functional component.
+
+**Primary analysis.** MMRM on the composite, visits at 3,
+6, 12, 18 months, unstructured covariance, adjusted for
+baseline composite, age, APOE4 status, and site.
+
+**Sensitivity analyses, pre-specified.**
+
+1. Multiple imputation including auxiliary variables:
+   MRI volumetrics, study-partner-reported function, and
+   the reason for withdrawal.
+2. Jump-to-reference imputation for patients who
+   discontinued study drug.
+3. Tipping point over a penalty applied to active-arm
+   imputed values, reported as a plot of $p$-value against
+   $\delta$ with the clinically meaningful difference
+   marked.
+4. A pattern-mixture model stratified by dropout time.
+
+**Reporting.** CONSORT flow diagram, dropout by arm and by
+reason in the main text rather than a supplement, and the
+tipping-point plot as a main figure. The paper states the
+assumption on which the primary result depends, in one
+sentence, in the discussion.
+
+That last item is rarer than it should be. A trial whose
+conclusion depends on MAR should say so where readers will
+see it.
+
+## Collaborating with an LLM on missing data
+
+**Prompt 1: 'Set up multiple imputation for this
+longitudinal trial.'**
+
+*What to watch for.* Reasonable `mice` scaffolding, with
+two recurring errors: imputing in wide format while
+ignoring the longitudinal structure, and omitting the
+treatment indicator from the imputation model, which
+biases the treatment effect toward the null.
+
+*Verification.* Confirm the imputation model includes the
+treatment arm and all analysis-model variables, plus
+auxiliaries. Inspect convergence and compare imputed
+against observed distributions.
+
+**Prompt 2: 'Implement a tipping-point analysis.'**
+
+*What to watch for.* Check which arm the penalty is
+applied to and in which direction, since the sign
+convention is easy to invert and the resulting plot then
+looks reassuring when it should not.
+
+*Verification.* At $\delta = 0$ the result must reproduce
+the MAR analysis exactly. If it does not, the shift is
+misapplied.
+
+**Prompt 3: 'Write the missing-data section of the SAP.'**
+
+*What to watch for.* Drafts tend to name methods without
+tying them to the estimand, and to describe MAR as though
+it were testable.
+
+*Verification.* Every method named must be traceable to an
+intercurrent-event strategy, and the section must state
+that MAR is an assumption and name the sensitivity
+analyses that probe it.
+
+## Principle in use
+
+1. **Prevention beats analysis, by a wide margin.** Spend
+   the effort on the retention plan and the
+   post-discontinuation follow-up.
+
+2. **Never let the primary analysis be the only
+   assumption.** Pre-specify at least one sensitivity
+   analysis under a genuinely different mechanism, and
+   report it beside the primary result rather than in a
+   supplement.
+
+3. **Report the dropout by arm in the abstract if it is
+   imbalanced.** A reader who learns about a 14-point
+   dropout imbalance on page 9 has already formed a
+   conclusion from the abstract.
+
+## Exercises
+
+1. Simulate a longitudinal trial with MAR dropout depending
+   on the previous observed value. Compare complete-case,
+   LOCF, MMRM, and multiple imputation for bias and
+   coverage.
+
+2. Repeat with MNAR dropout depending on the current
+   unobserved value. Which methods break, and by how much?
+
+3. Construct a tipping-point analysis for a binary outcome
+   as a two-way table of assumed response rates among the
+   missing in each arm. Shade the region where the
+   conclusion holds.
+
+4. Implement jump-to-reference imputation with `rbmi` and
+   compare the estimate and standard error to the MAR
+   analysis. Explain the direction of the difference.
+
+5. Take a published trial and audit it against the CONSORT
+   checklist. Identify the three items reported least
+   adequately and state what a reader loses from each.
+
+## Further reading
+
+- @nrc2010prevention, *The Prevention and Treatment of
+  Missing Data in Clinical Trials*. The most influential
+  document on this topic; read the recommendations.
+- @little2019statistical, *Statistical Analysis with
+  Missing Data*.
+- @molenberghs2007missing, on missing data specifically in
+  trials.
+- @carpenter2013analysis, on reference-based imputation.
+- @schulz2010consort, CONSORT, and the
+  explanation-and-elaboration paper.
+- The `mice`, `rbmi`, and `mmrm` R packages.

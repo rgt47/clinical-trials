@@ -1,0 +1,401 @@
+# Baseline Covariate Adjustment {#sec-baseline-covariates}
+
+*Prerequisites: Chapters 3, 5, and 8.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- State the criteria determining when to adjust, which
+  covariates to adjust for, and how to specify the
+  adjustment.
+- Explain why the decision to adjust must never depend on
+  observed baseline balance.
+- Compute the efficiency gain from adjustment and relate
+  it to the covariate-outcome correlation.
+- Handle adjustment correctly for binary and
+  time-to-event outcomes, where the estimand changes.
+- Recognize when adjustment can hurt.
+
+## Orientation
+
+Covariate adjustment in randomized trials has a mature
+theoretical literature, consistent simulation evidence, and
+regulatory guidance from ICH, the FDA, and the EMA, all
+pointing the same direction. It remains contested in
+applied practice. The gap is not one of evidence but of
+translation: an investigator facing a specific trial has
+had no compact set of criteria to apply without
+re-deriving the theory.
+
+This chapter supplies those criteria. Its content is not
+new; it is a consolidation of dispersed guidance into a
+form a study team can use, with the reasoning behind each
+rule stated so that it can be defended.
+
+The central claim is simple: **adjust, always, for
+pre-specified prognostic covariates**, and the design
+questions are which ones and how, not whether.
+
+## Provenance
+
+This chapter follows the research compendium
+`12-baseline-covariate-dist` (project `baselinedist`),
+which synthesizes the statistical literature, the
+regulatory guidance, and simulation evidence on adjusted
+versus unadjusted analyses across covariate-outcome
+correlations, sample sizes, and imbalance levels, and
+distils the result into criteria along three axes: when to
+adjust, which covariates, and how to specify the
+adjustment. Performance measures are bias, coverage, and
+relative variance reduction.
+
+## The statistician's contribution {#sec-covariates-human}
+
+**(Judgment 1.) The covariate list, fixed before
+unblinding.** The list should be short, prognostic, and
+justified by prior evidence. Choosing it from the trial's
+own data invalidates the inference, whether the selection
+is on observed imbalance or on observed association with
+the outcome.
+
+**(Judgment 2.) The estimand implied by the model.** In
+linear models, adjustment changes precision and not the
+target. In logistic and Cox models it changes the target,
+from a marginal to a conditional effect. This is not a
+technicality; it changes what the number means and
+whether it can be compared to other trials.
+
+**(Judgment 3.) Resisting the balance test.** Someone will
+propose testing baseline characteristics for imbalance and
+adjusting for those that differ. This is incoherent and
+should be refused. Chapter 8 gave the reason; this chapter
+gives the criterion.
+
+## When to adjust
+
+**Criterion 1. Always, when prognostic covariates are
+available and pre-specified.** The efficiency gain is real
+and the cost is nil when the model is correctly specified.
+
+**Criterion 2. Always include the stratification variables
+used in the randomization.** This is not merely an
+efficiency recommendation but a validity requirement, as
+Chapter 3 established: omitting them leaves the standard
+error too large and the inference conservative, and under
+covariate-adaptive schemes the test is not correctly
+calibrated at all.
+
+**Criterion 3. Always include the baseline measurement of
+the outcome, when it exists.** It is nearly always the
+single most prognostic covariate available, and the
+efficiency gain from including it is larger than from any
+other single variable.
+
+**And the negative criterion: the decision to adjust must
+not depend on observed baseline balance.** Senn's argument
+is decisive. In a randomized trial, any observed imbalance
+is by construction a chance event; a hypothesis test of
+baseline balance therefore tests a null hypothesis known
+to be true, and its rejection carries no information about
+whether adjustment is needed. Worse, conditioning the
+model choice on the data makes the type I error of the
+final test depend on a data-dependent selection, which is
+not accounted for in the reported $p$-value.
+
+## Which covariates
+
+**Criterion 4. Select on prior knowledge of prognostic
+value**, from previous trials, meta-analyses, or
+established clinical understanding.
+
+**Criterion 5. Keep the number small relative to the
+sample size.** The efficiency gain from an additional
+covariate is offset by the degree of freedom it consumes,
+and the trade-off worsens as the sample size falls. A
+useful rule is one covariate per 15 to 20 patients as an
+upper bound, and in practice the useful list is three to
+five variables. Chapter 14 supplies an additional reason
+for restraint: the covariate-adjusted Wald test becomes
+anti-conservative as the list lengthens in small samples.
+
+**Criterion 6. Never select on the trial's own data**, and
+this includes both selecting on observed imbalance and
+selecting on observed covariate-outcome association.
+
+## The efficiency gain
+
+For a continuous outcome analyzed by ANCOVA with a single
+covariate of correlation $\rho$ with the outcome, the
+residual variance is reduced by the factor $1 - \rho^2$,
+so the required sample size for fixed power is reduced by
+the same factor.
+
+| $\rho$ | Variance reduction | Equivalent $N$ saving |
+|-------:|-------------------:|----------------------:|
+| 0.2    | 4%                 | 4%                    |
+| 0.4    | 16%                | 16%                   |
+| 0.5    | 25%                | 25%                   |
+| 0.6    | 36%                | 36%                   |
+| 0.7    | 49%                | 49%                   |
+
+Baseline measurements of the outcome typically correlate
+0.5 to 0.7 with the follow-up value, so adjustment for
+baseline alone commonly saves a quarter to a half of the
+sample size. This is the largest free gain available in
+trial design and it costs one line in the model
+specification.
+
+```r
+set.seed(2026)
+n <- 100; rho <- 0.6
+x <- rnorm(2 * n)
+z <- rep(0:1, each = n)
+y <- 0.5 * z + rho * x + sqrt(1 - rho^2) * rnorm(2 * n)
+
+summary(lm(y ~ z))$coefficients['z', 'Std. Error']
+#> [1] 0.1418
+summary(lm(y ~ z + x))$coefficients['z', 'Std. Error']
+#> [1] 0.1131
+(0.1131 / 0.1418)^2
+#> [1] 0.6363    # variance ratio, close to 1 - rho^2 = 0.64
+```
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: adjustment and the baseline table
+
+**Question.** A reviewer objects that the trial adjusted
+for five covariates but the baseline table shows the arms
+were well balanced on all five, so the adjustment was
+unnecessary and looks like fishing. How do you respond?
+
+**Answer.**
+
+The objection confuses two roles that adjustment plays.
+
+Adjustment corrects for imbalance, which is what the
+reviewer has in mind, and in a well-balanced trial that
+correction is indeed small. But adjustment also reduces
+residual variance, and that gain is present whether or not
+the covariates are balanced. It comes from removing
+explained variation from the error term, not from
+correcting a difference between arms. A perfectly balanced
+trial still gains the full $1 - \rho^2$ precision benefit.
+
+The 'fishing' concern is answered by pre-specification:
+the five covariates were named in the SAP before
+unblinding, so no selection occurred. Point the reviewer
+to the SAP version and date.
+
+Finally, note that the reviewer's implicit alternative,
+adjusting only when the baseline table shows imbalance, is
+exactly the procedure that would constitute fishing, since
+it conditions the model on the data.
+:::
+
+## How to adjust
+
+**Criterion 7. Continuous outcomes: ANCOVA.** Regress the
+follow-up value on treatment and the covariates, including
+the baseline value of the outcome. Ordinary or robust
+standard errors are both acceptable in balanced designs.
+Lin's analysis shows that including
+treatment-by-covariate interactions, with covariates
+centered, guarantees the adjusted estimator is no less
+efficient than the unadjusted one asymptotically, which
+answers Freedman's critique of adjustment in randomized
+experiments [@lin2013agnostic; @freedman2008regression].
+
+**Criterion 8. Binary outcomes: fit the logistic model and
+then standardize.** The raw coefficient from an adjusted
+logistic regression is a conditional odds ratio, which
+differs from the marginal odds ratio by non-collapsibility
+even in the absence of confounding. To recover the
+marginal estimand, use g-computation: predict each
+patient's outcome probability under both arms, average,
+and difference.
+
+```r
+fit <- glm(y ~ z + x1 + x2, family = binomial, data = d)
+p1  <- predict(fit, transform(d, z = 1), type = 'response')
+p0  <- predict(fit, transform(d, z = 0), type = 'response')
+c(risk_difference = mean(p1) - mean(p0),
+  risk_ratio      = mean(p1) / mean(p0))
+#> risk_difference      risk_ratio
+#>          0.0912          1.4380
+```
+
+Standard errors by the delta method or the bootstrap; the
+`marginaleffects` and `RobinCar` packages implement this,
+the latter written specifically for randomized trials.
+Alternatives are a linear probability model or modified
+Poisson regression with robust standard errors, both of
+which target marginal quantities directly.
+
+**Criterion 9. Time-to-event outcomes.** Use a
+covariate-adjusted log-rank test, or estimate an adjusted
+hazard ratio recognizing that it too is conditional and
+non-collapsible, or target a collapsible summary such as
+the difference in restricted mean survival time. The
+choice must be pre-specified because the three answer
+different questions.
+
+## When adjustment can hurt
+
+Three cases.
+
+**Post-baseline variables.** Adjusting for anything
+measured after randomization can be affected by treatment.
+Conditioning on it removes part of the treatment effect
+and can induce collider bias. This includes adherence,
+concomitant medication, and intermediate biomarkers.
+
+**Too many covariates relative to $n$.** The degrees of
+freedom cost, and in small samples the calibration cost
+documented in Chapter 14, can exceed the precision gain.
+
+**Mis-specified functional form.** Adjustment for a
+continuous covariate entered linearly when the true
+relationship is strongly nonlinear leaves residual
+confounding of the imbalance and does not deliver the full
+precision gain. Splines or pre-specified categorization
+address this; the specification should be in the SAP.
+
+## Worked example: the covariate list for a stroke trial
+
+A trial of an acute intervention, 400 patients, primary
+endpoint the modified Rankin score at 90 days analyzed as
+an ordinal outcome, randomization stratified by center and
+by stroke severity category.
+
+**Criterion 2 forces**: center and severity category.
+
+**Criterion 3 forces**: there is no baseline modified
+Rankin in an acute stroke trial, since all patients are at
+their pre-morbid state, so the analogue is the pre-stroke
+functional status, which is included.
+
+**Criterion 4 supplies**: age and NIHSS at presentation,
+both established as the dominant prognostic factors from
+multiple prior trials and meta-analyses.
+
+**Criterion 5 checks**: five covariates for 400 patients,
+80 patients per covariate, comfortably within bounds.
+
+**Criterion 9 governs the specification**: the outcome is
+ordinal, so the primary analysis is a proportional-odds
+model with the five covariates, and because the
+proportional-odds coefficient is conditional and
+non-collapsible, the SAP additionally pre-specifies a
+standardized marginal summary, the difference in mean
+utility-weighted Rankin, computed by g-computation from
+the same model.
+
+**The negative criterion applies**: the SAP states
+explicitly that no covariate will be added or removed on
+the basis of the observed baseline table, and that no
+baseline balance tests will be performed or reported.
+
+**Sensitivity**: an unadjusted analysis, reported
+alongside. If adjusted and unadjusted differ materially in
+a randomized trial of this size, the explanation is either
+a strongly prognostic covariate that happened to be
+imbalanced, which is benign and expected, or a
+specification problem, which is not. Both should be
+examined before the manuscript.
+
+## Collaborating with an LLM on covariate adjustment
+
+**Prompt 1: 'Which covariates should we adjust for?'**
+
+*What to watch for.* Models produce reasonable lists based
+on the disease area and often include variables the trial
+does not collect, or omit the stratification factors,
+which are mandatory.
+
+*Verification.* Check the list against the case report
+form and against the randomization specification.
+
+**Prompt 2: 'Compute the marginal risk difference from
+this adjusted logistic model.'**
+
+*What to watch for.* Frequently returns the coefficient or
+its exponential rather than a standardized marginal
+effect, and frequently attaches a naive standard error to
+a standardized estimate.
+
+*Verification.* Confirm the prediction step evaluates
+every patient under both arms, and that the standard error
+comes from the delta method or a bootstrap.
+
+**Prompt 3: 'The baseline table shows an imbalance in age.
+Should we adjust?'**
+
+*What to watch for.* Models often say yes, adopt the
+imbalance-triggered logic, and reproduce exactly the error
+this chapter warns against.
+
+*Verification.* The answer is that age should have been in
+the pre-specified list if it is prognostic, and the
+observed imbalance is irrelevant to the decision.
+
+## Principle in use
+
+1. **Fix the covariate list in the SAP and never revisit
+   it.** Three to five prognostic variables, including the
+   stratification factors and the baseline outcome.
+
+2. **Never test baseline balance.** It tests a null known
+   to be true and invites a data-dependent model choice.
+
+3. **For nonlinear models, say which estimand you are
+   reporting.** Conditional and marginal effects differ,
+   and only one of them was pre-specified.
+
+## Exercises
+
+1. Verify by simulation that the ANCOVA variance ratio is
+   $1 - \rho^2$ for $\rho = 0.3, 0.5, 0.7$, and confirm the
+   estimator is unbiased in each case.
+
+2. Simulate a binary-outcome trial with a strong
+   prognostic covariate. Compare the unadjusted odds
+   ratio, the adjusted conditional odds ratio, and the
+   standardized marginal odds ratio. Explain the ordering.
+
+3. Implement the imbalance-triggered adjustment rule
+   (adjust only if the baseline test has $p < 0.05$) and
+   estimate the resulting type I error of the treatment
+   comparison by simulation.
+
+4. Show by simulation that adjusting for a
+   post-randomization variable affected by treatment
+   biases the estimated treatment effect, and characterize
+   the direction.
+
+5. For a trial with $n = 60$, plot the empirical power of
+   ANCOVA against the number of adjusted covariates from 0
+   to 10, with each covariate correlated 0.3 with the
+   outcome. Where is the optimum?
+
+## Further reading
+
+- The compendium `12-baseline-covariate-dist` for the full
+  criteria with primary-source citations.
+- @senn1994testing, on baseline balance testing.
+- @lin2013agnostic and @freedman2008regression, the
+  exchange on adjustment in randomized experiments, and
+  @wang2019analysis, which establishes valid intervals
+  without model assumptions.
+- @raab2000how, the practical criteria for selecting
+  covariates, including the subjects-per-covariate rule.
+- @vanlancker2024covariate and @ye2023toward, the two most
+  useful recent syntheses of adjustment practice.
+- @tsiatis2008covariate, for the semiparametric framing,
+  and @moore2009covariate, for targeted maximum likelihood
+  with binary outcomes.
+- @kahan2012improper, on the requirement to include
+  stratification variables, and @kahan2013risks, an
+  empirical assessment across trials.
+- @fda2021covariate and the EMA covariate guideline.
+- The `RobinCar` and `marginaleffects` R packages.

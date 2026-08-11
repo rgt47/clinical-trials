@@ -1,0 +1,555 @@
+# Randomization and Allocation Concealment {#sec-randomization}
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Distinguish randomization, allocation concealment, and
+  blinding, and explain what each protects against.
+- Implement simple, permuted-block, stratified, biased-coin,
+  and minimization allocation in R, and state the
+  imbalance and predictability properties of each.
+- Choose stratification factors and justify the number of
+  strata given the trial size.
+- Explain how the allocation procedure constrains the
+  analysis, and what happens when the two are mismatched.
+- Describe randomization-based inference and when it is
+  the natural reference distribution.
+
+## Orientation
+
+Randomization is the trial's foundation, and it is the
+element most often implemented casually. A trial can have
+an impeccable protocol, a well-chosen endpoint, and a
+correct sample size, and still be worthless if the site
+coordinator can predict the next assignment.
+
+Three ideas are routinely conflated. **Randomization** is
+the use of a chance mechanism to generate the assignment
+sequence. **Allocation concealment** is preventing anyone
+who could influence enrollment from knowing the upcoming
+assignment before the patient is enrolled. **Blinding** is
+preventing patients, clinicians, and assessors from
+knowing assignments after enrollment. The first two
+protect against selection bias at entry; the third
+protects against differential treatment and assessment
+afterward. A trial can be randomized and unconcealed (a
+sequence taped inside a cabinet), and that trial has
+selection bias despite being randomized.
+
+The chapter covers the mechanics of generating the
+sequence, the trade-off between balance and
+predictability that organizes all of it, and the analysis
+obligations that follow from the choice.
+
+## The statistician's contribution {#sec-randomization-human}
+
+**(Judgment 1.) Which factors to stratify on.** Each
+stratification factor multiplies the number of strata, and
+strata with few patients defeat the purpose. The rule of
+thumb is to stratify on factors that are strongly
+prognostic and few in number, plus center in a multicenter
+trial when centers differ in practice. Stratifying on
+everything plausible is a common and costly error.
+
+**(Judgment 2.) How much predictability to accept.**
+Balance and unpredictability are in tension. Simple
+randomization is maximally unpredictable and can leave the
+arms unbalanced. Permuted blocks guarantee balance and
+make the last assignment in each block deducible in an
+unblinded trial. Minimization achieves excellent balance
+across many factors and is the most predictable of all.
+There is no universally correct point on this curve; there
+is a correct point given the trial's size, blinding, and
+enrollment pattern.
+
+**(Judgment 3.) That the analysis matches the
+allocation.** A stratified randomization implies a
+stratified analysis. Covariate-adaptive allocation
+implies that a test ignoring the balancing covariates is
+conservative, sometimes severely. The obligation the
+allocation scheme creates for the analysis is a
+statistical judgment made at design time and frequently
+forgotten by the time the data arrive.
+
+## Simple randomization
+
+Each patient is assigned independently, with probability
+$1/2$ for a 1:1 trial. It is the coin flip.
+
+```r
+set.seed(2026)
+n <- 100
+arm <- sample(c('A', 'B'), n, replace = TRUE)
+table(arm)
+#> arm
+#>  A  B
+#> 44 56
+```
+
+Properties. Assignments are completely unpredictable, so
+selection bias is impossible even if the sequence
+generator is compromised for past assignments. The
+allocation ratio is achieved only in expectation: with
+$N = 100$, the number in arm A has standard deviation 5,
+so a 44/56 split is unremarkable and a 40/60 split occurs
+with probability about 5%.
+
+Does imbalance matter? Less than intuition suggests. Power
+depends on $1/n_A + 1/n_B$, which is flat near balance: a
+55/45 split in a 100-patient trial costs about 1% of
+power. @lachin1988properties argues that simple
+randomization is adequate for trials above roughly 200
+patients and that the real cost of imbalance is
+presentational, in that reviewers distrust unbalanced
+tables. For small trials the cost is real, and for trials
+with interim analyses the early imbalance can be
+substantial even when the final split is fine.
+
+## Permuted-block randomization
+
+Assignments are generated in blocks within which the
+allocation ratio is exact. With block size 4 and two arms,
+each block is a random permutation of AABB.
+
+```r
+library(blockrand)
+set.seed(2026)
+alloc <- blockrand(n = 100, num.levels = 2,
+                   levels = c('A', 'B'),
+                   block.sizes = c(1, 2))   # blocks of 2 and 4
+head(alloc[, c('id', 'block.id', 'block.size', 'treatment')])
+#>   id block.id block.size treatment
+#> 1  1        1          4         B
+#> 2  2        1          4         A
+#> 3  3        1          4         A
+#> 4  4        1          4         B
+#> 5  5        2          2         A
+#> 6  6        2          2         B
+```
+
+Properties. Imbalance never exceeds half the block size,
+so with blocks of 4 the arms differ by at most 2 at any
+moment. This is the standard choice for most trials and
+essentially mandatory when interim analyses are planned,
+because it guarantees balance at every look.
+
+The cost is predictability. In an unblinded trial with a
+known fixed block size of 4, an observer who has seen
+three assignments in a block knows the fourth with
+certainty, and knows the third with probability higher
+than $1/2$ whenever the first two match. This is the
+classic mechanism by which a coordinator who prefers the
+new treatment for a sicker patient can wait for the right
+slot. The countermeasures are: keep the block size
+concealed from sites, use random block sizes (mixing 2, 4,
+and 6), and blind the trial. In a double-blind trial with
+central randomization, block predictability is largely
+moot.
+
+## Stratified randomization
+
+Run a separate permuted-block sequence within each stratum
+defined by baseline factors: center, disease severity,
+prior therapy.
+
+```r
+set.seed(2026)
+strata <- expand.grid(center = c('S1', 'S2', 'S3'),
+                      severity = c('mod', 'sev'))
+lists <- lapply(seq_len(nrow(strata)), function(i)
+  blockrand(n = 40, num.levels = 2, levels = c('A', 'B'),
+            block.sizes = c(1, 2),
+            stratum = paste(strata$center[i],
+                            strata$severity[i])))
+```
+
+Stratification guarantees balance within each stratum, and
+therefore balance on the stratifying factors overall. It
+matters most when the factor is strongly prognostic and
+the trial is small, and it matters little in large trials,
+where chance imbalance on any single factor is small
+anyway.
+
+The number of strata is the constraint. With $S$ strata
+and block size $b$, the worst-case overall imbalance grows
+like $S \cdot b/2$, because each stratum can end with a
+partially filled block. A 120-patient trial stratified on
+center (8 levels), severity (2), and age group (3) has 48
+strata, most containing two or three patients, and it is
+then possible for the trial to be *less* balanced overall
+than simple randomization would have been. The guidance
+that follows: stratify on center plus at most one or two
+strongly prognostic factors, and handle the rest by
+covariate adjustment in the analysis (Chapter 16).
+
+::: {.callout-tip}
+## Tip
+
+A useful upper bound: keep the expected number of patients
+per stratum at 10 or more. If the arithmetic gives fewer,
+drop a factor or collapse its levels, and adjust for the
+dropped factor in the model instead. Adjustment recovers
+most of the precision that stratification would have
+provided, without the empty-stratum problem.
+:::
+
+## Biased-coin and urn designs
+
+@efron1971forcing proposed a middle path: assign with
+probability $p > 1/2$ to whichever arm currently has fewer
+patients, and $1/2$ under equality.
+
+```r
+biased_coin <- function(n, p = 2/3) {
+  arm <- character(n); nA <- 0; nB <- 0
+  for (i in seq_len(n)) {
+    prob <- if (nA < nB) p else if (nA > nB) 1 - p else 0.5
+    arm[i] <- if (runif(1) < prob) 'A' else 'B'
+    if (arm[i] == 'A') nA <- nA + 1 else nB <- nB + 1
+  }
+  arm
+}
+set.seed(2026)
+table(biased_coin(100))
+#>  A  B
+#> 51 49
+```
+
+The imbalance is controlled without any assignment being
+deterministic, so no observer can ever be certain of the
+next allocation. Urn designs (Wei's urn) achieve the same
+by adding balls of the opposite color after each draw,
+with the balancing force strong early and weakening as the
+trial grows, which matches the pattern of when imbalance
+actually matters.
+
+These designs are elegant, and used less than they should
+be, mostly because permuted blocks are what randomization
+software implements by default.
+
+## Minimization and covariate-adaptive allocation
+
+Minimization [@pocock1975sequential; @taves2010the]
+assigns each patient to whichever arm minimizes a total
+imbalance score computed across several prognostic
+factors, usually with a random element so the assignment
+is not deterministic.
+
+For a patient with factor levels $\ell_1, \dots, \ell_K$,
+compute for each candidate arm the imbalance that would
+result, sum across factors, and assign with high
+probability (say 0.8) to the arm with the smaller total.
+
+```r
+minimize <- function(counts, levels_new, p = 0.8) {
+  # counts: array [factor, level, arm] of current counts
+  imbalance <- sapply(c('A', 'B'), function(a) {
+    tentative <- counts
+    for (k in seq_along(levels_new))
+      tentative[k, levels_new[k], a] <-
+        tentative[k, levels_new[k], a] + 1
+    sum(abs(tentative[, , 'A'] - tentative[, , 'B']))
+  })
+  favored <- names(which.min(imbalance))
+  if (runif(1) < p) favored else setdiff(c('A', 'B'), favored)
+}
+```
+
+Minimization achieves near-perfect marginal balance on
+many factors simultaneously, which stratification cannot
+do once the factor count rises. That is its appeal in
+small and moderate trials with several important
+prognostic variables.
+
+Two objections. First, predictability: with a
+deterministic rule the next assignment is fully
+computable by anyone who knows the algorithm and the
+accumulated data, and even with a random element the
+assignment is skewed in a knowable direction. Some
+regulators are wary for this reason. Second, and more
+important statistically, the assignments are no longer
+independent, so a standard test that ignores the balancing
+factors does not have its nominal size; it is
+*conservative*, sometimes substantially, with the
+consequence that a trial using minimization and analyzing
+with an unadjusted t-test throws away power it paid for
+[@shao2010validity; @bugni2018inference]. The remedy is
+simple and mandatory: adjust for the minimization factors
+in the analysis model. Chapter 14 examines the extent of
+the loss by simulation.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: choosing an allocation procedure
+
+**Question.** A 60-patient, double-blind, single-center
+trial in a rare disease has three strongly prognostic
+baseline factors: disease duration (2 levels), prior
+therapy (2 levels), and baseline severity (3 levels).
+Which allocation procedure?
+
+**Answer.**
+
+Not full stratification: three factors give 12 strata for
+60 patients, five per stratum, so most strata end
+mid-block and the overall balance may be poor.
+
+Not simple randomization: at $N = 60$ the chance of an
+imbalance of 4 or more on any given binary factor is
+substantial, and with three prognostic factors the chance
+that at least one is badly imbalanced is high.
+
+Minimization on all three factors is the natural choice,
+with a randomization probability of 0.8 rather than a
+deterministic rule. The trial is double-blind and
+single-center with central assignment, so the
+predictability objection has little force. The obligation
+that follows is to pre-specify an analysis adjusting for
+all three factors, which is required for the test to have
+its nominal size and to recover the precision the
+balancing bought.
+
+An alternative worth considering: stratify on severity
+alone (3 strata, 20 patients each) with random block
+sizes, and adjust for the other two factors in the model.
+This is simpler to implement and nearly as good.
+:::
+
+## Allocation concealment
+
+The sequence must be inaccessible to anyone who decides
+whether a patient is enrolled. The mechanisms, in
+decreasing order of reliability:
+
+**Central randomization.** The site enrolls the patient in
+a web system or interactive voice response system that
+returns the assignment only after eligibility and
+identifiers have been entered and the patient is
+irrevocably registered. This is the standard and the only
+mechanism that is robust by construction.
+
+**Pharmacy-controlled allocation.** The site's research
+pharmacy holds the sequence and dispenses; investigators
+never see it.
+
+**Sequentially numbered, opaque, sealed envelopes.** The
+classic low-resource method, and defeasible: envelopes can
+be held to a light, opened out of order, or opened and
+resealed. If used, they must be numbered, opaque,
+tamper-evident, and audited.
+
+Empirical work comparing trials with and without adequate
+concealment finds that inadequately concealed trials
+report larger treatment effects on average, by roughly 20
+to 40% in some meta-epidemiological studies. This is one
+of the better-documented biases in the literature and the
+reason risk-of-bias tools ask about concealment
+separately from randomization.
+
+## What the allocation obliges the analysis to do
+
+The general principle: **analyze as you randomized.**
+
+- **Simple randomization**: an unadjusted comparison is
+  valid. Covariate adjustment is still worthwhile for
+  precision (Chapter 16), and it is not required for
+  validity.
+- **Stratified randomization**: the analysis should
+  include the stratification factors. Ignoring them is
+  conservative for the type I error and wasteful of power;
+  the usual estimate of the standard error is too large
+  because the between-stratum variation has already been
+  eliminated by design.
+- **Minimization or other covariate-adaptive schemes**:
+  adjustment for the balancing factors is required.
+  Unadjusted tests are conservative, and the size of the
+  effect depends on how prognostic the factors are.
+- **Cluster randomization**: the analysis must account for
+  within-cluster correlation, by mixed model, GEE, or
+  cluster-level summary. An individual-level analysis
+  ignoring clustering has grossly inflated type I error;
+  this is the most consequential mismatch of all.
+
+## Randomization-based inference
+
+There is a second, older justification for the $p$-value in
+a randomized trial that does not require any distributional
+assumption. Under the strong null hypothesis that treatment
+changes no patient's outcome, each patient's observed
+outcome would have been the same under the other
+assignment. The observed data can therefore be
+re-randomized many times using the actual allocation
+procedure, recomputing the test statistic each time, and
+the reference distribution is the resulting permutation
+distribution.
+
+```r
+set.seed(2026)
+observed <- mean(y[arm == 'A']) - mean(y[arm == 'B'])
+perm <- replicate(10000, {
+  a <- sample(arm)                    # respects the 1:1 design
+  mean(y[a == 'A']) - mean(y[a == 'B'])
+})
+mean(abs(perm) >= abs(observed))      # two-sided p-value
+#> [1] 0.0312
+```
+
+Two points. First, the re-randomization must reproduce the
+*actual* allocation procedure: for a stratified design,
+permute within strata; for minimization, re-run the
+minimization algorithm. Permuting freely when the design
+was restricted gives the wrong reference distribution.
+Second, randomization tests are exact for the strong null
+and are the natural analysis for small trials, where
+normal approximations are least trustworthy. Chapter 22
+returns to exact inference in small samples.
+
+## Worked example: a 240-patient multicenter trial
+
+A phase III trial in rheumatoid arthritis will enroll 240
+patients across 12 centers, 1:1, double-blind, with one
+interim analysis at 50% enrollment. Prognostic factors:
+center, prior biologic therapy (yes/no), and baseline
+disease activity (moderate/high).
+
+**Choice.** Stratify on center and prior biologic (24
+strata, 10 patients each on average), with random block
+sizes of 2 and 4 within stratum. Adjust for baseline
+disease activity in the analysis model rather than
+stratifying on it, which would triple the stratum count.
+
+**Why not minimization.** With 240 patients and only three
+factors, stratification plus adjustment achieves adequate
+balance, and the sponsor's regulatory affairs group
+prefers a conventional scheme for a pivotal trial.
+
+**Why blocks of 2 and 4 rather than 4 alone.** The trial is
+double-blind, so predictability is a minor concern, but
+random block sizes cost nothing and remove it entirely.
+
+**Interim implications.** Permuted blocks guarantee near
+balance at the interim look, which simple randomization
+would not.
+
+**Implementation.** Central web randomization; the sequence
+is generated by an unblinded statistician who has no role
+in the analysis, held in the randomization system, and
+released to the pharmacy only. Block sizes are documented
+in a file not shared with sites.
+
+**Analysis obligation, written into the SAP.** The primary
+model includes fixed effects for treatment, prior
+biologic, baseline disease activity, and center; center
+enters as a fixed effect because 12 is small and the
+centers are the ones of interest, a choice Chapter 15
+examines in detail.
+
+## Collaborating with an LLM on randomization
+
+**Prompt 1: 'Generate a stratified block randomization
+list for this trial.'**
+
+*What to watch for.* Code that is usually correct in
+structure. Check the block sizes are randomized, that the
+stratum variable is carried into the output, and that the
+seed is recorded. Models sometimes produce lists whose
+lengths differ by stratum in ways that leak information.
+
+*Verification.* Tabulate assignments by stratum and
+confirm exact balance within completed blocks. Confirm the
+list is reproducible from the seed.
+
+**Prompt 2: 'Should we stratify on these five factors?'**
+
+*What to watch for.* Models tend to say yes. The
+arithmetic of stratum count against sample size is exactly
+the thing to check yourself, and it is the thing a model
+will skip unless asked directly.
+
+*Verification.* Compute the stratum count and the expected
+patients per stratum. If below 10, the answer is no.
+
+**Prompt 3: 'Write the randomization section of the
+protocol.'**
+
+*What to watch for.* Boilerplate that omits concealment.
+Many drafts describe the sequence generation and say
+nothing about who holds the list, how sites obtain
+assignments, or how blinding is maintained, which is the
+part that reviewers examine.
+
+*Verification.* Confirm the section answers: who generates
+it, who holds it, how a site obtains an assignment, and
+who may unblind and under what circumstances.
+
+## Principle in use
+
+1. **Count the strata before choosing them.** Number of
+   strata times block size against sample size. This
+   single arithmetic check prevents the most common
+   randomization design error.
+
+2. **Separate the unblinded statistician from the analysis
+   statistician.** The person who generates the sequence
+   and prepares interim reports should not be the person
+   who writes the SAP and produces the final analysis.
+
+3. **Write the analysis obligation into the SAP when the
+   allocation is chosen, not later.** The link between
+   restricted allocation and the analysis model is the
+   thing that gets lost between design and database lock.
+
+## Exercises
+
+1. Simulate 10,000 trials of 50 patients under simple
+   randomization. What is the probability that the arms
+   differ in size by 6 or more? Repeat with $N = 200$ and
+   comment.
+
+2. With permuted blocks of fixed size 4 in an unblinded
+   trial, compute the probability that an observer who has
+   seen the first two assignments in a block can correctly
+   predict the third.
+
+3. A trial of 100 patients stratifies on center (6 levels)
+   and sex. Compute the worst-case overall imbalance with
+   block size 4, and compare to the standard deviation of
+   the imbalance under simple randomization.
+
+4. Implement minimization for two binary factors. Simulate
+   1000 trials of 60 patients and compare the marginal
+   imbalance to stratified block randomization on the same
+   factors.
+
+5. Using a simulated dataset from Exercise 4, compute the
+   type I error rate of an unadjusted t-test and of a test
+   adjusting for both factors, under the null. Explain the
+   difference.
+
+## Further reading
+
+- @rosenberger2016randomization, *Randomization in
+  Clinical Trials*. The definitive treatment.
+- @lachin1988properties, on when simple randomization
+  suffices.
+- @efron1971forcing, the biased-coin design.
+- @pocock1975sequential, the original minimization paper.
+- @shao2010validity and @bugni2018inference, on valid
+  inference under covariate-adaptive randomization.
+- @coart2023minimization, a current review of minimization
+  in practice, and @shan2024comparison, comparing the
+  Pocock-Simon variants.
+- @azher2024comparison, on randomization methods for
+  multi-arm trials, and @sverdlov2024selecting, on choosing
+  a method under stochastic recruitment in multicenter
+  trials.
+- @hilgers2020design, on stratified designs in the presence
+  of selection bias, and @kahan2012improper, the empirical
+  demonstration of what improper analysis of stratified or
+  minimized trials costs.
+- @wang2020randomization, on randomization tests for
+  multi-arm trials.
+- @hussey2007design, for the stepped-wedge design, the main
+  cluster variant not covered here.
+- The `blockrand`, `randomizeR`, and `Minirand` R package
+  documentation.

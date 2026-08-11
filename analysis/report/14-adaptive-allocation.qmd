@@ -1,0 +1,439 @@
+# Covariate-Adaptive Allocation and Its Analysis {#sec-adaptive-allocation}
+
+*Prerequisites: Chapters 3 and 8.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- State the separability result: that the allocation
+  decision and the analysis decision can be made
+  independently.
+- Explain why the analysis decision matters more than the
+  allocation decision for power.
+- Describe the calibration cost of the covariate-adjusted
+  test in small samples and the remedies for it.
+- Explain what covariate correlation does to
+  margin-balancing schemes and why stratified blocks are
+  immune.
+- Say what is and is not known about covariate-adaptive
+  randomization with MMRM endpoints.
+
+## Orientation
+
+Chapter 3 established that restricted allocation schemes
+create an obligation for the analysis. This chapter
+examines that relationship quantitatively, using
+simulation evidence, and reaches a conclusion that
+simplifies design practice considerably: the two decisions
+do not interact, so they can be made separately, and the
+analysis decision is the one that matters.
+
+That conclusion runs against the way these choices are
+usually discussed. Design teams debate minimization versus
+stratified blocks as though the choice were consequential
+for power, and treat the analysis model as a downstream
+detail. The evidence says the debate is misdirected: the
+spread in power across analysis strategies is roughly an
+order of magnitude larger than the spread across
+allocation schemes, and the latter is not distinguishable
+from Monte Carlo error.
+
+The chapter also documents a tension that the literature
+does not emphasize. Adjusting for every balancing
+covariate is what makes the standard test valid under
+restricted allocation. But the covariate-adjusted Wald
+test is anti-conservative in small samples, and more so
+the longer the covariate list. A design that lengthens its
+balancing list to improve balance simultaneously degrades
+the calibration of the test that list obliges it to use.
+
+## Provenance
+
+The results in this chapter come from the research
+compendium `02-adaptive-alloc` (project
+`adaptiveallocation`). Report `01-survival` is a full
+ADEMP simulation study crossing randomization schemes
+(simple, stratified blocks, covariate-adaptive, and a
+Hu-Hu family scheme) with analysis strategies (unadjusted
+and covariate-adjusted Cox proportional hazards, among
+others) across scenarios varying covariate configuration,
+sample size, and treatment effect, with all eight Morris
+performance measures reported with Monte Carlo standard
+errors. Report `02-mmrm` is a companion perspective
+examining whether the theory extends to MMRM endpoints.
+
+## The statistician's contribution {#sec-adaptive-human}
+
+**(Judgment 1.) Choosing the allocation scheme on balance
+grounds, not efficiency grounds.** If the two decisions do
+not interact and allocation contributes nothing
+distinguishable to power, then the allocation scheme
+should be chosen for the things it does affect: exact
+balance within strata, the ability to handle continuous
+covariates, robustness to correlation among prognostic
+factors, and the face validity of the baseline table.
+
+**(Judgment 2.) Recognizing that the covariate list has
+two opposing effects.** More covariates in the balancing
+scheme means better balance and a worse-calibrated
+adjusted test at small $n$. The statistician must weigh
+both, and in a trial below a few hundred patients the
+calibration side usually dominates.
+
+**(Judgment 3.) Knowing the limits of what has been
+shown.** The theory validating covariate adjustment under
+covariate-adaptive randomization was developed for
+particular estimators and endpoints. Extending it to
+MMRM by analogy is an assumption, not a result, and
+the companion report is explicit that the gap has not
+been closed.
+
+## The design space
+
+The compendium's simulation crosses:
+
+**Allocation schemes.** Simple randomization; stratified
+permuted blocks; covariate-adaptive randomization
+(minimization on specified margins); and a Hu-Hu family
+scheme that balances jointly rather than marginally.
+
+**Analysis strategies.** Unadjusted comparison;
+covariate-adjusted Cox proportional hazards adjusting for
+all balancing factors; and calibrated variants intended to
+repair the small-sample behavior of the adjusted test.
+
+**Scenarios.** Minimal and moderate covariate
+configurations, two sample sizes, null and alternative
+treatment effects ($\theta = 0$ and $\theta = \log 0.7$),
+with an exponential baseline hazard.
+
+Every cell reports bias, empirical standard error, mean
+squared error, model-based standard error, relative error
+of the model standard error, coverage, bias-eliminated
+coverage, and rejection rate, each with a Monte Carlo
+standard error, following the Morris framework.
+
+Across all scenarios absolute bias never exceeded 0.03,
+and coverage stayed within a narrow band. The interesting
+variation is in power and in the calibration of the tests,
+not in bias.
+
+## Finding 1: the decisions do not interact
+
+Crossing four schemes with four analyses, the largest
+interaction residual in power anywhere in the grid is of
+the same magnitude as its own Monte Carlo standard error.
+In the conditions where the analyses separate most
+sharply, their ranking is identical under every allocation
+scheme.
+
+The practical consequence is a license rather than a
+finding about any particular procedure. A design team may
+select an allocation scheme on balance grounds and an
+analysis on efficiency and calibration grounds without the
+two choices constraining each other. It also means the
+common practice in the methodological literature of
+reporting analysis comparisons under a single allocation
+scheme, and allocation comparisons under a single
+analysis, does not mislead in this setting.
+
+The qualification the compendium attaches: this is
+established for the schemes, analyses, and survival
+data-generating mechanisms examined, and not proven in
+general.
+
+## Finding 2: the analysis dominates
+
+Across the core scenarios, the spread in power between
+analysis strategies is roughly an order of magnitude
+larger than the spread between allocation procedures, and
+the allocation spread is not distinguishable from Monte
+Carlo error.
+
+This is consistent with the long-standing position, argued
+by Senn and by Kahan and Morris, that covariate imbalance
+is properly a problem of analysis rather than of
+allocation. If a prognostic covariate is imbalanced, the
+adjusted analysis accounts for it and the resulting
+inference is valid and efficient regardless of how the
+imbalance arose. The compendium extends this position to
+survival endpoints with a full set of performance
+measures.
+
+For a design team, the operational message is that the
+hours spent debating minimization versus stratification
+would be better spent specifying the analysis model.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what balance is for
+
+**Question.** If imbalance is a problem of analysis, and
+the adjusted analysis handles it, why balance at all?
+
+**Answer.**
+
+Three reasons survive, and none of them is power.
+
+*Face validity.* A baseline table showing 62% male in one
+arm and 41% in the other invites the reader to distrust
+the trial, whatever the adjusted analysis says. Reviewers
+and clinicians respond to the table. This is not a
+statistical argument and it is not negligible.
+
+*Protection against covariates the model handles badly.*
+Adjustment works when the covariate enters the model
+correctly. If a continuous prognostic variable has a
+nonlinear relationship with the outcome that the model
+specifies as linear, adjustment is incomplete and the
+residual imbalance matters. Balancing protects against
+mis-specification of exactly this kind.
+
+*Small samples.* In a 40-patient trial, an imbalance of 8
+on a strongly prognostic binary factor is both likely and
+consequential, and the adjusted analysis in such a trial
+has the calibration problems this chapter describes.
+Balance reduces the reliance on adjustment when adjustment
+is least trustworthy.
+
+What balance does *not* buy, on this evidence, is power.
+The compendium's fifth conclusion is explicit: there is no
+efficiency basis for preferring one allocation procedure
+over another for survival endpoints in the design space
+examined, and three pre-registered predictions of
+conditions under which adaptive allocation should pay were
+each refuted, with the null result at 2,000 replicates
+bounding any such advantage at roughly one percentage
+point of power.
+:::
+
+## Finding 3: the calibration cost
+
+Here the news is bad and specific. Adjusting for every
+specified covariate is what makes the standard test valid
+under restricted allocation. But the covariate-adjusted
+Wald test is anti-conservative below a few hundred
+subjects, and the inflation grows with the length of the
+covariate list.
+
+Crucially, the inflation is a property of the *test*, not
+of the allocation: it is present in equal measure under
+simple randomization. This locates the problem correctly.
+It is not that adaptive allocation breaks the test; it is
+that the small-sample Wald test in a model with many
+covariates was never well calibrated, and adaptive
+allocation obliges you to use exactly that test.
+
+The tension for design: lengthening the covariate list to
+improve balance simultaneously degrades the calibration of
+the test that list will be analyzed with. A design that
+balances on eight factors in a 150-patient trial has
+bought better baseline tables and a test whose actual size
+exceeds its nominal level.
+
+The remedies are the standard small-sample ones and belong
+to the analysis: a score or likelihood-ratio test rather
+than the Wald test; a robust variance with a small-sample
+correction; a permutation test respecting the actual
+allocation procedure (Chapter 3); or a bootstrap. The
+compendium recommends that a trial below a few hundred
+patients using covariate-adaptive allocation should
+pre-specify one of these rather than the default Wald
+test.
+
+## Finding 4: correlation among covariates
+
+The differences among allocation schemes are real,
+structured, and confined to balance.
+
+Correlation among covariates inflates the
+response-weighted imbalance under schemes that balance
+*margins*, by an amount governed by the product of the
+correlated covariates' coefficients. Stratified permuted
+blocks are unaffected, because they enforce balance within
+the joint strata rather than on the margins separately.
+The Hu-Hu family, which balances jointly in a weighted
+sense, does not inherit that robustness, which locates the
+protection specifically in exact enforcement within
+strata rather than in the presence of a joint-balance
+term.
+
+The design consequence: a trial that must be robust to
+correlation among genuinely prognostic covariates has one
+option among those examined, and it is the option that
+cannot accommodate continuous covariates or graded
+weights. That is a real constraint, and it is the kind of
+trade-off that a design team can only evaluate if it is
+stated.
+
+## The MMRM gap
+
+The companion report `02-mmrm` addresses a specific
+question: does the theory validating covariate-adjusted
+inference under covariate-adaptive randomization extend to
+MMRM endpoints?
+
+The regulatory context is that ICH E9 and both agencies
+recommend adjusting for the balancing factors, and the
+statistical literature has established the validity of
+this for particular estimators. What has been established
+covers linear models with simple covariance and certain
+survival analyses. What has *not* been established is the
+behavior of the MMRM estimator, with its unstructured
+covariance and Kenward-Roger degrees of freedom, under
+allocation schemes that induce dependence among
+assignments.
+
+The report's conclusion is that the gap is real and
+unaddressed, that practice has proceeded by analogy, and
+that the analogy is plausible but unverified. It proposes
+the simulation study that would close it, specifying the
+data-generating mechanisms, the estimands, and the
+performance measures required.
+
+For a practitioner, the interim guidance is: adjust for
+the balancing factors in the MMRM, as the guidance
+requires; be aware that the small-sample calibration of
+the resulting test has not been characterized under
+adaptive allocation; and in a trial small enough for this
+to matter, verify by simulation under your own design
+rather than relying on the analogy.
+
+## Worked example: a 180-patient survival trial
+
+A trial with a time-to-event primary endpoint, 180
+patients, five prognostic covariates: age group, sex,
+disease stage (3 levels), prior therapy, and baseline
+performance status. The team proposes minimization on all
+five.
+
+**Allocation.** With five factors, stratified blocks are
+infeasible (72 strata for 180 patients). Minimization is
+the natural scheme for balance, and the separability
+result means it costs nothing in power relative to the
+alternatives.
+
+**But.** Two of the covariates, disease stage and
+performance status, are strongly correlated. Under
+margin-balancing minimization, this correlation inflates
+the response-weighted imbalance. The compendium's finding
+is that only exact within-stratum enforcement protects
+against this, which minimization cannot provide.
+
+**Revised design.** Stratify on the joint levels of the
+two correlated covariates (6 strata, 30 patients each,
+feasible) using permuted blocks, and minimize on the
+remaining three factors within that. This is a hybrid, and
+it obtains the correlation robustness where it is needed.
+
+**Analysis.** Covariate-adjusted Cox model including all
+five factors. At $n = 180$ the adjusted Wald test is
+anti-conservative, so the SAP pre-specifies the score test
+as the primary inferential procedure, with the Wald
+confidence interval reported alongside and the
+discrepancy noted if material.
+
+**Verification.** Before finalizing, simulate the design:
+generate 5,000 null datasets under the hybrid allocation,
+apply the pre-specified analysis, and confirm the
+empirical type I error is at nominal level. This is a
+half-day of work and it is the only way to know.
+
+## Collaborating with an LLM on allocation and analysis
+
+**Prompt 1: 'Does minimization require covariate
+adjustment in the analysis?'**
+
+*What to watch for.* Models generally answer yes, which is
+correct, and generally do not mention that the resulting
+test is anti-conservative in small samples, which is the
+practically important half of the answer.
+
+*Verification.* Simulate the null under your own design
+and sample size.
+
+**Prompt 2: 'Compare allocation schemes for this trial.'**
+
+*What to watch for.* A tendency to attribute power
+differences to allocation schemes. On the evidence here,
+those differences are not real in the settings examined.
+
+*Verification.* Ask what the claimed power difference is
+in percentage points, and compare it to the Monte Carlo
+standard error of any simulation offered in support.
+
+**Prompt 3: 'Write the randomization and analysis sections
+so that they are consistent.'**
+
+*What to watch for.* This is a good use, since the
+consistency requirement is exactly the thing that gets
+lost between documents. Check that every balancing factor
+appears in the analysis model.
+
+*Verification.* Cross-tabulate the factor list in the two
+sections. They should match exactly.
+
+## Principle in use
+
+1. **Choose allocation for balance, analysis for
+   efficiency, and stop coupling the two decisions.**
+
+2. **In trials below a few hundred patients, pre-specify a
+   small-sample-valid test.** The adjusted Wald test is
+   anti-conservative and the trial's nominal alpha is not
+   its actual alpha.
+
+3. **Simulate your own design under the null.** The
+   published theory does not cover every combination of
+   allocation scheme, endpoint, and estimator, and the
+   MMRM case is explicitly open.
+
+## Exercises
+
+1. Simulate a 120-patient trial with minimization on four
+   binary covariates. Compare the empirical type I error
+   of the unadjusted test, the adjusted Wald test, and the
+   adjusted score test.
+
+2. Repeat under simple randomization and confirm that the
+   adjusted Wald test's inflation is unchanged, which is
+   the compendium's claim that the problem belongs to the
+   test rather than to the allocation.
+
+3. Construct two prognostic covariates with correlation
+   0.7 and simulate margin-balancing minimization.
+   Quantify the response-weighted imbalance and compare to
+   stratified blocks on the joint levels.
+
+4. For a fixed total sample size, plot the empirical type
+   I error of the adjusted Wald test against the number of
+   covariates adjusted for, from 1 to 10.
+
+5. Design and run the smallest simulation that would give
+   useful evidence on the MMRM gap: one data-generating
+   mechanism, one allocation scheme, two analyses, and
+   report the type I error with its Monte Carlo standard
+   error.
+
+## Further reading
+
+- The compendium `02-adaptive-alloc`, reports `01-survival`
+  and `02-mmrm`.
+- @shao2010validity, on testing under covariate-adaptive
+  randomization, and @bugni2018inference, for the general
+  inference theory.
+- @callegaro2021inference, a simulation study of inference
+  under covariate-adaptive randomization that is the
+  closest published analogue to the compendium's design.
+- @kahan2012improper, the empirical demonstration that
+  ignoring the balancing factors in the analysis is
+  conservative and costly.
+- @coart2023minimization and @shan2024comparison, on
+  minimization and the Pocock-Simon procedures as used in
+  practice.
+- @hilgers2020design, on stratified designs in the presence
+  of selection bias.
+- @kahan2013risks, on the risks and rewards of covariate
+  adjustment.
+- @rosenberger2016randomization, Chapters 9 and 10.
+- @fda2021covariate, the covariate-adjustment guidance.

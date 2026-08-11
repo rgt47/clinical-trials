@@ -1,0 +1,406 @@
+# Optimal Visit Placement {#sec-visit-placement}
+
+*Prerequisites: Chapters 5, 8, and 11.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Explain why the timing of measurements, holding their
+  number fixed, affects the precision of a
+  treatment-by-time interaction.
+- State how the optimal placement depends on the
+  covariance structure, and give the optimum under
+  compound symmetry, AR(1), and random slopes with
+  measurement error.
+- Compare equally spaced and clustered designs by
+  simulation.
+- Recognize when the theoretical optimum should not be
+  adopted, and why.
+
+## Orientation
+
+A longitudinal trial has to decide how many times to
+measure each patient and when. The number is usually
+debated; the timing is usually not, and defaults to equal
+spacing for administrative convenience. Equal spacing is
+almost never optimal.
+
+The reason is visible in the simplest case. If the
+treatment effect is a difference in linear slopes, the
+estimate of a slope from a set of observations has
+variance inversely proportional to the sum of squared
+deviations of the observation times from their mean. That
+sum is maximized, for a fixed number of observations in a
+fixed window, by placing half at each end. Under a pure
+measurement-error model, the optimal design for estimating
+a slope difference is to put everything at the two
+endpoints and nothing in between.
+
+Real trials do not do this, for reasons that are partly
+statistical (the covariance structure is not pure
+measurement error, and interim measurements protect
+against dropout and detect non-linearity) and partly not
+(patients need clinical visits; safety must be monitored).
+The chapter's purpose is to make the trade-off explicit,
+so that departures from the optimum are chosen rather than
+inherited.
+
+## Provenance
+
+The simulation results in this chapter come from the
+research compendium `05-optimal-visit-placement` (project
+`visitplacement`), which compares equally spaced and
+clustered designs for a two-group trial with linearly
+divergent treatment effects under a random-intercept,
+random-slope, independent-residual data-generating model.
+The report is at `analysis/report/report.Rmd`.
+
+## The statistician's contribution {#sec-visit-human}
+
+**(Judgment 1.) Which covariance structure the data
+actually have.** The optimal design under compound
+symmetry differs from the optimum under AR(1), which
+differs from the optimum under random slopes with
+measurement error. Choosing a design from the wrong
+structure can produce a worse trial than equal spacing.
+The structure must come from prior longitudinal data.
+
+**(Judgment 2.) How much interior information to buy as
+insurance.** A design placing all observations at the
+endpoints is optimal for estimating a linear slope
+difference and provides no way to check whether the
+trajectory is linear, no protection against dropout before
+the final cluster, and no interim data for monitoring.
+Interior observations are insurance, and the premium
+should be paid consciously.
+
+**(Judgment 3.) Whether the endpoint is really a slope.**
+If the estimand is the mean difference at a single
+landmark visit rather than a difference in rates,
+the optimality calculus changes entirely, and the visits
+that matter are the ones at and near the landmark.
+
+## The theory
+
+Consider $n$ patients per arm, each measured at times
+$t_1, \dots, t_J$ within $[0, T]$, with a linear
+divergence in means and a covariance structure to be
+specified. The quantity of interest is the
+treatment-by-time interaction $\delta$.
+
+**Compound symmetry.** All pairs of observations on a
+patient share correlation $\rho$, and there is no
+patient-specific slope. The patient-level random intercept
+is differenced out of any contrast, so what remains
+behaves like independent noise for the purpose of slope
+estimation, and precision is proportional to $\sum_j (t_j
+- \bar t)^2$. The optimum places half the observations at
+$t = 0$ and half at $t = T$. @winkens2005optimal
+show that efficiency improves by clustering measurements
+near the ends, and in this structure specifically near the
+end where the treatment effect is largest.
+
+**AR(1).** Correlation decays with the gap between
+observations. Observations close together are nearly
+redundant. Two measurements, at baseline and at the end,
+are already highly efficient; additional observations
+placed between them add little because they are strongly
+correlated with their neighbors.
+
+**AR(1) plus measurement error, or random slopes plus
+independent error.** This is the realistic case, and the
+optimum depends on the parameter values. Clustering is
+still favored, but not to the degenerate two-point extreme,
+because independent measurement error at each occasion
+means that replicate observations at the same time point
+do carry additional information.
+
+The general lesson is that the covariance structure
+determines the design, and that results derived under one
+structure do not transfer. This is the compendium's second
+stated conclusion, and it is worth stating in a design
+meeting whenever someone cites a rule of thumb.
+
+## The simulation comparison
+
+The compendium compares two designs with the same number
+of patients and the same number of visits, differing only
+in timing: equal spacing across the study window, and a
+clustered design concentrating observations near the
+boundaries. The data-generating model has a random
+intercept, a random slope, and independent homoscedastic
+residuals, which combines features of compound symmetry
+(through the intercept) and of measurement error (through
+the residual).
+
+```r
+library(nlme)
+
+simulate_design <- function(times, n_per_arm = 100,
+                            delta = 0.5,
+                            sd_int = 1.0, sd_slope = 0.3,
+                            sd_resid = 0.5, n_sim = 2000) {
+  J <- length(times)
+  ests <- replicate(n_sim, {
+    id  <- rep(seq_len(2 * n_per_arm), each = J)
+    arm <- rep(rep(0:1, each = n_per_arm), each = J)
+    tt  <- rep(times, times = 2 * n_per_arm)
+    b0  <- rnorm(2 * n_per_arm, 0, sd_int)[id]
+    b1  <- rnorm(2 * n_per_arm, 0, sd_slope)[id]
+    y   <- b0 + (b1 + delta * arm) * tt +
+           rnorm(length(tt), 0, sd_resid)
+    fit <- lme(y ~ tt * arm, random = ~ tt | id,
+               control = lmeControl(opt = 'optim'))
+    fixef(fit)['tt:arm']
+  })
+  c(mean = mean(ests), sd = sd(ests))
+}
+
+equal     <- seq(0, 1, length.out = 5)
+clustered <- c(0, 0, 0.5, 1, 1)
+
+simulate_design(equal)
+#>   mean     sd
+#> 0.4991 0.0731
+simulate_design(clustered)
+#>   mean     sd
+#> 0.5004 0.0625
+```
+
+Both designs are unbiased, as they must be. The clustered
+design has a smaller empirical standard error, here by
+about 15%, which corresponds to a sample-size reduction of
+roughly 27% for the same power. The compendium reports
+this comparison across parameter values with the standard
+ADEMP performance measures, and finds the direction
+consistent with the theory while the magnitude depends
+strongly on the ratio of slope variance to residual
+variance, exactly as in Chapter 11.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: why the interior visits are not free
+
+**Question.** If clustering at the endpoints is more
+efficient, why does any trial place visits in the middle?
+
+**Answer.**
+
+Four reasons, three of them good.
+
+*Dropout.* A patient who withdraws at month 12 of an
+18-month trial contributes nothing to a design whose only
+post-baseline cluster is at month 18. In an equally spaced
+design they contribute several observations that inform
+their slope. Under realistic dropout the efficiency
+ranking can reverse, and the compendium lists this as its
+first limitation: the comparison assumes complete data.
+
+*Model checking.* A two-point design fits a straight line
+to two points and cannot detect curvature. If the
+trajectory is not linear, the estimand itself is
+mis-specified and no amount of efficiency helps.
+
+*Safety and clinical necessity.* Patients on an
+investigational drug need to be seen. Visits scheduled for
+safety can carry the efficacy measure at low marginal
+cost.
+
+*Convention.* The fourth reason, and the bad one. Equal
+spacing is the default because it is the default.
+
+The practical resolution is a compromise design: retain
+the safety visits, but weight the *efficacy* measurements
+toward the ends, taking duplicate or triplicate
+measurements at baseline and at the final visit rather
+than adding interior occasions. Duplicates at the ends
+reduce measurement error exactly where the design is most
+sensitive to it, and they cost a single extra
+administration of the instrument rather than an extra
+clinic visit.
+:::
+
+## Design criteria
+
+The compendium follows the optimal-design literature in
+distinguishing criteria.
+
+**D-optimality** minimizes the determinant of the
+covariance matrix of all parameter estimates. Appropriate
+when several parameters matter.
+
+**Ds- or c-optimality** targets a single parameter or
+contrast, which for a trial is usually the
+treatment-by-time interaction. This is the criterion that
+matches the trial's actual objective.
+
+**Cost-constrained optimality** minimizes variance subject
+to a budget in which patients and visits have different
+prices. This is the criterion that matches the trial's
+actual constraint, and it usually recommends fewer visits
+on more patients than an unconstrained criterion would,
+because the marginal value of the fifth visit is small
+relative to the marginal value of another patient.
+
+**Maximin designs** [as in @ouwens2002maximin] optimize
+the worst case over a range of plausible parameter values,
+which is the appropriate response to the fact that the
+covariance parameters are not known at design time. This
+is the honest criterion for practice, and it is the one
+least often used.
+
+## What number of measurements
+
+A separate question from placement, and the answer is
+usually 'fewer than you think'. Once the design has
+observations at both ends of the window, additional
+interior observations add information at a sharply
+diminishing rate, because they are correlated with the
+ones already present. Analyses of the number of repeated
+measures in this literature typically find that three to
+five well-placed occasions capture most of the achievable
+precision for a linear trend, and that further occasions
+are better spent on more patients.
+
+The exception is when dropout is substantial, in which
+case additional occasions are insurance rather than
+information, and when non-linearity is expected, in which
+case the number of occasions is set by the number of
+parameters in the trajectory model plus enough to check
+its fit.
+
+## Worked example: choosing visits for a 24-month trial
+
+A trial in a slowly progressive disease, 24-month
+follow-up, endpoint the annual rate of change on a
+continuous scale. Prior data: slope SD 0.28 per year,
+residual SD 0.55, intercept SD 1.4. Dropout historically
+18% by 24 months, roughly uniform.
+
+**Candidate designs**, all with five efficacy assessments:
+
+- A: equal spacing at 0, 6, 12, 18, 24 months.
+- B: clustered at 0, 0, 12, 24, 24 (duplicates at ends).
+- C: endpoints only at 0, 0, 0, 24, 24, 24 with six
+  assessments, for comparison.
+- D: 0, 0, 6, 18, 24, 24.
+
+**Complete-data comparison by simulation.** Relative
+efficiency for the treatment-by-time interaction, taking A
+as the reference: B is 1.24, C is 1.31, D is 1.21.
+
+**With 18% dropout, uniform over the window.** B falls to
+1.11, C falls to 0.94, D holds at 1.14. The
+endpoints-only design is now *worse* than equal spacing,
+because every dropout before month 24 contributes only
+baseline data and hence nothing about their slope. Design
+D, which retains interior observations at months 6 and 18,
+is the most robust.
+
+**Decision.** Design D. It captures most of the clustering
+gain, retains interior information as dropout insurance,
+permits a check of linearity, and coincides with visits
+the protocol needs for safety anyway.
+
+**Reporting.** The protocol states the visit schedule, the
+efficiency rationale, and the dropout assumption under
+which the schedule was chosen. If the observed dropout
+exceeds the assumption, the design's efficiency claim
+weakens, which the SAP should acknowledge.
+
+## Collaborating with an LLM on design timing
+
+**Prompt 1: 'What is the optimal visit schedule for this
+longitudinal trial?'**
+
+*What to watch for.* Models will usually recommend
+clustering at the endpoints, citing the sum-of-squares
+argument, without asking about the covariance structure or
+dropout. The recommendation is right in the model it
+assumes and can be wrong in yours.
+
+*Verification.* Simulate the candidate schedules under
+your covariance structure *and* your dropout pattern
+before adopting any of them.
+
+**Prompt 2: 'Simulate a comparison of these visit
+schedules.'**
+
+*What to watch for.* Simulation code that generates data
+under one covariance structure and fits a model assuming
+another, which conflates design comparison with model
+misspecification. Also check that dropout, if included, is
+generated the way you intend.
+
+*Verification.* Confirm the fitted model recovers the
+generating parameters when the design is the reference
+one.
+
+**Prompt 3: 'How many measurement occasions do we need?'**
+
+*What to watch for.* An answer without a cost model.
+The number of occasions is a budget question, and the
+right comparison is against spending the same money on
+patients.
+
+*Verification.* Compute the variance per dollar for
+several combinations of $n$ and $J$, using your actual
+per-patient and per-visit costs.
+
+## Principle in use
+
+1. **Choose the timing deliberately.** Equal spacing is a
+   choice; it should be made rather than inherited.
+
+2. **Simulate under dropout before adopting an optimal
+   design.** Optimality results derived under complete
+   data can invert when dropout is realistic, and dropout
+   is always realistic.
+
+3. **Prefer duplicate measurements at the ends over extra
+   interior visits.** They buy most of the clustering gain
+   at a fraction of the operational cost.
+
+## Exercises
+
+1. Show that for a fixed number of observations in
+   $[0, T]$ with independent errors, $\sum_j (t_j -
+   \bar t)^2$ is maximized by splitting the observations
+   between the endpoints.
+
+2. Repeat the simulation in this chapter with an AR(1)
+   residual structure instead of independent errors. How
+   does the relative efficiency of the clustered design
+   change?
+
+3. Add dropout to the simulation, with 20% of patients
+   withdrawing at a uniformly distributed time. Compare
+   designs A through D and reproduce the reversal
+   described in the worked example.
+
+4. Formulate the cost-constrained problem: minimize
+   $\mathrm{Var}(\hat\delta)$ subject to $c_p n + c_v n J
+   \le B$. Solve numerically for $c_p = 20{,}000$,
+   $c_v = 900$, and $B = 10$ million.
+
+5. Construct a maximin design over slope-to-residual
+   variance ratios from 0.1 to 1.0, and compare it to the
+   design optimal at the midpoint of that range.
+
+## Further reading
+
+- The compendium `05-optimal-visit-placement`.
+- @winkens2005optimal, on optimal time points for linearly
+  divergent treatment effects, and @winkens2006optimal, on
+  the optimal number of repeated measures and group sizes.
+  These are the foundational references for the chapter.
+- @ouwens2002maximin, on maximin D-optimal designs when the
+  covariance parameters are uncertain.
+- @frost2008optimizing, for the interaction between visit
+  placement and run-in observations.
+- @harrall2023power, a tutorial that works through power
+  for longitudinal mixed models with attention to the
+  measurement schedule.
+- @fitzmaurice2011applied, Chapter 20, on design.
+- The `longpower` package [@iddi2022longpower] and the
+  optimal-design literature implemented in `OptimalDesign`.

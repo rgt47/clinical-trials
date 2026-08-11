@@ -1,0 +1,367 @@
+# Exact Conditional Power and Stochastic Curtailment {#sec-conditional-power}
+
+*Prerequisites: Chapters 9 and 22.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Define stochastic curtailment and relate it to
+  conditional power.
+- Explain why asymptotic conditional power is unreliable
+  with rare events, small samples, or staggered entry.
+- Compute exact conditional power for a trial whose final
+  comparison is Fisher's exact test.
+- Handle staggered entry through a moment-based estimator
+  for partitioned event rates.
+- Position exact conditional power against
+  group-sequential boundaries, alpha spending, and
+  Bayesian predictive power.
+
+## Orientation
+
+Chapter 9 introduced conditional power as the futility
+monitoring tool: the probability that a trial will reject
+the null at its planned final analysis, given the data
+accumulated so far. Stopping when that probability is low
+is **stochastic curtailment**, so called because it
+curtails a trial whose conclusion is nearly determined.
+
+The standard implementations rest on the asymptotic
+normality of the final test statistic and the independent
+increments structure. Those assumptions are reasonable in
+a large cardiovascular trial with thousands of events.
+They are not reasonable in a trial with a low-incidence
+mortality endpoint, where the final comparison will be an
+exact test because the counts are small, and where the
+number of events at the interim may be in single digits.
+
+This chapter develops the exact treatment: conditional
+power computed by enumeration, for a trial whose final
+comparison is Fisher's exact test.
+
+## Provenance
+
+This chapter follows the research compendium
+`10-conditional-power-rare` (project `conditional-power`),
+whose report `01-binary-fisher` develops exact conditional
+power for a two-group randomized trial with a binary
+outcome under simultaneous entry, and extends it to
+staggered entry via a moment-based estimator for
+partitioned event rates. Companion reports treat exact
+stochastic curtailment for time-to-event finals
+(`02-logrank`) and count endpoints (`03-counts`), and a
+supplementary literature review situates the method
+against the modern monitoring framework.
+
+## The statistician's contribution {#sec-cond-power-human}
+
+**(Judgment 1.) Recognizing when the asymptotic
+calculation is not usable.** Rare events, small samples,
+and staggered entry each degrade the approximation, and
+they usually occur together. A monitoring committee acting
+on a conditional power of 0.12 should know whether that
+number is trustworthy to the nearest 0.05 or the nearest
+0.20.
+
+**(Judgment 2.) Choosing the effect assumption for the
+remaining data.** Conditional power is a function of what
+is assumed about the future. Under the design alternative
+it is optimistic; under the current estimate it is
+pessimistic when the interim is unlucky. Report both, and
+consider the Bayesian average.
+
+**(Judgment 3.) Distinguishing advice from a rule.**
+Futility stopping does not inflate the type I error, so
+the boundary can be advisory. A DMC that treats it as a
+rule is making a decision the design permits but does not
+require; a DMC that ignores it repeatedly should have its
+charter revisited.
+
+## Conditional power, exactly
+
+Setup. A two-arm trial with a binary endpoint, target
+sample size $n$ per arm, final analysis by Fisher's exact
+test at level $\alpha$. At an interim, $m$ patients per
+arm have been observed, with $x_1$ and $x_0$ events.
+
+The asymptotic calculation treats the final $Z$ statistic
+as normal with the observed information fraction and
+computes a tail probability. The exact calculation instead
+enumerates.
+
+For each possible pair of future event counts
+$(y_1, y_0)$ among the remaining $n - m$ patients per arm,
+compute:
+
+1. The probability of that pair under the assumed future
+   event rates, which is a product of two binomial
+   probabilities.
+2. Whether the completed table, with totals
+   $(x_1 + y_1, x_0 + y_0)$, would be rejected by Fisher's
+   exact test at level $\alpha$.
+
+Conditional power is the sum of the probabilities of the
+pairs that lead to rejection:
+$$
+\mathrm{CP} = \sum_{y_1=0}^{n-m}\sum_{y_0=0}^{n-m}
+  P(y_1) P(y_0) \, \mathbb{1}\{\text{reject}(x_1 + y_1,
+  x_0 + y_0)\}.
+$$
+
+```r
+exact_cp <- function(x1, x0, m, n, p1, p0, alpha = 0.05) {
+  r <- n - m                              # remaining per arm
+  total <- 0
+  for (y1 in 0:r) for (y0 in 0:r) {
+    prob <- dbinom(y1, r, p1) * dbinom(y0, r, p0)
+    if (prob < 1e-12) next
+    tab <- matrix(c(x1 + y1, n - x1 - y1,
+                    x0 + y0, n - x0 - y0), nrow = 2)
+    if (fisher.test(tab)$p.value < alpha) total <- total + prob
+  }
+  total
+}
+
+# interim: 2 events of 40 active, 7 of 40 placebo; target 100/arm
+exact_cp(x1 = 2, x0 = 7, m = 40, n = 100,
+         p1 = 0.05, p0 = 0.175)
+#> [1] 0.6412
+```
+
+The enumeration is finite and, at these sizes, fast. The
+computation is exact in the sense that it makes no
+distributional approximation to the final test, only the
+assumption about future event rates, which is explicit and
+under the analyst's control.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: where the asymptotic version goes wrong
+
+**Question.** In the example above the asymptotic
+conditional power is 0.71 and the exact value is 0.64.
+Which direction is the error, and why?
+
+**Answer.**
+
+The asymptotic value is too high, and there are two
+reasons.
+
+First, the final test is Fisher's exact test, which is
+conservative: its actual size at these counts is well
+below the nominal 0.05, as Chapter 22 showed. The
+asymptotic conditional power calculation assumes the final
+test rejects whenever a normal-theory statistic exceeds
+its critical value, which happens more often than the
+exact test rejects. The conditional power inherits the
+conservatism of the final test, and any calculation that
+ignores the final test's discreteness overstates it.
+
+Second, with event counts in single digits the normal
+approximation to the future increment is poor, and the
+discreteness of the possible outcomes means the true
+conditional power is a step function of the observed
+counts rather than a smooth curve.
+
+The practical consequence is a monitoring error in the
+dangerous direction: a committee told the trial has 71%
+conditional power continues, when it has 64% and the
+threshold for concern may be nearby. In trials where the
+interim counts are small, which is exactly the setting
+where futility monitoring is most consequential, the
+approximation errs toward continuation.
+:::
+
+## Staggered entry
+
+The simultaneous-entry calculation assumes that all
+patients are enrolled at once, so that at the interim
+every enrolled patient has completed follow-up. Real
+trials enroll over months or years, so at the interim the
+population comprises patients with complete follow-up,
+patients partway through, and patients not yet enrolled.
+
+Each group contributes differently to the final analysis,
+and the event rates that apply to them may differ, since a
+patient with three months of follow-up remaining has a
+different remaining event probability than one with the
+full window ahead.
+
+The compendium extends the exact calculation to this
+setting with a **moment-based estimator for partitioned
+event rates**: the enrolled-but-incomplete cohort's
+remaining event probability is estimated from the observed
+data, partitioned by follow-up duration, and the
+enumeration is carried out over the resulting mixture.
+
+The practical significance: without this extension, the
+analyst must either pretend that follow-up is complete,
+which understates the remaining events and hence the
+conditional power, or discard the partially followed
+patients, which discards information at exactly the moment
+it is scarcest.
+
+## Positioning against the modern framework
+
+Exact conditional power is one tool among several, and it
+is worth being clear about what it competes with.
+
+**Group-sequential boundaries** (Chapter 9) control the
+type I error across looks and are the primary machinery
+for efficacy stopping. Conditional power is complementary:
+it addresses futility, where type I error is not at
+risk.
+
+**Alpha-spending functions** give the flexibility to
+schedule looks as the trial permits. Conditional power
+requires no alpha and can be computed at any time without
+budgetary consequence.
+
+**Bayesian predictive power** averages conditional power
+over the posterior for the treatment effect, which avoids
+conditioning on a single assumed future effect. It is the
+more coherent summary and requires a prior. The exact
+enumeration developed here can be embedded in the
+predictive calculation by averaging over the posterior
+predictive event rates rather than fixing them.
+
+**Adaptive sample-size re-estimation** uses the same
+interim quantity for a different purpose: rather than
+stopping when conditional power is low, the promising-zone
+approach increases the sample size when conditional power
+is in an intermediate range. The exact calculation is the
+right input to that decision in the small-count setting,
+for the same reason.
+
+## Worked example: a low-incidence mortality trial
+
+A trial in a rare condition with a mortality primary
+endpoint. Target 100 patients per arm, expected mortality
+17.5% on control and 5% on treatment, final analysis by
+Fisher's exact test at one-sided 0.025. One interim look
+planned at 40 patients per arm with complete follow-up.
+
+**At the interim.** 2 deaths among 40 on treatment, 7
+among 40 on control. The trend favors treatment.
+
+**Exact conditional power** under the design alternative
+(future rates 0.05 and 0.175): 0.64.
+
+**Under the current estimate** (future rates 0.05 and
+0.175 from the observed 2/40 and 7/40, which happen to be
+close to the design): 0.63.
+
+**Under the null** (both future rates equal to the pooled
+0.1125): 0.09. This is the quantity that answers 'if the
+drug does nothing from here, could the trial still
+succeed on what it has', and a value of 0.09 says the
+trial's eventual success is not already assured.
+
+**The asymptotic comparison.** The corresponding
+asymptotic values are 0.71, 0.70, and 0.13, each higher
+than the exact value, for the reasons in the callout
+above.
+
+**Recommendation.** Continue. Conditional power under both
+the design alternative and the current estimate is well
+above any conventional futility threshold.
+
+**Had the interim been 5 of 40 against 6 of 40**, the
+exact conditional power under the current estimate falls
+to 0.11, below a 0.20 futility threshold, and the DMC
+would have a basis for a futility recommendation. The
+asymptotic calculation gives 0.17 in that case, also below
+threshold but by less, illustrating that the two
+approaches can differ enough to matter near the decision
+boundary.
+
+**Documentation.** The DMC charter specifies the exact
+calculation, the assumed future rates for each of the
+three variants, and the futility threshold, so that the
+committee is not choosing the assumption after seeing the
+data.
+
+## Collaborating with an LLM on conditional power
+
+**Prompt 1: 'Compute conditional power at this interim.'**
+
+*What to watch for.* Nearly always the asymptotic formula,
+without a warning about small counts, and frequently
+without stating which future-effect assumption was used.
+
+*Verification.* Specify the assumption explicitly, and in
+a small trial compute the exact version by enumeration and
+compare.
+
+**Prompt 2: 'Write the futility monitoring plan.'**
+
+*What to watch for.* Plans that make the futility boundary
+binding without saying so, which changes the design's
+operating characteristics, or that fail to state that
+futility stopping does not inflate the type I error.
+
+*Verification.* Confirm the plan states whether the
+boundary is binding, and that the efficacy boundary was
+computed accordingly.
+
+**Prompt 3: 'Extend this to staggered entry.'**
+
+*What to watch for.* Models generally handle this by
+ignoring the partially followed patients, which is the
+conservative but wasteful choice, and rarely propose the
+partitioned-rate estimator.
+
+*Verification.* Check whether the calculation accounts for
+patients enrolled but not yet complete, and how their
+remaining event probability was obtained.
+
+## Principle in use
+
+1. **Match the conditional power calculation to the final
+   test.** If the final analysis is exact, the conditional
+   power calculation should be too, or it overstates the
+   chance of success.
+
+2. **Report conditional power under at least two
+   assumptions.** The design alternative and the current
+   estimate bracket the honest range, and the null-case
+   value is a useful third.
+
+3. **Fix the futility threshold and the assumption in the
+   charter.** Choosing either after seeing the interim
+   data converts a design feature into a judgment call.
+
+## Exercises
+
+1. Implement the exact conditional power enumeration and
+   reproduce the worked example's values.
+
+2. Compare exact and asymptotic conditional power across a
+   grid of interim event counts for the same design. Where
+   is the discrepancy largest?
+
+3. Show that the exact conditional power is a step
+   function of the interim counts, and explain why.
+
+4. Extend the enumeration to compute Bayesian predictive
+   power under a Beta prior on each arm's event rate.
+
+5. For the trial in the worked example, compute the
+   probability under the null that the futility boundary
+   is crossed at the interim, and the probability under
+   the alternative. Interpret these as the operating
+   characteristics of the futility rule.
+
+## Further reading
+
+- The compendium `10-conditional-power-rare`, reports
+  `01-binary-fisher`, `02-logrank`, and `03-counts`.
+- @lan1982stochastically, the original stochastic
+  curtailment paper.
+- @halperin1982aid, on data monitoring with conditional
+  power.
+- @jennison2000group, Chapter 10.
+- @proschan2005two and @mehta2011adaptive, on the use of
+  conditional power in sample-size re-estimation.
+- The `gsDesign` package's `gsCP` function for the
+  asymptotic case.

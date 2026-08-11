@@ -1,0 +1,435 @@
+# Imputation in Practice: Machine Learning and Detection Limits {#sec-imputation}
+
+*Prerequisites: Chapter 10.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Explain why point-prediction accuracy is the wrong
+  criterion for evaluating an imputation method in a
+  trial.
+- Describe how a random-forest imputation method can be
+  made proper, temporal-aware, and capable of MNAR
+  sensitivity analysis.
+- Handle left-censored assay data below a limit of
+  detection, and identify which analysis targets are
+  sensitive to the choice.
+- Choose an imputation strategy matched to the estimand
+  rather than to the data type.
+
+## Orientation
+
+Chapter 10 established the framework: mechanisms,
+prevention, MMRM under MAR, multiple imputation,
+reference-based methods, and sensitivity analysis. This
+chapter takes up two specific practical problems where the
+generic advice is insufficient.
+
+The first is whether machine-learning imputation methods
+belong in a confirmatory trial. Random-forest imputation
+is attractive: non-parametric, native handling of mixed
+data types, minimal specification. It is also, in its
+standard form, a single-imputation method that ignores
+temporal structure and offers no route to sensitivity
+analysis, which makes it unsuitable as delivered. Whether
+it can be repaired is the subject of the first half.
+
+The second is left-censored data: assay readings below a
+limit of detection. This is a different kind of
+missingness, with a known bound rather than an unknown
+value, and it has its own literature and its own bad
+default practice.
+
+The unifying theme is that the criterion for judging an
+imputation method in a trial is not how accurately it
+predicts the missing values. It is whether the resulting
+treatment-effect estimate is unbiased, whether its
+confidence interval covers, and whether the power is
+retained. Methods optimized for prediction accuracy can
+fail all three.
+
+## Provenance
+
+Two research compendia. `30-missforest` (project
+`missforest`) develops T-MissForest, a temporal-aware
+extension of random-forest imputation with proper multiple
+imputation and MNAR sensitivity analysis, evaluated
+against MICE variants across simulated two-arm trials.
+`38-zzmesoimpute-paper` compares strategies for
+below-detection-limit immunoassay data in a simulation
+calibrated to a multiplexed Meso Scale Discovery panel.
+
+## The statistician's contribution {#sec-imputation-human}
+
+**(Judgment 1.) Choosing the evaluation criterion.**
+Machine-learning imputation is usually evaluated on
+imputation accuracy. A trial cares about bias, coverage,
+and power of the treatment effect. A method can impute
+individual values well and produce a biased treatment
+effect, and the reason is systematic: shrinkage toward the
+conditional mean reduces prediction error and understates
+variability.
+
+**(Judgment 2.) Insisting on proper multiple imputation.**
+Single imputation, however clever, treats imputed values
+as observed and understates the variance. Any method used
+for inference must propagate imputation uncertainty.
+
+**(Judgment 3.) Distinguishing censoring from
+missingness.** A value below a detection limit is not
+missing; it is known to lie in an interval. Methods that
+treat it as missing discard that information, and methods
+that substitute a constant fabricate precision.
+
+## Why prediction accuracy is the wrong criterion
+
+Consider a method that imputes each missing value by its
+conditional mean given the observed data. This minimizes
+mean squared prediction error and is therefore optimal by
+the machine-learning criterion. It is also wrong for
+inference, in two ways.
+
+The imputed values have less variability than real ones,
+so the imputed dataset is under-dispersed and any variance
+estimated from it is too small. And a single imputation
+provides no way to reflect the uncertainty about what the
+missing value was, so the standard error of the treatment
+effect is understated and the confidence interval
+under-covers.
+
+Rubin's rules exist to fix the second problem, and they
+require draws from the posterior predictive distribution
+rather than conditional means, which fixes the first. A
+method is **proper** when it draws rather than predicts
+and when the draws reflect both the sampling variability
+of the imputation model's parameters and the residual
+variability of the values.
+
+This is why the `missforest` compendium's evaluation uses
+bias of the treatment effect, 95% interval coverage, and
+power, and says so explicitly: these reflect the
+inferential demands of confirmatory analysis rather than
+the point-prediction accuracy that typically favors
+machine learning methods.
+
+## Making forest imputation usable in a trial
+
+Standard missForest iterates: for each variable with
+missing values, fit a random forest on the others and
+replace the missing entries with predictions, repeating
+until convergence. Three defects for trial use.
+
+**It ignores temporal structure.** A longitudinal trial's
+measurements are ordered, and a patient's week-12 value is
+informed most by their week-8 value. A forest treating
+visits as unrelated columns discards this.
+
+**It produces single imputations.** No route to Rubin's
+rules.
+
+**It offers no sensitivity mechanism.** There is no
+parameter to vary to explore MNAR departures.
+
+The T-MissForest extension addresses each:
+
+1. **Temporal feature augmentation**: lagged values,
+   subject-level summaries, and time-structured visiting
+   sequences that respect the ordering of repeated
+   measures, so the forest can use the trajectory rather
+   than only the cross-section.
+2. **Proper multiple imputation** via predictive mean
+   matching, bootstrap subsampling, or quantile regression
+   forests, all of which produce draws rather than
+   predictions and hence permit valid inference through
+   Rubin's rules.
+3. **MNAR sensitivity analysis** through delta adjustment,
+   tipping-point analysis, and reference-based strategies
+   (jump to reference, copy reference, copy increments in
+   reference), which are exactly the tools of Chapter 10,
+   made available within the forest framework.
+
+The comparators in the evaluation are MICE with predictive
+mean matching, MICE with random forests, standard
+missForest, and mixgb, across simulated two-arm trials
+varying sample size, dropout rate, missingness mechanism,
+correlation structure, and treatment-effect pattern.
+
+::: {.callout-warning}
+## Warning
+
+The regulatory position on machine-learning imputation in
+confirmatory trials is unsettled. MICE is endorsed and
+familiar; forest-based methods are neither. A sponsor
+proposing forest imputation as the primary analysis should
+expect to justify it, and the pragmatic path is to use
+MICE for the primary and the forest method as a
+pre-specified sensitivity analysis, where its flexibility
+in capturing nonlinear relationships is a genuine
+complement rather than a regulatory risk.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: when flexibility helps
+
+**Question.** Under what circumstances would a
+forest-based imputation outperform MICE with predictive
+mean matching, and when would it not?
+
+**Answer.**
+
+Forests help when the relationships among the variables
+used for imputation are nonlinear or involve interactions
+that a linear conditional model does not capture. In a
+trial with many baseline covariates of mixed type, some
+with threshold effects, a forest can find structure that
+requires explicit specification in MICE. It also helps
+when the analyst does not have the time or the knowledge
+to specify a good conditional model for every incomplete
+variable, which is the ordinary situation.
+
+Forests do not help, and can hurt, when the true
+relationships are close to linear and the sample is small.
+A forest with limited data produces imputations that are
+overly shrunk toward the overall mean, because each tree's
+terminal nodes contain few observations; the resulting
+imputed dataset is under-dispersed and the treatment
+effect is attenuated. Predictive mean matching, which
+draws an observed value from a donor pool, avoids this by
+construction.
+
+The deeper point: the imputation model must be at least as
+rich as the analysis model, and in a trial the analysis
+model contains the treatment indicator and the
+interactions of interest. A flexible imputation method
+that omits the treatment arm from its predictors will
+bias the treatment effect toward the null no matter how
+sophisticated it is. This error is easier to make with a
+method that requires little specification, which is the
+hidden cost of minimal configuration.
+:::
+
+## Left-censored assay data
+
+A different problem. Multiplexed immunoassays return
+concentrations, and readings below the assay's limit of
+detection are reported as censored rather than as numbers.
+Typical panels have censoring fractions from a few percent
+to more than half for some analytes.
+
+The common laboratory practice replaces each below-LOD
+reading with a single uniform draw on $(0, \mathrm{LOD})$.
+Other options: substitute a constant such as
+$\mathrm{LOD}/2$ or $\mathrm{LOD}/\sqrt{2}$; regression on
+order statistics, which fits a distribution to the
+uncensored values and imputes the censored ones from the
+fitted quantiles; censored maximum likelihood, which
+treats the censoring correctly in the likelihood; and
+multiple imputation from the censored distribution.
+
+The `zzmesoimpute` compendium compares these in a
+simulation calibrated to observed censoring fractions,
+with per-group sample sizes from 25 to 200, evaluating
+bias and root mean squared error of the analyte mean and
+coverage of a between-group mean difference.
+
+The findings split sharply by target.
+
+**For point estimation of the analyte mean:** the
+uniform-draw convention behaves like $\mathrm{LOD}/2$
+substitution and *underestimates the mean at higher
+censoring*. Censored maximum likelihood, regression on
+order statistics, and multiple imputation remain
+approximately unbiased with lower root mean squared error,
+and the pattern is stable across sample size.
+
+**For the between-group mean difference:** interval
+coverage was close to nominal for *every* strategy at
+*every* sample size, and the anticipated advantage of
+proper multiple imputation did not materialize even at the
+smallest samples.
+
+The explanation for the second result is instructive. The
+mean difference is dominated by sampling variability
+common to all methods: whatever bias substitution
+introduces, it introduces in both groups, and the
+difference removes most of it. The variance inflation that
+proper multiple imputation is designed to capture is small
+relative to the between-patient variability that all
+methods share.
+
+**The practical conclusion**: the choice of strategy
+matters for point estimation and is largely immaterial to
+inference on the mean difference. For a trial whose
+endpoint is a between-arm comparison, the simple
+approaches are defensible; for a paper reporting analyte
+concentrations descriptively, they are not.
+
+```r
+library(NADA)
+
+# censored maximum likelihood for a left-censored analyte
+fit <- cenmle(Cen(conc, censored) ~ arm, data = assay)
+summary(fit)
+
+# regression on order statistics
+ros <- cenros(assay$conc, assay$censored)
+mean(ros)
+```
+
+## Choosing
+
+A decision procedure.
+
+**Longitudinal outcome, MAR plausible, standard analysis
+model**: MMRM. No imputation required.
+
+**Longitudinal outcome, auxiliary variables available that
+strengthen MAR**: multiple imputation with MICE, including
+the auxiliaries and the treatment arm, then the analysis
+model on the imputed sets.
+
+**Longitudinal outcome, complex nonlinear baseline
+structure, exploratory or sensitivity role**: T-MissForest
+or another proper forest-based method, with the treatment
+arm in the predictors.
+
+**Any confirmatory analysis under MNAR concern**:
+reference-based imputation plus a tipping point, as in
+Chapter 10.
+
+**Left-censored assay data, between-group comparison**:
+any reasonable method; document the choice, and prefer
+censored maximum likelihood on grounds of correctness.
+
+**Left-censored assay data, reporting concentrations**:
+censored maximum likelihood or regression on order
+statistics. Not substitution.
+
+## Worked example: an assay sub-study within a trial
+
+A biomarker sub-study nested in a phase II trial. A
+20-analyte MSD panel measured at baseline and week 12 in
+120 patients, 60 per arm. Censoring fractions range from
+2% to 48% across analytes. Two objectives: describe the
+concentrations, and compare the change from baseline
+between arms for four pre-specified analytes.
+
+**For the descriptive objective.** Censored maximum
+likelihood per analyte per timepoint, reporting the
+estimated mean and its interval with the censoring
+fraction alongside. For the analytes with censoring above
+40%, the estimates are reported with an explicit caution,
+since the fitted distribution is doing most of the work.
+
+**For the comparative objective.** The compendium's
+finding is that the strategy is largely immaterial to the
+mean difference. The SAP nonetheless specifies censored
+maximum likelihood for consistency with the descriptive
+analysis, and pre-specifies substitution at
+$\mathrm{LOD}/\sqrt 2$ as a sensitivity analysis. The
+expectation, stated in advance, is that they will agree.
+
+**Multiplicity.** Four analytes, so a Holm correction
+within the biomarker family, and the family is labeled
+exploratory since no claim rests on it.
+
+**Missing visits, as distinct from censored values.**
+Eight patients missed the week-12 visit. These are missing
+data, not censored data, and are handled by multiple
+imputation using the baseline panel and the clinical
+covariates, with the treatment arm included in the
+imputation model.
+
+**Reporting.** The censoring fraction for every analyte is
+reported. This is the single most important number for a
+reader judging the analysis, and it is routinely omitted.
+
+## Collaborating with an LLM on imputation
+
+**Prompt 1: 'Impute the missing values in this trial
+dataset.'**
+
+*What to watch for.* The single most consequential error
+is omitting the treatment indicator from the imputation
+model, which biases the treatment effect toward the null.
+It is common in generated code because the treatment
+variable looks like an outcome-side variable.
+
+*Verification.* Inspect the predictor matrix. The
+treatment arm must be in it.
+
+**Prompt 2: 'Use a random forest to impute this
+longitudinal data.'**
+
+*What to watch for.* Standard missForest, which is single
+imputation and ignores the temporal ordering. The output
+will look fine and the inference will be wrong.
+
+*Verification.* Confirm the method produces multiple
+imputations and that lagged values are among the
+predictors.
+
+**Prompt 3: 'How should we handle values below the
+detection limit?'**
+
+*What to watch for.* Substitution at $\mathrm{LOD}/2$
+offered without qualification. It is adequate for a mean
+difference and biased for a mean.
+
+*Verification.* Ask what the analysis target is, and check
+the censoring fraction before accepting any method.
+
+## Principle in use
+
+1. **Evaluate imputation by the treatment effect, not by
+   prediction accuracy.** Bias, coverage, and power are
+   the criteria; imputation accuracy is not one of them.
+
+2. **Put the treatment arm in the imputation model.**
+   Always. Omitting it attenuates the effect being
+   estimated.
+
+3. **Report the censoring or missingness fraction
+   prominently.** A reader cannot judge any of this
+   without it.
+
+## Exercises
+
+1. Simulate a trial with MAR dropout and impute using (a)
+   conditional-mean single imputation, (b) predictive mean
+   matching with $M = 50$, and (c) standard missForest.
+   Compare bias, coverage, and power of the treatment
+   effect.
+
+2. Repeat (b) with the treatment arm omitted from the
+   imputation model and quantify the attenuation.
+
+3. Simulate left-censored data at censoring fractions of
+   10%, 30%, and 50%. Compare the bias of the estimated
+   mean under substitution, uniform draw, regression on
+   order statistics, and censored maximum likelihood.
+
+4. Repeat for the between-group mean difference and
+   reproduce the finding that coverage is close to nominal
+   for all methods.
+
+5. Implement temporal feature augmentation for a
+   forest-based imputation, adding lagged values and
+   subject-level summaries, and quantify the improvement
+   in coverage over the un-augmented version.
+
+## Further reading
+
+- The compendia `30-missforest` and
+  `38-zzmesoimpute-paper`.
+- @vanbuuren2011mice, on MICE.
+- @stekhoven2012missforest, the original missForest paper.
+- @desilva2017comparison and @huque2018comparison, two
+  careful comparisons of multiple imputation methods for
+  longitudinal data, which are the right benchmarks for any
+  new method.
+- @carpenter2013analysis, on reference-based imputation.
+- @little2019statistical, for the general theory including
+  censored data.
+- The `mice`, `missForest`, `rbmi`, and `NADA` R packages.

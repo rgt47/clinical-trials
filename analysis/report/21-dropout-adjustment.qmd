@@ -1,0 +1,384 @@
+# Sample-Size Adjustment for Anticipated Dropout {#sec-dropout-adjustment}
+
+*Prerequisites: Chapters 5, 10, and 20.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Enumerate the common dropout-adjustment methods and
+  state what each assumes.
+- Explain why the standard $N_0/(1-d)$ inflation
+  over-corrects for MMRM analyses and under-corrects at
+  high dropout rates.
+- Choose an adjustment method matched to the planned
+  analysis.
+- Explain how the timing of dropout, not just its
+  amount, changes the correct adjustment.
+- Distinguish adjusting for lost information from
+  addressing dropout bias.
+
+## Orientation
+
+Every longitudinal trial inflates its sample size for
+anticipated dropout, and almost every one does it by
+dividing by $1 - d$. That rule was derived for a
+complete-case comparison at a single endpoint, and it is
+applied routinely to trials analyzed by MMRM, where
+patients who drop out still contribute substantial
+information through their observed visits.
+
+The consequence is systematic mis-sizing, in a direction
+that depends on the dropout rate and the analysis. The
+menu of alternatives is large and largely undocumented
+comparatively: heuristic inflation factors, replacement
+strategies, and analytical adjustments derived from the
+likelihood of the planned analysis.
+
+This chapter compares them. Its practical conclusion is
+that the adjustment should match the planned analysis, and
+that when the analysis is MMRM the analytical adjustment
+derived for MMRM is available, unbiased, and better than
+any of the heuristics.
+
+## Provenance
+
+This chapter follows the research compendium
+`14-dropout-adjustment` (project `dropout-adjustment`),
+which formalizes ten adjustment methods and evaluates each
+in an ADEMP-compliant Monte Carlo program. The
+data-generating model is a linear mixed trajectory with
+Gaussian random intercepts and slopes and compound-symmetric
+covariance; three dropout-hazard patterns (constant,
+early-heavy, late-heavy) are crossed with dropout rates
+from 0% to 40%, at 1,000 replicates per cell, reporting
+bias, empirical standard error, mean squared error, and
+95% interval coverage with Monte Carlo standard errors.
+
+## The statistician's contribution {#sec-dropout-adj-human}
+
+**(Judgment 1.) Matching the adjustment to the analysis.**
+An inflation factor derived for complete-case analysis
+applied to an MMRM design is a category error. The
+question is always: given the planned analysis, how much
+information does a patient who leaves at visit $j$
+contribute?
+
+**(Judgment 2.) Estimating the dropout *pattern*, not just
+the rate.** Early-heavy and late-heavy attrition at the
+same total rate require different corrections and make
+replacement strategies work or fail. The pattern comes
+from prior trials in the same population.
+
+**(Judgment 3.) Keeping the two problems separate.**
+Adjusting the sample size handles the loss of precision.
+It does nothing about the bias from informative dropout,
+which Chapter 10 addresses. A protocol that inflates $N$
+and says nothing about the missing-data mechanism has
+solved the easier half.
+
+## The methods
+
+The compendium formalizes ten.
+
+**No adjustment.** The baseline, showing what dropout
+costs when nothing is done.
+
+**Simple inflation**, $N_0 / (1 - d)$. The standard rule.
+Derived for a complete-case comparison in which a dropout
+contributes nothing.
+
+**Squared inflation**, $N_0 / (1 - d)^2$. The most
+conservative of the common rules.
+
+**Overall's additive rule**, $N_0 (1 + d)$. Derived
+specifically for slope-based longitudinal analyses, and
+intermediate between the two above.
+
+**Full replacement.** Keep the original target and enroll
+a replacement for each dropout, who contributes a partial
+trajectory from their later start.
+
+**Half replacement.** Replace half of them.
+
+**MMRM analytical adjustment.** Derive the required $n$
+from the information matrix of the planned MMRM under the
+assumed dropout pattern.
+
+**Random-slopes adjustment.** The analogous derivation for
+a random-slopes analysis.
+
+**Two-stage slope-summary adjustment.** Compute each
+patient's slope from their observed data, then compare
+slopes, with the sample size derived from the resulting
+variance under the dropout pattern.
+
+**Piecewise linear growth adjustment.** For trajectories
+with a change in slope.
+
+## What the simulation shows
+
+**No adjustment.** Even at 10 to 20% dropout, MMRM
+analyses retain substantial power, because partial
+trajectories contribute information. This is the finding
+that undermines the naive rule: the loss is much smaller
+than the dropout rate suggests. At 30 to 40% the loss
+becomes pronounced.
+
+**Simple inflation** performs adequately at moderate
+rates and tends toward slight conservatism for MMRM
+analyses, because it was derived for complete-case
+comparisons. At high rates it under-corrects, since the
+relationship between dropout and information loss is not
+linear in $d$.
+
+**Squared inflation** produces the largest samples and
+over-enrolls considerably for MMRM analyses of
+longitudinal data. It may be appropriate when both arms
+experience independent dropout and the analysis is
+endpoint-only, which describes few modern longitudinal
+trials.
+
+**Overall's additive rule** falls between the two and was
+derived for slope-based analyses, where it offers the best
+balance of efficiency and robustness among the heuristics.
+
+**Full replacement** is sensitive to dropout *timing*.
+Under late-heavy patterns there is little calendar time
+left for replacements to accumulate follow-up, so the
+strategy adds patients who contribute almost nothing.
+Under early-heavy patterns, replacements enroll early
+enough to deliver meaningful trajectories and the strategy
+works.
+
+**Half replacement** is the pragmatic middle: less costly
+than full replacement, meaningful power recovery over
+none.
+
+**MMRM analytical adjustment** directly accounts for the
+information contributed by partial trajectories and
+therefore avoids the heuristics' conservatism. It is the
+recommended method when the planned analysis is MMRM with
+compound symmetry.
+
+**Two-stage slope-summary adjustment** performs comparably
+to the MMRM analytical method when the between-subject
+slope variance is non-trivial, which connects back to the
+equivalence conditions of Chapter 18.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: why the naive rule over-corrects
+
+**Question.** A trial expects 25% of patients to withdraw
+before the final visit. The analysis is MMRM with visits
+at months 3, 6, 9, and 12. Why is $N_0/0.75$ too large?
+
+**Answer.**
+
+Because the withdrawing patients are not absent from the
+analysis. Under MMRM with MAR, a patient observed at
+months 3, 6, and 9 contributes to the estimate of the
+month-12 treatment effect: their observed values inform
+the treatment-by-visit means, and the estimated
+within-patient correlation propagates that information to
+the unobserved month-12 value.
+
+How much they contribute depends on the correlation
+between visits and on when they left. A patient who leaves
+after month 9 contributes nearly as much as a completer if
+the month-9 to month-12 correlation is high. A patient who
+leaves after month 3 contributes considerably less. Only a
+patient with no post-baseline visit at all contributes
+nothing, and that group is much smaller than the total
+withdrawal count.
+
+The naive rule treats all 25% as the last case. The
+analytical adjustment computes the actual information
+contribution under the assumed dropout pattern and the
+assumed correlation, which is why it gives a smaller and
+more accurate answer.
+
+The corollary for design: the higher the between-visit
+correlation, the less dropout costs, and the more the
+naive rule over-enrolls.
+:::
+
+## Timing matters
+
+Three patterns at the same 25% total dropout:
+
+**Constant hazard.** Withdrawals spread evenly across
+follow-up. The average dropout has completed about half
+the visits.
+
+**Early-heavy.** Most withdrawals in the first months,
+often reflecting tolerability. The average dropout
+contributes little, so the information loss is closer to
+the naive rule, and replacement strategies work because
+replacements have time to accumulate data.
+
+**Late-heavy.** Most withdrawals near the end, often
+reflecting study fatigue or a competing event. The average
+dropout has contributed most of their trajectory, so the
+information loss is small and the naive rule badly
+over-enrolls, while replacement strategies contribute
+almost nothing.
+
+The design implication: obtain the dropout *curve* from
+prior trials, not just the final rate. A Kaplan-Meier plot
+of retention from a previous trial in the same population
+is the input that makes the adjustment defensible.
+
+```r
+# Retention-informed adjustment: compute the information
+# under the assumed dropout pattern rather than inflating.
+information_ratio <- function(retention, corr_matrix) {
+  # relative information of the final-visit contrast under
+  # the observed-data patterns implied by `retention`
+  J <- length(retention)
+  patterns <- diff(c(retention, 0)) * -1   # prop. dropping at j
+  contribs <- sapply(seq_len(J), function(j) {
+    obs <- seq_len(j)
+    S   <- corr_matrix[obs, obs, drop = FALSE]
+    # information about the visit-J mean from visits 1..j
+    if (j == J) 1 else
+      corr_matrix[j, J]^2   # simplified illustration
+  })
+  sum(patterns * contribs) + retention[J] * 1
+}
+```
+
+The illustration is deliberately simplified; the
+compendium's implementation uses the full information
+matrix of the fitted model. The point of showing it is
+that the calculation is mechanical once the retention
+curve and the correlation structure are specified, and
+there is no reason to substitute a rule of thumb for it.
+
+## Worked example: adjusting a 12-month MMRM trial
+
+A trial with visits at months 3, 6, 9, and 12, primary
+contrast at month 12, MMRM with compound-symmetric
+covariance and within-patient correlation 0.65. Unadjusted
+requirement: 180 per arm. Expected dropout 25%, with a
+roughly constant hazard.
+
+**Naive simple inflation.** $180 / 0.75 = 240$ per arm.
+
+**Squared inflation.** $180 / 0.75^2 = 320$ per arm.
+Clearly excessive for this analysis.
+
+**Overall's rule.** $180 \times 1.25 = 225$ per arm.
+
+**MMRM analytical adjustment**, computing the information
+under the constant-hazard retention curve and the assumed
+correlation: 207 per arm.
+
+**Simulation check.** Generate under the assumed model and
+dropout pattern, fit the MMRM, 5,000 replicates. At $n =
+207$, power is 0.898 (Monte Carlo SE 0.004). At the naive
+240, power is 0.932, confirming the over-enrollment: 33
+extra patients per arm buying 3 points of power that were
+not required.
+
+**Sensitivity to the pattern.** Repeating with an
+early-heavy pattern at the same 25% total, the analytical
+requirement rises to 228 per arm; with a late-heavy
+pattern it falls to 193. The spread across patterns, 35
+patients per arm, is larger than the difference between
+several of the heuristic methods, which is the argument
+for obtaining the retention curve.
+
+**What is not addressed.** All of the above assumes
+non-informative dropout. If patients withdraw because they
+are deteriorating, the estimate is biased regardless of
+sample size, and the protocol needs the Chapter 10
+apparatus: retention plan, follow-up after
+discontinuation, reference-based sensitivity analyses, and
+a tipping point.
+
+## Collaborating with an LLM on dropout adjustment
+
+**Prompt 1: 'Adjust our sample size for 25% dropout.'**
+
+*What to watch for.* Nearly universal use of $N_0/(1-d)$
+with no reference to the planned analysis. This is the
+single most reliable failure mode in this area.
+
+*Verification.* Ask what the analysis is and whether the
+proposed adjustment accounts for partial trajectories.
+
+**Prompt 2: 'Should we replace dropouts?'**
+
+*What to watch for.* Generic discussion without reference
+to timing, which is the factor that determines the answer.
+
+*Verification.* Supply the expected retention curve and
+the enrollment window, and ask how much follow-up a
+replacement enrolled at month $t$ would accumulate.
+
+**Prompt 3: 'Simulate power under this dropout pattern.'**
+
+*What to watch for.* Dropout implemented as MCAR when the
+intent was MAR, or as deletion of the final visit only
+rather than of all subsequent visits.
+
+*Verification.* Check that dropout is monotone: once a
+patient leaves, all later visits are missing.
+
+## Principle in use
+
+1. **Match the adjustment to the analysis.** MMRM
+   analytical adjustment when the analysis is MMRM;
+   Overall's rule for slope-based analyses when the
+   analytical route is unavailable; simple inflation only
+   for endpoint-only analyses.
+
+2. **Get the retention curve, not the retention rate.**
+   The pattern changes the answer by more than the choice
+   among heuristics does.
+
+3. **Say explicitly that the adjustment addresses
+   precision and not bias.** They are separate problems
+   with separate remedies, and conflating them is how
+   protocols end up with a large trial and no
+   missing-data plan.
+
+## Exercises
+
+1. For a four-visit MMRM design with correlation 0.65,
+   compute the information contributed by patients
+   dropping out after visits 1, 2, and 3, relative to a
+   completer.
+
+2. Implement the ten adjustment methods for a design of
+   your choosing and tabulate the resulting sample sizes
+   at dropout rates of 10, 20, 30, and 40%.
+
+3. Simulate the achieved power of each method at each rate
+   and identify which methods hit the 90% target most
+   closely.
+
+4. Repeat under early-heavy and late-heavy dropout
+   patterns and describe how the ranking changes.
+
+5. Add informative dropout, where the withdrawal hazard
+   depends on the current unobserved value, and report
+   both the achieved power and the bias for the method
+   that performed best under MAR.
+
+## Further reading
+
+- The compendium `14-dropout-adjustment`.
+- @overall2006rule, the additive rule-of-thumb derived for
+  two-stage analyses of repeated measurements, which is the
+  best-performing heuristic for slope-based designs.
+- @iddi2022longpower, for the retention-weighted
+  calculations implemented in `longpower`.
+- @nrc2010prevention, on prevention and treatment of
+  missing data.
+- @mallinckrodt2008recommendations, on MMRM under dropout.
+- @diggle1994informative, on informative dropout.
+- @friede2006sample, on sample-size recalculation as an
+  alternative to guessing the dropout rate in advance.
+- The `longpower` package's attrition functions.

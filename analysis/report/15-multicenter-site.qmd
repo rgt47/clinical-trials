@@ -1,0 +1,403 @@
+# Multicenter Trials and the Site Effect {#sec-multicenter}
+
+*Prerequisites: Chapters 3 and 8.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Explain why site is a source of outcome variability and
+  what ignoring it costs.
+- Compare fixed-effect, random-effect, and no-site
+  analysis models on bias, power, and coverage.
+- State when the number of sites makes the fixed-effect
+  model inefficient.
+- Decide whether to include a treatment-by-site
+  interaction term.
+- Describe the effect of unequal site sizes and the
+  hazard of informative site size.
+
+## Orientation
+
+Almost every trial of any size is multicenter, for the
+simple reason that no single center can enroll enough
+patients. Patients at different sites differ in case mix,
+in the care they receive, and in how outcomes are
+assessed, so site contributes variance to the outcome. The
+analysis has to decide what to do about it.
+
+The available choices are: ignore site; include it as a
+set of fixed effects; include it as a random effect; and
+in each of the latter two, decide whether to include a
+treatment-by-site interaction. These choices sound minor
+and are not: they affect power, coverage, and the
+inferential target.
+
+There is also a design linkage. Site is almost always a
+stratification factor in the randomization, and Chapter 3
+established that stratification factors must appear in the
+analysis. Ignoring site therefore violates the
+analyze-as-you-randomized principle, with consequences
+this chapter quantifies.
+
+## Provenance
+
+Two research compendia support this chapter.
+`07-multicenter-rct` (project `multicenterrct`) is a Monte
+Carlo study of four analysis models across scenarios
+crossing the number of sites, the site-level variance,
+the presence of random treatment-by-site interaction, and
+balanced versus imbalanced site sizes.
+`11-site-covariate-analysis` (project `sitecovariate`)
+addresses the narrower question 'should site be a
+covariate in the analysis model?' with four scenarios
+crossing equal versus unequal site sizes with the presence
+or absence of true treatment-by-site interaction, at 1,000
+replicates each, reporting bias, empirical and model-based
+standard errors, power, coverage, and convergence.
+
+## The statistician's contribution {#sec-multicenter-human}
+
+**(Judgment 1.) Whether the sites are the sites of
+interest or a sample of possible sites.** This is the
+substantive content of the fixed-versus-random question.
+Twelve academic centers chosen for expertise are arguably
+the population; forty community practices are plausibly a
+sample from a larger population to which the inference
+should generalize.
+
+**(Judgment 2.) Whether treatment effect heterogeneity
+across sites is expected.** Some heterogeneity is
+ubiquitous, and the power to detect it is nearly always
+inadequate. The productive stance is to plan for its
+presence rather than to test for its absence.
+
+**(Judgment 3.) Whether site size is informative.** If
+large sites systematically differ from small ones, for
+instance because high-volume centers treat more severe
+patients, then every model can produce a biased estimate
+of the population-average effect. This possibility should
+be examined descriptively before the analysis is
+finalized.
+
+## The models
+
+With $Y_{ij}$ the outcome for patient $j$ at site $i$ and
+$Z_{ij}$ treatment:
+
+**M0, ignore site.**
+$Y_{ij} = \beta_0 + \beta_1 Z_{ij} + \epsilon_{ij}$.
+
+**M1, site as fixed effects.**
+$Y_{ij} = \beta_0 + \beta_1 Z_{ij} + \sum_k \gamma_k
+ I(i = k) + \epsilon_{ij}$, consuming $K - 1$ degrees of
+freedom.
+
+**M2, site as random effect.**
+$Y_{ij} = \beta_0 + \beta_1 Z_{ij} + a_i + \epsilon_{ij}$
+with $a_i \sim N(0, \sigma_a^2)$, consuming one variance
+parameter.
+
+**M3, random treatment-by-site interaction.**
+$Y_{ij} = \beta_0 + \beta_1 Z_{ij} + a_i + g_i Z_{ij} +
+\epsilon_{ij}$ with $g_i \sim N(0, \sigma_g^2)$.
+
+```r
+library(lme4); library(lmerTest)
+
+m0 <- lm(y ~ treatment, data = trial)
+m1 <- lm(y ~ treatment + factor(site), data = trial)
+m2 <- lmer(y ~ treatment + (1 | site), data = trial)
+m3 <- lmer(y ~ treatment + (treatment | site), data = trial)
+```
+
+## What the simulations show
+
+**Ignoring site is unbiased and inefficient.** Point
+estimates from M0 are unbiased, because randomization was
+stratified and the arms are balanced within site. The cost
+is in the standard error: the site-level variance is left
+in the residual, which inflates the estimated standard
+error, produces over-coverage, and reduces power. The
+magnitude scales with the intraclass correlation: with no
+site-level variance, ignoring site is harmless; as
+$\sigma_a^2$ grows, the penalty becomes substantial. This
+is a direct confirmation of the general result that
+failure to adjust for a stratification variable produces
+conservative inference and lost power.
+
+**The random-effect model is the robust default.** Across
+nearly all scenarios in both compendia, M2 attained
+nominal or near-nominal coverage and the highest power. It
+does not pay $K - 1$ degrees of freedom, and it borrows
+information across sites, which stabilizes estimation when
+some sites contribute few patients.
+
+**The fixed-effect model is competitive when $K$ is
+small.** With ten sites, M1 performed comparably to M2.
+With thirty sites, it lost efficiency to the accumulation
+of nuisance parameters. The degradation is amplified when
+site sizes are unequal, because a fixed-effect model
+treats each site independently and can produce unstable
+estimates when some sites contribute very few patients per
+arm.
+
+**The interaction term costs power when there is no
+interaction.** Including M3's random slope when
+$\sigma_g^2 = 0$ expends degrees of freedom for nothing
+and reduces power. Including it when interaction is
+genuinely present is the correct specification, and M2
+fitted to interaction-containing data still maintained
+reasonable coverage because the extra variability was
+partially absorbed into the residual.
+
+**Unequal site sizes cost little, unless extreme.** With a
+coefficient of variation of site size around 1.1, the
+random-effect model showed only a modest increase in
+empirical standard error and a correspondingly small power
+loss. The efficiency loss from unequal site sizes is
+generally small unless the imbalance is severe.
+
+::: {.callout-warning}
+## Warning
+
+The scenario neither compendium simulates, and both flag,
+is **informative site size**: larger sites systematically
+differing from smaller ones in patient characteristics or
+in the treatment effect itself. Under informative site
+size, all of these models can produce biased estimates of
+the population-average treatment effect, because the
+implicit weighting across sites does not match the target
+population. Check descriptively whether site size
+correlates with case mix before choosing a model, and if
+it does, consider explicitly weighting to the target
+population.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: fixed or random with eight sites?
+
+**Question.** A trial randomizes 240 patients across eight
+academic centers, stratified by center. Fixed or random
+effects for site?
+
+**Answer.**
+
+Either is defensible here, and the reasoning differs in
+kind rather than in degree.
+
+The efficiency argument barely distinguishes them at $K =
+8$ with 30 patients per site: the fixed-effect model
+spends seven degrees of freedom out of 240, which is
+inconsequential, and both models will give nearly
+identical answers.
+
+The inferential argument favors random effects if the
+inference is meant to generalize beyond these eight
+centers, which it usually is: the drug will be used in
+centers not in the trial. The fixed-effect model estimates
+the effect averaged over exactly these eight centers.
+
+The estimation argument favors random effects with the
+caveat that eight is few for estimating a variance
+component. The estimate of $\sigma_a^2$ will be poor, and
+the Kenward-Roger correction to the degrees of freedom
+becomes important. Some analysts prefer fixed effects
+below about ten sites for this reason.
+
+The practical recommendation, and the compendia's, is
+random effects as the default with Kenward-Roger degrees
+of freedom, and a pre-specified sensitivity analysis using
+fixed effects. Reporting both, when they agree, is
+reassuring; when they disagree materially at $K = 8$,
+something else is wrong, usually an outlying site.
+:::
+
+## Treatment-by-site interaction
+
+Two kinds must be distinguished.
+
+**Quantitative interaction**: the effect differs in
+magnitude across sites but has the same sign everywhere.
+Ubiquitous, expected, and usually of no consequence for
+the trial's conclusion.
+
+**Qualitative interaction**: the effect reverses sign at
+some sites. Consequential if real, and almost always a
+chance finding when reported, because the power to detect
+qualitative interaction is very low.
+
+Formal tests for interaction have low power, as with
+subgroups in Chapter 8. A non-significant test does not
+establish homogeneity. The recommended practice is to
+include the interaction term only when there is a strong a
+priori reason to expect heterogeneity, to examine a
+site-level forest plot descriptively, and to be explicit
+that any apparent heterogeneity is hypothesis-generating.
+
+A related trap: with many small sites, some will show
+dramatic effects by chance alone. A forest plot with
+thirty sites, four of which have confidence intervals
+excluding the null in opposite directions, is exactly what
+homogeneity produces at that sample size.
+
+## Binary and time-to-event outcomes
+
+Both compendia restrict to continuous outcomes analyzed
+with normal-theory models, and both flag the extension as
+open. Two specific complications arise elsewhere.
+
+**Separation in logistic models with many small sites.**
+With site as a fixed effect in a logistic regression, a
+site in which no patient has the event contributes a
+perfectly separating indicator, and the maximum likelihood
+estimate does not exist. Random effects avoid this;
+so do penalized likelihood approaches.
+
+**Stratified versus adjusted survival analyses.** A Cox
+model can include site as a stratification variable,
+allowing each site its own baseline hazard, or as a set of
+covariates. Stratifying is more robust and does not
+estimate a site effect; with many small sites,
+stratification can cost substantial efficiency because
+comparisons are confined within strata.
+
+## Worked example: analysis plan for a 30-site trial
+
+A 600-patient trial across 30 sites, randomization
+stratified by site with permuted blocks, continuous
+primary endpoint at week 16, expected 20 patients per site
+with a range from 5 to 60.
+
+**Primary model.** Site as a random intercept, treatment
+as a fixed effect, adjusted for baseline value and the
+other stratification factor, Kenward-Roger degrees of
+freedom.
+
+**Why not fixed effects.** Thirty sites at 600 patients
+means 29 nuisance parameters, and the smallest sites have
+five patients, some of which will be all in one arm.
+Fixed effects would be unstable exactly where the
+random-effect model borrows strength.
+
+**Why not ignore site.** Site is the stratification
+variable, and the expected intraclass correlation of 0.03
+to 0.05 is enough to cost several percentage points of
+power through the inflated residual variance.
+
+**Interaction.** Not in the primary model. There is no a
+priori reason to expect heterogeneity: the intervention is
+a drug with a pharmacological mechanism, delivered
+identically. A site-level forest plot is reported
+descriptively, and the SAP states that it is exploratory.
+
+**Small-site handling.** Sites with fewer than five
+patients are not pooled for the primary analysis, since
+the random-effect model handles them, but they are pooled
+into a single 'other' category for the descriptive
+forest plot, where individual estimates would be
+uninterpretable.
+
+**Sensitivity analyses.** Fixed-effect site model; a model
+with a random treatment-by-site slope; and an analysis
+excluding the largest site, to confirm the result is not
+driven by one center. The last of these is the one that
+most often reveals a problem.
+
+**Informative site size check.** Before unblinding,
+tabulate baseline characteristics by site size tertile. If
+large sites differ systematically, the SAP's sensitivity
+analysis weighting sites equally is triggered.
+
+## Collaborating with an LLM on multicenter analysis
+
+**Prompt 1: 'Should site be a fixed or random effect in
+this trial?'**
+
+*What to watch for.* Models generally give a reasonable
+summary of the trade-off and rarely ask the two questions
+that determine the answer: how many sites, and whether the
+inference is meant to generalize beyond them.
+
+*Verification.* Supply $K$, the per-site sample sizes, and
+the intended scope of inference, and re-ask.
+
+**Prompt 2: 'Fit and compare these four models.'**
+
+*What to watch for.* Code that fits `(treatment | site)`
+when `(1 | site)` was intended, or that omits the
+degrees-of-freedom method. Convergence warnings from the
+random-slope model on small data are routine and are often
+silently ignored in generated code.
+
+*Verification.* Check convergence explicitly, and compare
+the estimated variance components against what the design
+anticipated.
+
+**Prompt 3: 'Interpret this site-level forest plot.'**
+
+*What to watch for.* Narrating apparent heterogeneity.
+With thirty sites, extreme estimates are guaranteed.
+
+*Verification.* Compare the observed spread of site
+estimates to the spread expected under homogeneity, which
+can be simulated in a few lines.
+
+## Principle in use
+
+1. **Random effects for site as the default.** It is the
+   most robust across the scenarios examined, and its
+   advantage grows with the number of sites and with
+   imbalance in site sizes.
+
+2. **Never ignore the stratification variable.** It is
+   unbiased and conservative, and conservative means
+   losing power that the design paid for.
+
+3. **Plan for treatment-by-site heterogeneity rather than
+   testing for it.** The test has no power; the plan is
+   what protects the interpretation.
+
+## Exercises
+
+1. Simulate a trial with 20 sites, ICC 0.05, and compare
+   the empirical power of M0, M1, and M2. Repeat with ICC
+   0 and comment.
+
+2. Repeat with 5 sites and with 50 sites, holding total
+   $N$ fixed, and plot the power of M1 and M2 against the
+   number of sites.
+
+3. Generate data with a true random treatment-by-site
+   interaction, $\sigma_g = 0.2$. Compare coverage of M2
+   and M3, and compute the power of the likelihood-ratio
+   test for the interaction.
+
+4. Simulate informative site size, where site mean
+   prognosis is correlated with site size. Quantify the
+   bias in the population-average treatment effect for
+   each model, and propose a weighting that removes it.
+
+5. For a binary outcome with 30 sites averaging 10
+   patients each, compare a fixed-effect logistic model, a
+   random-effect logistic model, and a penalized-likelihood
+   fit. How often does separation occur?
+
+## Further reading
+
+- The compendia `07-multicenter-rct` and
+  `11-site-covariate-analysis`.
+- @localio2001adjustments, on adjustment for center.
+- @feaster2011modeling, on modeling site effects in
+  multi-site trials.
+- @kim2020analysis, on multicenter trials with very low
+  event rates, which is the setting where the
+  fixed-effect model breaks down most sharply.
+- @kahan2012improper, on the consequences of omitting the
+  stratification variable, and @kahan2013risks, on
+  covariate adjustment more generally.
+- @sverdlov2024selecting, on choosing a randomization
+  method for a multicenter trial with uncertain
+  site-level recruitment.
+- ICH E9, Section 3.2, on multicenter trials.
+- The `lme4`, `lmerTest`, and `mmrm` packages.

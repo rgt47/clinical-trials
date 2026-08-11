@@ -1,0 +1,376 @@
+# Fully Sequential Analysis Revisited {#sec-sequential}
+
+*Prerequisites: Chapter 9.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Describe the sequential probability ratio test and
+  Armitage's restricted procedures.
+- Explain why group-sequential methods displaced fully
+  sequential monitoring in the late 1970s.
+- Assess which of those reasons still hold given modern
+  computation, alpha spending, and adaptive methodology.
+- Describe continuous sequential monitoring in
+  post-marketing safety surveillance.
+- State the conditions under which fully sequential
+  monitoring would be appropriate for a confirmatory
+  efficacy trial.
+
+## Orientation
+
+Interim monitoring began as a fully sequential enterprise.
+Wald's sequential probability ratio test, developed for
+wartime quality control, evaluates the likelihood ratio
+after each observation and stops as soon as it crosses a
+boundary [@wald1945sequential]. Armitage adapted the idea
+for medical trials, and through the 1960s and early 1970s
+sequential medical plans, with their characteristic
+triangular and restricted boundaries plotted on graph
+paper, were the state of the art.
+
+Then group-sequential methods arrived
+[@pocock1977group; @obrien1979multiple], and within a
+decade fully sequential monitoring had essentially
+disappeared from confirmatory trials.
+
+This chapter asks whether the reasons for that
+displacement still hold. They were largely practical
+rather than theoretical, and the practical landscape has
+changed: computation is free, alpha-spending has decoupled
+the number of looks from the design, and adaptive
+methodology has normalized designs far more complex than a
+continuous boundary.
+
+## Provenance
+
+This chapter follows the research compendium
+`20-sequential-analysis` (project `sequentialanalysis`),
+which reviews the theoretical foundations of fully
+sequential analysis, traces the historical shift to group
+sequential monitoring, identifies the practical
+considerations that drove the transition, and evaluates
+whether current technological and regulatory conditions
+warrant renewed attention. It identifies safety
+surveillance as the domain where continuous monitoring has
+already been revived, and considers whether the arguments
+extend to confirmatory efficacy trials.
+
+## The statistician's contribution {#sec-sequential-human}
+
+**(Judgment 1.) Whether the data actually arrive
+continuously.** A trial with a 24-week endpoint does not
+observe outcomes one at a time in a meaningful sense;
+information arrives in a lagged, overlapping stream. Fully
+sequential monitoring makes sense when the outcome is
+observed quickly relative to enrollment.
+
+**(Judgment 2.) Whether the operational apparatus can
+support it.** A boundary evaluated after every patient
+requires a data pipeline that is clean and current after
+every patient. This is the constraint that killed the
+approach in the 1970s and it is the one most changed by
+modern electronic data capture.
+
+**(Judgment 3.) What the expected sample size saving is
+worth.** Continuous monitoring reduces the expected sample
+size relative to group sequential monitoring, but the
+reduction is modest once three or four looks are
+available. The marginal gain from twenty looks over four
+is small, and from continuous over twenty is smaller.
+
+## The theory
+
+**Wald's SPRT.** For a simple null against a simple
+alternative, compute the likelihood ratio $\Lambda_n$
+after each observation and stop when it crosses either
+boundary:
+$$
+\Lambda_n \ge \frac{1 - \beta}{\alpha}
+\quad\text{(reject } H_0\text{)}, \qquad
+\Lambda_n \le \frac{\beta}{1 - \alpha}
+\quad\text{(accept } H_0\text{)}.
+$$
+The SPRT is optimal in the sense of minimizing the
+expected sample size under both hypotheses among all tests
+with the same error probabilities. That is a strong
+result and it comes with a serious caveat: the sample size
+is unbounded, and the SPRT can run for a very long time
+when the truth lies between the two hypotheses.
+
+**Armitage's restricted procedures** address this by
+truncating the boundaries, producing the closed designs of
+the sequential medical plans: restricted, triangular, and
+double-triangular. The truncation costs the optimality
+property and delivers a bounded trial, which is what a
+protocol needs.
+
+**The repeated significance problem.** Armitage's other
+contribution [@armitage1969repeated] was to quantify what
+happens without adjustment: continuous testing at a fixed
+nominal level rejects with probability 1 under the null.
+This is the result quoted in Chapter 9, and it is the
+reason continuous monitoring requires a boundary designed
+for it.
+
+## Why it was displaced
+
+The compendium identifies the practical considerations,
+none of which was a theoretical objection.
+
+**Computation.** Boundaries for continuous monitoring, and
+the operating characteristics that justify them, required
+numerical work that was expensive in 1975. Group
+sequential designs with three or four looks could be
+tabulated.
+
+**Data flow.** Continuous monitoring requires the
+cumulative statistic to be current. With paper case report
+forms and quarterly data entry, the statistic was months
+stale, and the design's promise of immediate stopping was
+fictional.
+
+**Committee structure.** A DMC meets; it does not sit
+continuously. Group-sequential looks match the cadence of
+an institution that convenes two or three times over a
+trial's life. This may be the deepest reason: the design
+was aligned to the human process.
+
+**Endpoint lag.** Continuous monitoring is meaningful only
+if outcomes are observed promptly. For a trial with a
+one-year endpoint, the information at any calendar moment
+reflects patients enrolled a year earlier, so the
+distinction between continuous and quarterly looks is
+largely illusory.
+
+**Alpha spending superseded the argument.** Lan and
+DeMets's spending function [@lan1983discrete] gave group
+sequential designs the flexibility that had been
+continuous monitoring's advantage: the number and timing
+of looks need not be fixed in advance, only the spending
+function. Once looks could be scheduled opportunistically,
+the case for continuous monitoring narrowed to the
+marginal efficiency of infinitely many looks over several.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: how much is continuous monitoring worth?
+
+**Question.** Under the alternative hypothesis, how much
+smaller is the expected sample size with continuous
+monitoring than with a four-look O'Brien-Fleming design?
+
+**Answer.**
+
+Less than intuition suggests, and the reason is the shape
+of the boundary.
+
+Most of the reduction in expected sample size from
+sequential monitoring comes from the first few
+opportunities to stop. Going from one look to two captures
+a large share of the available saving; two to four
+captures much of the rest. Beyond that, additional looks
+are opportunities to stop at times when the boundary is
+unlikely to be crossed anyway, because the O'Brien-Fleming
+boundary is very stringent early and the trial is unlikely
+to cross it between looks that are close together.
+
+Published comparisons typically find that a design with
+four or five looks captures most of the expected sample
+size reduction available from continuous monitoring, with
+the residual gain in the range of a few percent.
+
+Against that few percent one must set: the operational
+cost of continuously current data, the difficulty of
+convening a decision-making body continuously, and the
+regulatory unfamiliarity of the design. That arithmetic is
+why group sequential won, and it is still the arithmetic
+today for a conventional confirmatory trial.
+
+The arithmetic changes when stopping *quickly* has value
+beyond sample size, which is the safety case below.
+:::
+
+## Where continuous monitoring survived
+
+Post-marketing safety surveillance. The setting is
+distinctive in ways that reverse the trade-off.
+
+**The data are already continuous.** Claims databases,
+electronic health records, and vaccine safety datalinks
+accumulate events in near real time without a study team
+having to collect them.
+
+**There is no committee to convene.** Surveillance is
+algorithmic; the boundary is evaluated by a program and
+signals are reviewed when they occur.
+
+**Speed has intrinsic value.** Detecting a safety signal
+three months earlier prevents exposures. That value is not
+measured in sample size.
+
+**The endpoint is immediate.** An adverse event following
+vaccination is observed within days.
+
+The methods used, maximized sequential probability ratio
+tests and conditional sequential tests, are direct
+descendants of Wald and Armitage, and they are the routine
+tools of vaccine safety surveillance systems. Continuous
+sequential monitoring did not die; it moved.
+
+## Would it work for efficacy trials now?
+
+The compendium's assessment, translated into practical
+terms.
+
+**What has changed in its favor.** Computation is free, so
+boundaries and operating characteristics for any design
+can be simulated. Electronic data capture makes a current
+cumulative statistic feasible for trials with short
+endpoints. Alpha spending provides the theoretical
+framework, since continuous monitoring is the limit of
+spending as the look spacing goes to zero. And adaptive
+designs have accustomed regulators to complexity.
+
+**What has not changed.** DMCs still meet rather than sit.
+Endpoint lag is unchanged for most confirmatory trials and
+is the binding constraint. The efficiency gain over four
+or five looks remains small. And a trial stopped after a
+single patient's data crossed a boundary would face
+questions about the robustness of the result that no
+statistical argument fully answers.
+
+**Where the case is strongest.** Trials with rapidly
+observed endpoints, where the outcome is known within days
+of randomization; platform trials with continuous
+enrollment and automated data flows; safety monitoring
+within efficacy trials, where the continuous-monitoring
+machinery can run alongside a group-sequential efficacy
+design; and settings where each additional exposure
+carries substantial risk.
+
+**Where the case is weakest.** Conventional
+parallel-group confirmatory trials with endpoints measured
+in months.
+
+## Worked example: a continuous safety boundary alongside a group-sequential efficacy design
+
+A trial of a novel agent with a known class-effect risk of
+a serious adverse event, expected background rate 1%,
+concern threshold 3%. Primary efficacy endpoint at 26
+weeks, group-sequential with two interim looks.
+
+**Efficacy monitoring.** Conventional: Lan-DeMets
+O'Brien-Fleming spending, two interims, DMC meetings.
+
+**Safety monitoring.** Continuous. A maximized sequential
+probability ratio test on the cumulative count of the
+adverse event, with the boundary calibrated to give an
+overall false-signal probability of 0.05 across the
+trial's expected exposure. The statistic is recomputed
+whenever a new event is reported; the boundary is
+evaluated by a program; a crossing triggers an immediate
+DMC teleconference rather than an automatic stop.
+
+**Why this split works.** The safety endpoint is observed
+within days of occurrence and is reported through the
+adverse-event pipeline continuously, so a current
+statistic is genuine. The efficacy endpoint is not
+observed for 26 weeks, so continuous monitoring of it
+would be an empty ritual.
+
+**Operating characteristics.** Simulated: the probability
+of a safety signal within the trial is 0.048 when the true
+rate is 1%, and 0.87 when it is 3%, with median time to
+signal of 4.2 months under the latter. Those two numbers
+are what the charter needs.
+
+**Documentation.** The charter distinguishes the two
+monitoring streams, states that the safety boundary is
+advisory and triggers review rather than stopping, and
+confirms that the safety monitoring consumes no efficacy
+alpha, since it concerns a different endpoint and a
+different hypothesis.
+
+## Collaborating with an LLM on sequential methods
+
+**Prompt 1: 'Design a sequential test for this trial.'**
+
+*What to watch for.* Models often produce a Wald SPRT
+without noting that it is unbounded, or a group-sequential
+design when a sequential one was requested. They also tend
+to conflate the two literatures.
+
+*Verification.* Confirm whether the design is closed
+(bounded maximum sample size) and what the maximum is.
+
+**Prompt 2: 'What are the operating characteristics of
+this continuous boundary?'**
+
+*What to watch for.* Analytic claims that hold for the
+unrestricted SPRT and not for the truncated version
+actually proposed.
+
+*Verification.* Simulate. Continuous boundaries are easy
+to simulate and hard to characterize analytically once
+truncated.
+
+**Prompt 3: 'Set up continuous safety monitoring.'**
+
+*What to watch for.* Failure to account for the multiple
+looks in the false-signal probability, which is the entire
+point, and failure to specify the exposure denominator,
+which for a rate-based boundary determines everything.
+
+*Verification.* Simulate the false-signal rate under the
+background rate over the trial's full exposure.
+
+## Principle in use
+
+1. **Match the monitoring cadence to the data cadence.**
+   Continuous monitoring of an endpoint observed at six
+   months is a fiction that can mislead a committee.
+
+2. **Use continuous methods for safety and group
+   sequential for efficacy** when the two endpoints have
+   different observation lags, which is common.
+
+3. **Simulate any truncated sequential design.** The
+   optimality results belong to the unbounded SPRT, and
+   every usable design is bounded.
+
+## Exercises
+
+1. Implement the SPRT for a normal mean with known
+   variance and simulate its sample-size distribution
+   under the null, the alternative, and a value between
+   them. Comment on the third case.
+
+2. Truncate the SPRT at a maximum sample size and compute
+   the resulting error probabilities. How much do they
+   depart from the nominal values?
+
+3. Compare the expected sample size under the alternative
+   for designs with 1, 2, 4, 10, and continuous looks,
+   using an O'Brien-Fleming-type spending function.
+   Reproduce the diminishing-returns pattern.
+
+4. Implement a maximized sequential probability ratio test
+   for Poisson counts and calibrate its boundary to a 5%
+   false-signal probability over a fixed exposure.
+
+5. For a trial with a 12-week endpoint and 18 months of
+   accrual, plot the information available at each
+   calendar month. Use it to argue for or against
+   continuous efficacy monitoring in that trial.
+
+## Further reading
+
+- The compendium `20-sequential-analysis`.
+- @wald1945sequential, the original sequential tests.
+- @armitage1969repeated, on repeated significance testing.
+- @whitehead1997design, the standard treatment of
+  sequential medical designs.
+- @jennison2000group, for the group-sequential comparison.
+- @ellenberg2019data, on how monitoring committees
+  actually operate.

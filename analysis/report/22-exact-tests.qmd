@@ -1,0 +1,446 @@
+# Exact Tests for Small and Sparse Trials {#sec-exact-tests}
+
+*Prerequisites: Chapters 5 and 8.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Explain why asymptotic tests fail in small or sparse
+  $2 \times 2$ tables and what 'exact' means.
+- Distinguish conditional from unconditional exact tests
+  and state the argument on each side.
+- Describe the three design coordinates that unify the
+  unconditional exact procedures.
+- Compute exact power for Fisher's test under unequal
+  allocation and quantify the imbalance penalty.
+- Choose and apply an exact test for trend in ordered
+  categories.
+
+## Orientation
+
+Chapter 5's binary sample-size formula and Chapter 8's
+logistic regression both rest on asymptotic
+approximations. In a trial with 30 patients per arm and an
+event rate of 8%, those approximations are not merely
+imprecise, they can be wrong in ways that matter: nominal
+5% tests with actual sizes of 8% or of 1%, and confidence
+intervals with coverage far from 95%.
+
+Exact methods compute the sampling distribution of the
+test statistic by enumeration rather than approximation.
+They have a reputation for conservatism, which is
+deserved for the conditional test and largely undeserved
+for the unconditional alternatives, and a reputation for
+computational difficulty, which was accurate in 1935 and
+is not now.
+
+This chapter covers the $2 \times 2$ problem, its
+extension to $m \times 2$ and $r \times c$ tables, exact
+power calculation under unequal allocation, and exact
+tests for trend.
+
+## Provenance
+
+Four research compendia support this chapter.
+`01-fisher-exact-rx2` (project `fisherexacttestrx2`)
+develops algorithms for Fisher's exact test in
+$m \times 2$ and $m \times c$ tables, an exact conditional
+test of no three-way interaction, and exact bounds with a
+provable stopping rule for network enumeration.
+`15-unconditional-exact-2x2` (project
+`unconditional-exact`) gives a unifying framework for
+unconditional exact tests. `24-fisher-power-unequal-n`
+generalizes the Thomas-Conlon exact power algorithm to
+arbitrary allocation ratios. `32-test-for-trend` (project
+`testtrend`) treats tests for trend in ordered categories.
+
+## The statistician's contribution {#sec-exact-human}
+
+**(Judgment 1.) Recognizing when the asymptotics fail.**
+The usual rule, expected cell counts of at least five, is
+crude. The honest procedure in a small trial is to check
+the actual size of the intended test by simulation at the
+design stage.
+
+**(Judgment 2.) Choosing conditional or unconditional.**
+The choice turns on whether the margins are genuinely
+fixed by design, which in a clinical trial they are not:
+the number of events is random, not chosen. This is an
+argument for unconditional tests that has been made since
+Barnard and is still routinely ignored.
+
+**(Judgment 3.) Accepting a discrete test's oscillating
+size.** With discrete data, the achievable significance
+levels are a finite set, so no test attains exactly 5%. A
+test that is sometimes 4.1% and sometimes 4.9% is
+correctly described as valid and conservative; a test that
+is sometimes 5.6% is not valid, however appealing its
+average.
+
+## Why exactness matters
+
+The chi-square and normal approximations to the binomial
+converge slowly when the probability is far from 0.5 and
+the sample is small. Two symptoms.
+
+**Type I error miscalibration.** The uncorrected
+chi-square test in sparse tables can exceed its nominal
+level substantially; the continuity-corrected version
+over-corrects and becomes conservative.
+
+**Interval coverage failure.** The Wald interval for a
+proportion has coverage that oscillates wildly and can
+fall below 80% for nominal 95% intervals at small $n$ and
+extreme $p$.
+
+```r
+set.seed(2026)
+n <- 30; p <- 0.08
+size_check <- function(test) {
+  mean(replicate(20000, {
+    x <- rbinom(2, n, p)
+    tab <- rbind(x, n - x)
+    test(tab)$p.value < 0.05
+  }))
+}
+size_check(function(t) chisq.test(t, correct = FALSE))
+#> [1] 0.0632
+size_check(function(t) chisq.test(t, correct = TRUE))
+#> [1] 0.0187
+size_check(fisher.test)
+#> [1] 0.0187
+```
+
+The uncorrected test exceeds its nominal level; the
+corrected and exact tests are conservative by more than a
+factor of two. Neither is 5%, and the conservatism is
+power thrown away.
+
+## Conditional and unconditional exact tests
+
+**Fisher's exact test** conditions on both margins. Given
+the total number of events, the distribution of the
+2 by 2 table under the null is hypergeometric, and the
+$p$-value is the sum of probabilities of tables at least
+as extreme. The conditioning removes the nuisance
+parameter, the common event probability, which is what
+makes the computation exact and finite.
+
+The objection, raised by Barnard almost immediately
+[@barnard1947significance], is that the total number of
+events is not fixed by the design. In a trial the
+investigator fixes the arm sizes; the events are random.
+Conditioning on a quantity that was not fixed discards
+information and produces a test that is conservative:
+its actual size can be well below nominal, and the power
+loss is real.
+
+**Unconditional exact tests** condition only on the arm
+sizes and handle the nuisance parameter directly, most
+commonly by maximizing the rejection probability over all
+values of the common probability under the null. Barnard's
+test and Boschloo's test are the classic examples;
+Boschloo's is uniformly more powerful than Fisher's
+[@boschloo1970raised].
+
+The `unconditional-exact` compendium shows that this
+fragmented literature, Boschloo, Berger-Boos, Liddell,
+Rice, and the rest, is organized by **three design
+coordinates**:
+
+1. **An ordering of the sample lattice** by a test
+   statistic, which determines which tables count as more
+   extreme.
+2. **A weighting function over the nuisance parameter**,
+   defining a weighted type I error criterion used to
+   select the critical region. Maximization is the
+   limiting case of a point-mass weight at the worst-case
+   value; the Berger-Boos restricted supremum maximizes
+   only over a confidence region for the nuisance
+   parameter, which reduces conservatism.
+3. **A tie-resolution rule** for tables of equal ordering
+   value.
+
+Within this framework the procedures of Liddell and Rice
+are special cases, corresponding to particular choices of
+the three coordinates. The value of the framework is that
+it converts a menu of named tests into a small set of
+decisions a designer can make deliberately.
+
+```r
+library(Exact)
+
+tab <- matrix(c(3, 27, 10, 20), nrow = 2)
+fisher.test(tab)$p.value
+#> [1] 0.0553
+exact.test(tab, method = 'boschloo')$p.value
+#> [1] 0.0389
+exact.test(tab, method = 'z-pooled')$p.value
+#> [1] 0.0362
+```
+
+The same data, three exact procedures, and the
+conditional test alone fails to reject at 0.05. This is
+not a coincidence of the example: it is the systematic
+conservatism of conditioning.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: is Fisher's test wrong?
+
+**Question.** Should Fisher's exact test be abandoned in
+favor of Boschloo's?
+
+**Answer.**
+
+Not abandoned, but demoted from default.
+
+Fisher's test is *valid*: its actual size never exceeds
+nominal. What it is not is efficient, because conditioning
+on a margin the design did not fix discards information.
+Boschloo's test is also valid and uniformly at least as
+powerful, so on statistical grounds it dominates.
+
+Three reasons Fisher persists. It is available everywhere
+and is understood by every reviewer. Its conditional
+argument has a genuine theoretical rationale, from
+ancillarity, that a minority of statisticians still find
+persuasive. And for large tables the unconditional
+computation is more expensive, though modern
+implementations have narrowed this considerably.
+
+The practical recommendation: in a small trial where the
+analysis is pre-specified and the power matters, specify
+Boschloo's or another unconditional exact test, and say in
+the SAP why. In a secondary or descriptive analysis where
+convention is worth more than a few percentage points of
+power, Fisher's test is fine and universally understood.
+
+What is not defensible is running both and reporting the
+one that rejects.
+:::
+
+## Exact power under unequal allocation
+
+Published power and sample-size calculations for Fisher's
+test have largely assumed balanced allocation. Unequal
+allocation arises constantly: ethical preference for the
+novel therapy, site availability, cost asymmetry between
+arms.
+
+The `fisher-power-unequal-n` compendium generalizes the
+Thomas-Conlon exact power algorithm from balanced designs
+to arbitrary allocation ratios $k = n_1/n_2$, exploiting
+the hypergeometric support structure, the mode-finding
+quadratic, and the adjacency recurrences, all of which
+generalize naturally. The implementation is an R package
+with an Rcpp backend, validated against a pure-R reference
+and against existing software in the balanced case.
+
+Two findings.
+
+**Equal allocation is optimal.** For Fisher's exact test,
+$k = 1$ minimizes the total sample size for fixed power.
+This extends the well-known optimality result for
+unconditional tests to the discrete-hypergeometric
+conditional setting.
+
+**The penalty for moderate imbalance is 5 to 15%.** For
+$k = 1.5$ or $k = 2$, the total sample size required rises
+by roughly 5 to 15% relative to balanced allocation. This
+is a number a design team can use: it converts 'unequal
+allocation costs something' into a quantity to weigh
+against the ethical or logistical reason for the
+imbalance.
+
+Note that this is a larger penalty than the $(1+k)^2/4k$
+inflation of Chapter 5 predicts for the asymptotic case at
+$k = 1.5$, which gives 4%. The difference comes from the
+discreteness: with unequal margins, the attainable
+significance levels change, and the conservatism of the
+conditional test acquires an oscillatory pattern in the
+allocation ratio.
+
+## Larger tables and trend
+
+**$m \times 2$ and $r \times c$ tables.** Fisher's test
+generalizes, and the computation becomes a network
+enumeration problem [@mehta1983network]. The
+`fisherexacttestrx2` compendium develops algorithms for
+this case, including exact bounds with a provable stopping
+rule, which allow the enumeration to terminate early once
+the $p$-value is bracketed away from the decision
+threshold. It also treats an exact conditional test of no
+three-way interaction, the exact analogue of testing for
+interaction in a $2 \times 2 \times K$ table.
+
+**Ordered categories and trend.** When the exposure or
+dose has a natural ordering, testing for a general
+association wastes power; the relevant alternative is a
+monotone trend. The Cochran-Armitage test
+[@cochran1954some; @armitage1955test] is the standard
+asymptotic procedure, computing a score test with scores
+assigned to the ordered levels.
+
+Its exact counterpart conditions on the margins and
+enumerates the permutation distribution of the trend
+statistic. The `testtrend` compendium treats the choice of
+scores, the exact versus asymptotic comparison, and the
+small-sample behavior. Two practical points: equally
+spaced scores are the default and are appropriate when the
+categories represent equal increments, while
+dose-proportional scores are appropriate for dose-response
+and can differ materially in power; and the exact test is
+worth the computation in a dose-finding or dose-ranging
+trial, where the counts in the extreme dose groups are
+small by construction.
+
+```r
+library(coin)
+
+# ordered dose groups, binary response
+independence_test(response ~ dose, data = d,
+                  distribution = 'exact',
+                  scores = list(dose = c(0, 1, 2, 4)))
+#> Exact General Independence Test
+#> Z = 2.417, p-value = 0.0139
+```
+
+## Worked example: a rare-disease trial
+
+A trial in a rare autoinflammatory disease. 24 patients
+randomized 2:1 to active or placebo, 16 and 8. Primary
+endpoint: proportion achieving remission at week 12.
+Expected rates 60% active, 15% placebo.
+
+**Design analysis.** The expected cell counts are 9.6,
+6.4, 1.2, and 6.8. The last is below the conventional
+threshold and the asymptotic test is not trustworthy. The
+SAP specifies an exact test.
+
+**Which one.** Boschloo's, on the grounds that the margins
+are not fixed by design and the trial cannot afford the
+conditional test's conservatism at this sample size.
+
+**Power.** Computed exactly. At the assumed rates,
+Boschloo's test has power 0.72 at one-sided 0.025;
+Fisher's has 0.61. The 11-point difference is the price of
+conditioning, and at 24 patients it is decisive.
+
+**Allocation.** The 2:1 ratio was chosen to give more
+patients access to the active agent. Exact calculation
+shows the penalty: at 1:1, 20 patients would give the same
+power as 24 at 2:1, a 17% penalty at the upper end of the
+compendium's 5 to 15% range because the sample is very
+small. The team accepts the penalty and the protocol
+states the number.
+
+**Type I error verification.** Simulated under the null at
+the design's allocation: Boschloo's achieves 0.0231
+against nominal 0.025, Fisher's 0.0104. Both valid;
+Fisher's leaves more than half of the available alpha
+unspent.
+
+**Reporting.** The exact $p$-value with an exact
+confidence interval for the risk difference, computed by
+inverting the same test, not a Wald interval, which at
+these counts would have poor coverage.
+
+## Collaborating with an LLM on exact inference
+
+**Prompt 1: 'Which test should we use for this small
+2x2 table?'**
+
+*What to watch for.* Models reliably suggest Fisher's
+exact test and rarely mention the unconditional
+alternatives or the conservatism argument.
+
+*Verification.* Ask specifically about Boschloo's test and
+about the actual size of each option at your sample size.
+
+**Prompt 2: 'Compute the power of Fisher's exact test for
+this design.'**
+
+*What to watch for.* Models frequently substitute the
+asymptotic normal-approximation power, which overstates
+the exact test's power because it ignores the
+conservatism. They also usually assume balanced
+allocation.
+
+*Verification.* Use an exact power routine, or simulate:
+generate under the alternative and compute the proportion
+of exact $p$-values below alpha.
+
+**Prompt 3: 'Test for trend across these dose groups.'**
+
+*What to watch for.* Correct use of Cochran-Armitage and
+usually a silent choice of equally spaced scores, which
+may not match the doses.
+
+*Verification.* Check the scores against the actual dose
+levels and consider whether the dose-response is expected
+on the dose scale or the log-dose scale.
+
+## Principle in use
+
+1. **Check the actual size of your test at your sample
+   size.** Twenty lines of simulation at the design stage,
+   and it settles the question that rules of thumb only
+   approximate.
+
+2. **Prefer unconditional exact tests when power
+   matters.** The margins were not fixed by the design,
+   and conditioning on them costs real power in small
+   trials.
+
+3. **Invert the test for the interval.** An exact test
+   reported with a Wald interval is inconsistent, and at
+   the sample sizes where exact tests are needed the Wald
+   interval is unreliable.
+
+## Exercises
+
+1. For $n = 25$ per arm and $p = 0.10$ under the null,
+   compute by simulation the actual size of the
+   uncorrected chi-square, corrected chi-square, Fisher,
+   and Boschloo tests at nominal 0.05.
+
+2. Plot the actual size of Fisher's exact test against $n$
+   from 10 to 100 at $p = 0.15$. Describe the oscillation.
+
+3. Compute the exact power of Fisher's test for a 2:1
+   design with $n = 30$ and 15, at rates 0.5 and 0.2.
+   Compare to the balanced design with the same total.
+
+4. Derive the hypergeometric null distribution for the
+   $2 \times 2$ table conditional on both margins, and
+   explain which design feature the conditioning assumes.
+
+5. For a four-dose trial with response rates 0.10, 0.15,
+   0.25, 0.40 and 20 patients per dose, compare the power
+   of the exact trend test using equally spaced scores
+   against dose-proportional scores for doses 1, 2, 4, 8.
+
+## Further reading
+
+- The compendia `01-fisher-exact-rx2`,
+  `15-unconditional-exact-2x2`,
+  `24-fisher-power-unequal-n`, and `32-test-for-trend`.
+- @barnard1947significance and @boschloo1970raised, the
+  foundational unconditional papers.
+- @fay2021practical, the most useful modern survey of valid
+  inference for the two-sample binomial problem, including
+  the matching of tests to confidence intervals.
+- @crans2008how, a quantitative evaluation of how
+  conservative Fisher's test actually is, and
+  @lydersen2003power, comparing standard, mid-$p$, and
+  randomized versions.
+- @suissa1985exact, on exact unconditional sample sizes,
+  and @mehrotra2003cautionary, a caution about
+  unconditional inference for the risk difference.
+- @mehta1983network, on network algorithms for exact
+  tests in larger tables.
+- @cochran1954some and @armitage1955test, on tests for
+  trend.
+- The `Exact`, `exact2x2`, `coin`, and `StatXact`
+  implementations.

@@ -1,0 +1,443 @@
+# MMRM in Practice: Linearity, Equivalence, and Fit {#sec-mmrm-practice}
+
+*Prerequisites: Chapters 8 and 10.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- State the conditions under which a mixed model reduces
+  exactly to ANCOVA or to a summary-statistic analysis.
+- Explain the bias-variance trade-off between a
+  random-slopes model and a categorical-time MMRM.
+- Decide between a slope estimand and a final-visit
+  estimand on scientific grounds.
+- Report and interpret marginal and conditional $R^2$ for
+  a mixed model, and know when the estimates are
+  unreliable.
+
+## Orientation
+
+The mixed model for repeated measures is the default
+analysis for longitudinal trials, and it is often adopted
+without asking two questions that determine whether it is
+buying anything.
+
+The first is whether the model reduces to something
+simpler. With two time points and an unstructured
+covariance, MMRM is *algebraically identical* to ANCOVA,
+not approximately but exactly. Knowing this saves
+arguments and clarifies what the machinery does.
+
+The second is what the model assumes about the shape of
+the treatment effect. A random-slopes model constrains the
+effect to accumulate linearly in time. When that is true,
+it is more powerful than the unconstrained alternative;
+when it is false, it is biased. The size of both effects
+is quantifiable and the choice should be made on
+biological grounds before the data exist.
+
+## Provenance
+
+Three research compendia support this chapter.
+`18-mmrm-vs-lm-simple` (project `mmrmlm`) establishes the
+equivalence conditions under which random-effects models
+reduce to fixed-effect alternatives.
+`08-mmrm-linearity-robust` (project `mmrmrobust`)
+quantifies the bias-variance trade-off between the
+random-slopes and categorical-time MMRM when the treatment
+effect departs from linearity, calibrated to CDR-SB in
+Alzheimer disease trials. `17-mixed-r2` (project
+`mixedr2`) compares $R^2$ measures for mixed models across
+a 32-scenario simulation.
+
+## The statistician's contribution {#sec-mmrm-practice-human}
+
+**(Judgment 1.) Choosing the estimand, slope or final
+visit, before choosing the model.** These are different
+scientific claims. A slope estimand asserts that the
+treatment changes the rate of the disease; a final-visit
+estimand asserts that patients are better off at a
+specified time. The estimand determines the model, not the
+reverse.
+
+**(Judgment 2.) Assessing whether linearity is plausible
+for the *treatment effect*, not merely for the disease
+trajectory.** These are separate assumptions. A disease
+may progress linearly while a treatment's effect on it is
+delayed, and delayed onset is exactly what breaks the
+random-slopes model.
+
+**(Judgment 3.) Not over-selling model fit.** An $R^2$ for
+a mixed model is not the familiar quantity, and in small
+samples the estimate is unstable enough that reporting it
+without uncertainty is misleading.
+
+## When the mixed model reduces to something simpler
+
+The `mmrmlm` compendium identifies three conditions.
+
+**Condition 1: two time points with unstructured
+covariance.** When MMRM is fitted with an unrestricted
+$2 \times 2$ covariance matrix to a baseline and a single
+follow-up, the treatment effect estimate and its standard
+error are algebraically identical to those from ANCOVA.
+This is an exact equivalence, not an approximation.
+
+The practical consequence: for any two-time-point design
+with complete data, ANCOVA is a sufficient analysis, and
+the MMRM apparatus adds no information about the treatment
+contrast. Teams that fit MMRM to pre-post data believing
+it is more sophisticated are fitting ANCOVA with extra
+steps. What MMRM does add, and it is not nothing, is
+graceful handling of missing baselines and a route to
+including patients missing the follow-up.
+
+**Condition 2: small between-subject slope variance.** In
+designs with three or more time points, the random-slopes
+model becomes equivalent to a summary-statistic analysis,
+in which each patient's slope is computed and the slopes
+are compared, when the ratio $\sigma_b / \sigma$ is small.
+Below roughly 0.25, for equally spaced designs with the
+same total follow-up, the efficiency gain from the mixed
+model is negligible.
+
+This is the same ratio that governed Chapter 11: where
+measurement error dominates biological variability in
+rates, which is common in short trials with noisy
+endpoints, the elaborate model recovers what a
+per-patient regression slope would have given.
+
+**Condition 3: constrained longitudinal data analysis with
+complete data.** The cLDA model, which constrains the
+baseline means to be equal across arms because
+randomization guarantees they are, produces treatment
+effect estimates effectively identical to ANCOVA when no
+baseline values are missing. Its advantage appears only
+with incomplete baselines, where it gains 1 to 4%
+additional power depending on the missingness rate.
+
+None of this argues against mixed models. They retain
+genuine advantages when data are incomplete under a
+plausible MAR assumption, when multiple post-baseline time
+points carry information about the effect, and when the
+covariance structure itself is of interest. The point is
+to know which of those applies to the trial at hand.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what MMRM buys with two time points
+
+**Question.** A trial measures the outcome at baseline and
+week 12 only. Fifteen percent of patients miss the week-12
+visit. Is MMRM worth fitting?
+
+**Answer.**
+
+With complete data, no: it is exactly ANCOVA.
+
+With 15% missing week-12 values, still essentially no, and
+for a reason worth understanding. A likelihood-based
+analysis uses each patient's observed data; a patient with
+a baseline and no follow-up contributes no information
+about the treatment effect at week 12, because there is
+nothing in their record after randomization to inform it.
+Both MMRM and ANCOVA effectively exclude them. The
+patients with the missing outcome are simply absent from
+both analyses.
+
+Where the mixed model earns its place is with
+*intermediate* visits. Add a week-6 measurement and a
+patient who attends week 6 and misses week 12 now
+contributes: their week-6 value, combined with the
+estimated correlation between weeks 6 and 12, informs the
+week-12 contrast under MAR. This is the entire mechanism,
+and it requires intermediate observations to operate.
+
+The design implication is direct. If dropout is expected
+and the analysis is MMRM, schedule intermediate visits,
+because they are what converts dropouts from
+non-contributors into partial contributors.
+:::
+
+## Linearity of the treatment effect
+
+Now the harder question. Two models for a trial with
+several visits:
+
+**Random-slopes model.** Treatment modifies the rate of
+change: $E[Y_{ij}] = \alpha + \beta t_{ij} + \delta Z_i
+t_{ij}$. The treatment effect at any time is $\delta t$, a
+straight line through the origin. The estimand is the
+difference in slopes, and the effect at the final visit is
+an extrapolation along that line.
+
+**Categorical-time MMRM.** Treatment has a separate effect
+at each visit: $E[Y_{ij}] = \mu_j + \delta_j Z_i$. No
+constraint on shape. The estimand is $\delta_J$, the
+difference at the final visit.
+
+The `mmrmrobust` compendium parameterizes the departure
+from linearity by an exponent $\kappa$, with the
+treatment-effect trajectory proportional to
+$(t/T)^{\kappa}$, so $\kappa = 1$ is linear, $\kappa < 1$
+front-loaded (early onset then plateau), and $\kappa > 1$
+back-loaded (delayed onset then acceleration).
+
+The findings:
+
+**When $\kappa = 1$**, the random-slopes model has
+negligible bias and higher power than the categorical-time
+model, consistent with the general principle that a
+correctly specified parametric model beats a
+nonparametric alternative.
+
+**As $\kappa$ departs from 1**, the random-slopes model
+incurs systematic bias in the 18-month treatment contrast.
+The mechanism: the linear constraint forces the effect to
+accumulate at a constant rate, so a front-loaded or
+back-loaded true effect is misallocated across time
+points, distorting the fitted value at the final visit.
+
+**The categorical-time model is approximately unbiased
+regardless of $\kappa$**, because it places no constraint
+on the shape.
+
+This is a clean bias-variance trade-off: power when the
+constraint is right, bias when it is wrong, and no
+protection from the data, because the trial is rarely
+large enough to distinguish the shapes reliably.
+
+### Which estimand, then
+
+The compendium's recommendation is that the choice between
+slope and final-visit estimands should be informed by the
+expected shape of the treatment effect, decided on
+biological grounds.
+
+**Choose the slope estimand and the random-slopes model**
+when there is a strong biological rationale for a constant
+rate of slowing, as with a treatment that directly
+modulates the underlying disease rate.
+
+**Choose the final-visit estimand and categorical-time
+MMRM** when the mechanism suggests delayed onset or an
+early plateau. Amyloid-clearing antibodies are the
+canonical delayed-onset case: months are required to
+achieve plaque reduction, so the treatment-placebo
+difference widens progressively, which is $\kappa > 1$.
+Visual inspection of the published CDR-SB trajectories
+from recent phase III anti-amyloid trials is consistent
+with this pattern.
+
+This aligns with regulatory positions. The FDA guidance
+notes that slope analyses may be considered when the
+course of disease is predictable and approximately linear;
+the EMA similarly conditions slope-based claims on
+verifiable linearity; and ICH E9(R1) reinforces that the
+estimand is chosen on scientific grounds before the model
+is specified.
+
+```r
+# Compare the two models on the same simulated data
+library(mmrm); library(lme4)
+
+# categorical time: no shape constraint
+m_cat <- mmrm(y ~ trt * factor(visit) + base +
+                us(visit | id), data = d)
+
+# random slopes: linear constraint
+m_slope <- lmer(y ~ trt:time + time + base + (time | id),
+                data = d)
+```
+
+::: {.callout-warning}
+## Warning
+
+Fitting both models and reporting the one that gives the
+smaller $p$-value is a serious violation of
+pre-specification and will produce an inflated type I
+error. The choice must be made in the SAP. If the team
+genuinely cannot decide, the safe choice is the
+categorical-time model, which is unbiased under both
+shapes and costs power only when linearity happens to
+hold.
+:::
+
+## Reporting fit: $R^2$ for mixed models
+
+Applied readers ask how much variance the model explains,
+and the answer for a mixed model is not unique. The
+standard decomposition gives two quantities:
+
+**Marginal $R^2$**, the proportion of total variance
+explained by the fixed effects alone.
+
+**Conditional $R^2$**, the proportion explained by fixed
+and random effects together.
+
+The `mixedr2` compendium compares the Nakagawa-Schielzeth
+measure and the Johnson extension across 32 scenarios
+crossing the random-effects structure (intercept-only
+versus random slopes), the intraclass correlation (0.1 and
+0.5), the target marginal $R^2$ (0.1 and 0.5), and sample
+size (20 or 50 clusters crossed with 5 or 20 observations
+per cluster), at 1,000 replicates each.
+
+The findings:
+
+- Both methods are approximately unbiased across the
+  simulated conditions, confirming their mathematical
+  equivalence for random-intercept models.
+- Differences appear only in random-slope scenarios, where
+  the Johnson extension has modestly lower bias.
+- Small samples (20 clusters of 5) produce substantially
+  wider sampling distributions and lower monotonicity
+  rates than larger samples.
+- Marginal $R^2$ is estimated most precisely in high-ICC,
+  large-sample conditions, where the variance
+  decomposition is most identifiable.
+- Singular fits are common in low-ICC random-slope
+  scenarios, consistent with the known limitations of
+  maximum likelihood for small variance components.
+
+The practical recommendations that follow: use the
+Nakagawa-Schielzeth measure for random-intercept models
+and the Johnson extension for random-slope models; report
+both marginal and conditional values; attach a measure of
+uncertainty when there are fewer than 30 clusters or fewer
+than 10 observations per cluster; and report convergence
+and singularity explicitly, since a singular fit makes the
+variance decomposition, and therefore $R^2$, meaningless.
+
+```r
+library(performance)
+r2_nakagawa(fit)
+#> # R2 for Mixed Models
+#>   Conditional R2: 0.641
+#>      Marginal R2: 0.218
+```
+
+## Worked example: choosing the analysis for an 18-month AD trial
+
+An anti-amyloid antibody, 18-month follow-up, CDR-SB
+measured at baseline and months 3, 6, 12, 18. Expected
+dropout 20%.
+
+**Estimand.** The mechanism requires months of plaque
+clearance before any clinical effect, so a delayed onset
+is expected, $\kappa > 1$. On the compendium's evidence,
+the random-slopes model would be biased in the direction
+of understating the 18-month difference. Choose the
+final-visit estimand.
+
+**Primary model.** Categorical-time MMRM, unstructured
+covariance, fixed effects for treatment, visit,
+treatment-by-visit, baseline CDR-SB, and stratification
+factors, Kenward-Roger degrees of freedom, with the
+month-18 contrast as the primary.
+
+**Why intermediate visits are scheduled.** They are not
+merely descriptive. Under 20% dropout, they are the
+mechanism by which patients who withdraw after month 12
+contribute to the month-18 estimate.
+
+**Secondary slope analysis.** Reported as secondary, with
+the explicit note that it assumes linear accumulation, and
+with the estimated trajectory shape plotted so that
+readers can judge the assumption.
+
+**Model fit.** Marginal and conditional $R^2$ reported for
+the primary model with bootstrap intervals, and
+convergence and singularity status stated.
+
+**What the design would have been if the mechanism were
+different.** For a symptomatic agent with a rapid,
+sustained effect, the slope estimand with a random-slopes
+model would have been more powerful, and the visit
+schedule could have been sparser at the expense of the
+dropout-handling benefit.
+
+## Collaborating with an LLM on longitudinal models
+
+**Prompt 1: 'Should we use MMRM or ANCOVA?'**
+
+*What to watch for.* Models almost always recommend MMRM,
+without noting that with two time points and complete data
+the two are algebraically identical.
+
+*Verification.* Count the post-baseline time points. If
+there is one, the answer is that it does not matter for
+the point estimate.
+
+**Prompt 2: 'Fit a random-slopes model for this trial.'**
+
+*What to watch for.* Code that fits the model without
+flagging the linearity assumption on the treatment effect,
+and that reports the slope difference as though it were
+the effect at the final visit.
+
+*Verification.* Ask explicitly what the model assumes
+about the shape of the treatment effect over time, and
+whether that assumption is defensible for the mechanism.
+
+**Prompt 3: 'Report the R-squared for this mixed model.'**
+
+*What to watch for.* A single number with no indication of
+whether it is marginal or conditional, and no attention to
+singularity.
+
+*Verification.* Check convergence and the variance
+components. If a variance component is estimated at zero,
+the decomposition is degenerate.
+
+## Principle in use
+
+1. **Count the time points before choosing the model.**
+   Two means ANCOVA; three or more means the covariance
+   structure and the shape assumption start to matter.
+
+2. **Decide the shape assumption from the mechanism, in
+   the SAP.** The data will not tell you, and choosing
+   after seeing them invalidates the inference.
+
+3. **Schedule intermediate visits if dropout is
+   expected.** They are the machinery that makes MMRM's
+   MAR handling work.
+
+## Exercises
+
+1. Simulate a two-time-point trial with complete data. Fit
+   MMRM with unstructured covariance and ANCOVA, and
+   verify the treatment estimates and standard errors
+   agree to numerical precision.
+
+2. Repeat with 20% of follow-up values missing at random
+   and confirm the two analyses still agree. Then add an
+   intermediate visit and show that they no longer do.
+
+3. Simulate treatment-effect trajectories with $\kappa =
+   0.5, 1.0, 2.0$. Estimate the bias of the random-slopes
+   model and the categorical-time model for the final-visit
+   contrast in each case.
+
+4. For the same simulations, compute the power of both
+   models at $\kappa = 1$ and quantify what the
+   categorical-time model gives up when linearity holds.
+
+5. Reproduce the finding that singular fits are common in
+   low-ICC random-slope scenarios: simulate 500 datasets
+   with 20 clusters of 5 observations and ICC 0.05, and
+   report the singularity rate and the distribution of
+   marginal $R^2$.
+
+## Further reading
+
+- The compendia `18-mmrm-vs-lm-simple`,
+  `08-mmrm-linearity-robust`, and `17-mixed-r2`.
+- @mallinckrodt2008recommendations, on MMRM as the
+  recommended primary analysis.
+- @fitzmaurice2011applied, Chapters 8 and 15.
+- @nakagawa2013general and @edwards2008r2, on $R^2$ for
+  mixed models.
+- The `mmrm`, `lme4`, `lmerTest`, and `performance` R
+  packages.

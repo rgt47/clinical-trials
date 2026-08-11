@@ -1,0 +1,438 @@
+# Maintaining the Size of Tests {#sec-multiplicity}
+
+*Prerequisites: Chapters 8 and 9.*
+
+## Learning objectives
+
+By the end of this chapter you should be able to:
+
+- Distinguish family-wise error rate from false discovery
+  rate and say which is appropriate in a confirmatory
+  trial.
+- Apply single-step, step-down, and step-up procedures and
+  state the dependence assumptions each requires.
+- Construct a closed testing procedure and represent a
+  multiplicity strategy as a graph.
+- Explain how the Romano-Wolf resampling stepdown
+  procedure exploits the joint dependence of test
+  statistics, and what it gains.
+- Choose a procedure for a specific trial's hypothesis
+  family.
+
+## Orientation
+
+A confirmatory trial rarely tests one hypothesis. It has a
+primary endpoint and several secondary endpoints capable
+of supporting label claims; it may have two doses; it has
+interim looks; and it has subgroups. Each of these
+multiplies the opportunities for a false positive, and
+without adjustment the probability that at least one false
+claim emerges can far exceed the declared level.
+
+Chapter 8 introduced the standard remedies. This chapter
+goes further, in two directions. First, it organizes the
+procedures by what they assume and what they deliver, so
+that a choice can be made on grounds other than
+familiarity. Second, it takes up resampling-based
+procedures, and specifically the Romano-Wolf stepdown,
+which exploits the joint dependence structure of the test
+statistics rather than treating them as independent or
+worst-case dependent. In a trial where the endpoints are
+strongly correlated, which is the normal case, the gain in
+power is substantial.
+
+## Provenance
+
+This chapter follows the research compendium
+`19-multiple-comparisons` (project
+`multiple-comparisons`), which surveys the principal
+classes of procedures with their mathematical
+formulations, required assumptions, strengths, and
+limitations, and gives a detailed treatment of the
+Romano-Wolf resampling-based stepdown correction, arguing
+that it improves substantially on both classical
+marginal-$p$-value procedures and earlier resampling
+methods, and identifying directions in which the framework
+might be improved further.
+
+## The statistician's contribution {#sec-multiplicity-human}
+
+**(Judgment 1.) Defining the family.** Everything depends
+on which hypotheses belong to the family whose error rate
+is controlled. A defensible definition is: every
+hypothesis whose rejection could support a claim. Analyses
+that will be labeled exploratory and that no one will
+claim are outside it, provided the labeling is honest and
+survives to publication.
+
+**(Judgment 2.) Ordering the hypotheses.** A fixed
+sequence costs nothing in power for the first hypothesis
+and everything for the later ones if the ordering is
+wrong. The ordering is a clinical judgment about which
+claims matter, made before the data exist.
+
+**(Judgment 3.) Deciding whether to control the family-wise
+error rate at all.** In a confirmatory trial supporting
+regulatory claims, yes. In an exploratory analysis of
+twenty biomarkers, false discovery rate control is the
+better target, and saying so is more honest than applying
+a Bonferroni correction that guarantees nothing will be
+found.
+
+## Error rates
+
+**Family-wise error rate (FWER).** The probability of at
+least one false rejection among the family. Control in the
+**strong** sense means the probability is bounded for any
+configuration of true and false nulls; **weak** control
+bounds it only when all nulls are true. Confirmatory
+trials require strong control.
+
+**False discovery rate (FDR).** The expected proportion of
+rejections that are false. Appropriate when many
+hypotheses are tested and a few false positives among many
+discoveries are tolerable, as in genomics. Not appropriate
+for a label claim, where one false claim is one too many.
+
+**Per-comparison error rate.** No adjustment. Defensible
+only when no claim rests on the comparison.
+
+## The procedures
+
+**Bonferroni.** Reject $H_i$ if $p_i \le \alpha/m$.
+Controls FWER under any dependence. Simple, universally
+understood, conservative.
+
+**Sidak.** Reject if $p_i \le 1 - (1-\alpha)^{1/m}$.
+Slightly less conservative, requires independence.
+
+**Holm (step-down).** Order the $p$-values
+$p_{(1)} \le \dots \le p_{(m)}$. Compare $p_{(1)}$ to
+$\alpha/m$, $p_{(2)}$ to $\alpha/(m-1)$, and so on,
+stopping at the first failure. Controls FWER under any
+dependence and is uniformly more powerful than
+Bonferroni. There is no situation in which Bonferroni
+should be preferred to Holm, and Bonferroni's persistence
+is purely a matter of familiarity.
+
+**Hochberg (step-up).** Work from the largest $p$-value
+down; reject all remaining once $p_{(i)} \le
+\alpha/(m-i+1)$. More powerful than Holm, requires
+positive dependence (specifically, the PRDS condition).
+
+**Hommel.** More powerful than Hochberg under the same
+conditions, more complex, and rarely used because the gain
+is small.
+
+**Closed testing.** The general principle from which most
+of the above derive. Form every intersection hypothesis of
+the family; test each at level $\alpha$ by any valid
+local test; reject an individual hypothesis if every
+intersection containing it is rejected. Closed testing
+gives strong FWER control by construction, and every
+procedure that controls FWER strongly can be represented
+as a closed test.
+
+**Graphical approaches** [@dmitrienko2009multiple]
+represent a closed testing procedure as a graph in which
+nodes are hypotheses with allocated alpha and edges
+specify how alpha is transferred when a hypothesis is
+rejected. This is now the standard way to specify a
+multiplicity strategy in a confirmatory protocol, because
+it is both rigorous and legible: a reviewer can read the
+graph and see exactly what claims are possible.
+
+**Benjamini-Hochberg.** Controls FDR under positive
+dependence. The right tool for exploratory screening and
+the wrong tool for a confirmatory claim.
+
+```r
+p <- c(primary = 0.011, sec1 = 0.019, sec2 = 0.032,
+       sec3 = 0.041)
+rbind(
+  bonferroni = p.adjust(p, 'bonferroni'),
+  holm       = p.adjust(p, 'holm'),
+  hochberg   = p.adjust(p, 'hochberg'),
+  BH         = p.adjust(p, 'BH'))
+#>            primary  sec1  sec2  sec3
+#> bonferroni   0.044 0.076 0.128 0.164
+#> holm         0.044 0.057 0.064 0.064
+#> hochberg     0.041 0.041 0.041 0.041
+#> BH           0.041 0.041 0.041 0.041
+```
+
+The same four $p$-values yield one rejection under
+Bonferroni, one under Holm, and four under Hochberg. The
+difference between Holm and Hochberg here is entirely the
+positive-dependence assumption, which for four correlated
+endpoints in the same trial is plausible but not free.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what the correlation buys
+
+**Question.** Four endpoints in a trial are correlated at
+about 0.7 with each other. Why does Bonferroni waste
+power, and how much?
+
+**Answer.**
+
+Bonferroni controls the FWER assuming the worst possible
+dependence structure. With independent tests, the
+probability that at least one of four tests at level
+$\alpha/4$ rejects under the global null is close to
+$\alpha$, so Bonferroni is nearly exact. With *positively
+correlated* tests, the rejections tend to occur together,
+so the probability of at least one false rejection is
+*less* than $\alpha$: the procedure is conservative, and
+increasingly so as the correlation rises.
+
+At correlation 0.7 among four endpoints, the actual FWER
+of the Bonferroni procedure is roughly 0.035 rather than
+0.05, so about 30% of the available alpha is unspent, and
+the corresponding power loss is real.
+
+A procedure that knows the correlation can spend the full
+alpha. Two routes: parametric, using the multivariate
+normal distribution of the test statistics with the known
+or estimated correlation (the Dunnett procedure for
+multiple doses against a common control is the classic
+case); or resampling, which estimates the joint
+distribution from the data itself. The second is the
+Romano-Wolf approach below, and it requires no
+distributional assumption.
+:::
+
+## Romano-Wolf resampling stepdown
+
+The idea. Rather than combining marginal $p$-values under
+an assumption about their dependence, estimate the joint
+distribution of the test statistics by resampling under
+the null, and construct a stepdown procedure using the
+resampled distribution of the maximum statistic.
+
+The algorithm, in outline:
+
+1. Compute the observed test statistics $T_1, \dots, T_m$
+   and order them from most to least significant.
+2. Generate $B$ resamples under the null, preserving the
+   dependence structure. In a randomized trial the natural
+   resampling is a permutation of treatment labels, which
+   reproduces exactly the null distribution induced by the
+   randomization.
+3. For the most significant hypothesis, compare its
+   statistic to the distribution of the *maximum*
+   statistic across all $m$ hypotheses in the resamples.
+   Reject if it exceeds the appropriate quantile.
+4. If rejected, remove that hypothesis and repeat with the
+   maximum taken over the remaining hypotheses only. Stop
+   at the first non-rejection.
+
+The stepdown structure is what makes it more powerful than
+a single-step maximum-statistic procedure, and the
+resampling is what makes it more powerful than Holm: the
+maximum of four highly correlated statistics has a much
+tighter distribution than the maximum of four independent
+ones, so the critical value is smaller.
+
+```r
+# Permutation-based stepdown for a randomized trial
+romano_wolf <- function(y, arm, endpoints, B = 10000,
+                        alpha = 0.05) {
+  obs <- sapply(endpoints, function(e)
+    abs(t.test(y[[e]] ~ arm)$statistic))
+  ord <- order(obs, decreasing = TRUE)
+  null_max <- replicate(B, {
+    a <- sample(arm)
+    sapply(endpoints, function(e)
+      abs(t.test(y[[e]] ~ a)$statistic))
+  })
+  reject <- logical(length(endpoints))
+  remaining <- ord
+  for (i in seq_along(ord)) {
+    j <- ord[i]
+    crit <- quantile(apply(null_max[remaining, , drop = FALSE],
+                           2, max), 1 - alpha)
+    if (obs[j] > crit) {
+      reject[j] <- TRUE
+      remaining <- setdiff(remaining, j)
+    } else break
+  }
+  reject
+}
+```
+
+**What it gains.** Power, in proportion to the correlation
+among the endpoints. With four endpoints correlated at
+0.7, the procedure recovers most of the alpha that
+Bonferroni leaves unspent.
+
+**What it requires.** A resampling scheme that is valid
+under the null, which a randomized trial supplies for
+free through permutation of treatment labels; enough
+resamples for a stable estimate of the tail quantile, so
+$B$ of 10,000 or more; and the same statistic computed on
+each resample, which for complex models can be expensive.
+
+**Its limitations**, which the compendium identifies as
+directions for improvement. The permutation null is the
+strong null of no effect on any endpoint, which is not
+quite the null the stepdown needs at later steps.
+Studentization is required for the procedure to be
+asymptotically valid under the weak null. And the
+resampling approach does not straightforwardly accommodate
+the hierarchical logical constraints that regulatory
+strategies often impose, such as testing a secondary
+endpoint only if the primary succeeded, which is the
+natural strength of the graphical approach.
+
+## Choosing
+
+A practical decision rule.
+
+**Two to four hypotheses with a defensible clinical
+ordering**: fixed-sequence hierarchy. Costs nothing for
+the first and is the simplest thing that works.
+
+**Several hypotheses with no natural ordering, in a
+confirmatory setting**: a graphical procedure. It is
+rigorous, legible to reviewers, and permits alpha
+recycling.
+
+**Multiple doses against a common control**: Dunnett, which
+uses the known correlation induced by the shared control
+arm and is more powerful than any marginal method.
+
+**Many correlated endpoints where the correlation is
+substantial and unmodeled**: Romano-Wolf resampling
+stepdown.
+
+**Exploratory screening of many hypotheses**:
+Benjamini-Hochberg, with the analysis labeled exploratory.
+
+**Interim looks**: alpha spending (Chapter 9), which is a
+multiplicity procedure specialized to the temporal
+structure.
+
+Combinations occur, and the graphical framework is
+usually how they are assembled: a graph whose nodes are
+endpoint families, within which a resampling or parametric
+procedure operates.
+
+## Worked example: a strategy for a two-dose trial
+
+A trial with two doses against placebo and three
+endpoints: the primary, and two key secondaries capable of
+supporting label claims. Six hypotheses.
+
+**Structure.** A graphical procedure. Alpha 0.025 one-sided
+split equally between the two doses, 0.0125 each. Within
+each dose, a fixed sequence: primary, then secondary 1,
+then secondary 2. Edges transfer a rejected dose's alpha
+to the other dose, so that if the high dose's full
+sequence succeeds, its alpha is recycled.
+
+**Why not Bonferroni across all six.** It would require
+$p < 0.0042$ for any claim, and it ignores both the
+logical structure (a secondary claim is meaningless
+without the primary) and the correlation between the two
+doses' comparisons, which share a control arm.
+
+**Why not Romano-Wolf here.** The logical constraints are
+the dominant feature of this family, and the graphical
+framework encodes them directly. Resampling could be used
+*within* the secondary endpoint family at a given dose,
+where the two secondaries are correlated at about 0.6, and
+the SAP specifies this as a pre-planned refinement.
+
+**Verification.** Simulate the whole strategy under the
+global null with the estimated correlation structure and
+confirm the FWER is at or below 0.025. This is not
+optional for any non-standard strategy, and it is quick.
+
+**Presentation.** The graph appears as a figure in the
+protocol and in the publication. A reader can trace which
+claims were possible and which were made.
+
+## Collaborating with an LLM on multiplicity
+
+**Prompt 1: 'Design a multiplicity strategy for this
+trial.'**
+
+*What to watch for.* Models produce reasonable
+hierarchies and frequently miss part of the family,
+usually the multiple-arm dimension or the interim looks.
+They also often propose Bonferroni where Holm dominates
+it.
+
+*Verification.* Enumerate every hypothesis that could
+support a claim, and check the procedure covers all of
+them.
+
+**Prompt 2: 'Implement the Romano-Wolf procedure.'**
+
+*What to watch for.* Implementations that take the maximum
+over all hypotheses at every step, which is the
+single-step procedure and less powerful, or that fail to
+studentize the statistics.
+
+*Verification.* Check that the set over which the maximum
+is taken shrinks after each rejection, and verify the FWER
+by simulation under the global null.
+
+**Prompt 3: 'Do we need to adjust for these secondary
+endpoints?'**
+
+*What to watch for.* An answer that turns on whether the
+endpoints are 'important' rather than on whether a claim
+will be made.
+
+*Verification.* The question is whether rejection would be
+reported as a finding. If yes, it is in the family.
+
+## Principle in use
+
+1. **Define the family in the SAP, by enumeration.** Not
+   by category, by list.
+
+2. **Never use Bonferroni when Holm is available.** Holm
+   is uniformly more powerful, requires the same
+   assumptions, and is one argument change in
+   `p.adjust`.
+
+3. **Simulate the strategy under the global null.** Any
+   procedure more complex than a textbook one should have
+   its FWER verified before the protocol is finalized.
+
+## Exercises
+
+1. Verify by simulation that Holm controls the FWER under
+   arbitrary dependence, using strongly correlated test
+   statistics.
+
+2. Compute the actual FWER of the Bonferroni procedure for
+   four test statistics with exchangeable correlation
+   0, 0.3, 0.5, 0.7, and 0.9. Plot the unspent alpha.
+
+3. Implement the Romano-Wolf stepdown for a simulated
+   trial with five correlated endpoints and compare its
+   power to Holm and to Hochberg.
+
+4. Construct a graphical multiplicity strategy for a trial
+   with three endpoints and two doses, and verify its FWER
+   by simulation.
+
+5. For a trial with a primary endpoint and 20 exploratory
+   biomarkers, compare the number of discoveries under
+   Holm and Benjamini-Hochberg, and argue which is
+   appropriate.
+
+## Further reading
+
+- The compendium `19-multiple-comparisons`.
+- @hochberg1987multiple, the standard reference for the
+  classical procedures.
+- @dmitrienko2009multiple, on multiplicity in
+  pharmaceutical trials and the graphical approach.
+- The Romano and Wolf papers on stepwise multiple testing
+  with resampling.
+- The `multcomp`, `gMCP`, and `hommel` R packages.
