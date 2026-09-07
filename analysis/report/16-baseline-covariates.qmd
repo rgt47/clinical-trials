@@ -22,20 +22,21 @@ By the end of this chapter you should be able to:
 Covariate adjustment in randomized trials has a mature
 theoretical literature, consistent simulation evidence, and
 regulatory guidance from ICH, the FDA, and the EMA, all
-pointing the same direction. It remains contested in
+pointing in the same direction. It remains contested in
 applied practice. The gap is not one of evidence but of
-translation: an investigator facing a specific trial has
+translation. An investigator facing a specific trial has
 had no compact set of criteria to apply without
 re-deriving the theory.
 
-This chapter supplies those criteria. Its content is not
-new; it is a consolidation of dispersed guidance into a
+We supply those criteria in this chapter. The content is
+not new. It is a consolidation of dispersed guidance into a
 form a study team can use, with the reasoning behind each
 rule stated so that it can be defended.
 
 The central claim is simple: **adjust, always, for
-pre-specified prognostic covariates**, and the design
-questions are which ones and how, not whether.
+pre-specified prognostic covariates**. The design questions
+are which covariates and how to specify the model, not
+whether to adjust at all.
 
 ## Provenance
 
@@ -68,9 +69,9 @@ whether it can be compared to other trials.
 
 **(Judgment 3.) Resisting the balance test.** Someone will
 propose testing baseline characteristics for imbalance and
-adjusting for those that differ. This is incoherent and
-should be refused. Chapter 8 gave the reason; this chapter
-gives the criterion.
+adjusting for those that differ. This is incoherent, and we
+recommend refusing it outright. Chapter 8 gave the reason;
+this chapter supplies the criterion.
 
 ## When to adjust
 
@@ -93,15 +94,16 @@ efficiency gain from including it is larger than from any
 other single variable.
 
 **And the negative criterion: the decision to adjust must
-not depend on observed baseline balance.** Senn's argument
-is decisive. In a randomized trial, any observed imbalance
-is by construction a chance event; a hypothesis test of
-baseline balance therefore tests a null hypothesis known
-to be true, and its rejection carries no information about
-whether adjustment is needed. Worse, conditioning the
-model choice on the data makes the type I error of the
-final test depend on a data-dependent selection, which is
-not accounted for in the reported $p$-value.
+not depend on observed baseline balance.** We find Senn's
+argument decisive. In a randomized trial, any observed
+imbalance is by construction a chance event. A hypothesis
+test of baseline balance therefore tests a null hypothesis
+already known to be true, and its rejection carries no
+information about whether adjustment is needed. Worse,
+conditioning the model choice on the data makes the type I
+error of the final test depend on a data-dependent
+selection, and this is not accounted for in the reported
+$p$-value.
 
 ## Which covariates
 
@@ -142,9 +144,9 @@ the same factor.
 Baseline measurements of the outcome typically correlate
 0.5 to 0.7 with the follow-up value, so adjustment for
 baseline alone commonly saves a quarter to a half of the
-sample size. This is the largest free gain available in
-trial design and it costs one line in the model
-specification.
+sample size. This is, in our view, the largest free gain
+available in trial design, and it costs one line in the
+model specification.
 
 ```r
 set.seed(2026)
@@ -298,11 +300,11 @@ baseline balance tests will be performed or reported.
 
 **Sensitivity**: an unadjusted analysis, reported
 alongside. If adjusted and unadjusted differ materially in
-a randomized trial of this size, the explanation is either
-a strongly prognostic covariate that happened to be
-imbalanced, which is benign and expected, or a
-specification problem, which is not. Both should be
-examined before the manuscript.
+a randomized trial of this size, we would look for one of
+two explanations: a strongly prognostic covariate that
+happened to be imbalanced, which is benign and expected, or
+a specification problem, which is not. Both should be
+examined before the manuscript is written.
 
 ## Collaborating with an LLM on covariate adjustment
 

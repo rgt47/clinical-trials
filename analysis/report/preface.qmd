@@ -4,9 +4,9 @@ This volume is the clinical-trials course of the rgtlab
 graduate curriculum. It exists because the two
 clinical-trial chapters of the companion volume *Applied
 Statistical Methods for Health Sciences Research* are a
-survey, and a survey is not enough for a student who will
-soon be sitting on a study team. Trial work is unusually
-consequential: the decisions are made before the data
+survey. A survey is not enough for a student who will soon
+be sitting on a study team. Trial work is unusually
+consequential. The decisions are made before the data
 exist, they are written into a regulated document, and
 they cannot be revised once enrollment begins.
 
@@ -21,20 +21,20 @@ three ways.
 First, **every method is motivated by a decision someone
 has to make**, not by the mathematics that describes it.
 A reader who will never derive a group-sequential boundary
-still has to understand what a data monitoring committee
-is deciding when it looks at one, and a reader who will
-derive it needs the same motivation before the algebra is
-worth anything.
+still has to understand what a data monitoring committee is
+deciding when it looks at one. A reader who will derive it
+needs the same motivation before the algebra is worth
+anything.
 
 Second, **the mathematics is kept at the level of a first
 graduate methods sequence**. The book uses normal-theory
 sample-size formulas, likelihood ratios, the log-rank
 statistic, and linear and generalized linear models. It
-does not use measure theory, martingale limit arguments,
-or asymptotic theory beyond a stated result. Where a
-derivation would be instructive but long, the book states
-the result, shows what it implies, and points to the
-reference that proves it.
+does not use measure theory, martingale limit arguments, or
+asymptotic theory beyond a stated result. Where a
+derivation would be instructive but long, we state the
+result, show what it implies, and point to the reference
+that proves it.
 
 Third, **notation is defined where it is used**, and the
 Conventions page collects the recurring symbols in one
@@ -43,10 +43,10 @@ should be able to read every chapter; a biostatistics
 student should find enough technical content in the
 advanced chapters to be worth their time.
 
-The advanced-topic chapters (11 through 28) are harder
-than the core ten. They are written so that the first half
-of each is accessible to the whole audience, with the
-simulation detail concentrated in the second half.
+The advanced-topic chapters (11 through 28) are harder than
+the core ten. We have written each so that its first half
+is accessible to the whole audience, with the simulation
+detail concentrated in the second half.
 
 ## What this book covers
 
@@ -128,35 +128,34 @@ Ten chapters, one per week of a quarter:
 
 ## Prerequisites
 
-One graduate course in statistical methods (estimation,
-hypothesis testing, confidence intervals, linear
-regression) and basic familiarity with R. Survival
+We assume one graduate course in statistical methods
+(estimation, hypothesis testing, confidence intervals,
+linear regression) and basic familiarity with R. Survival
 analysis and mixed models are introduced where they are
-needed rather than assumed. The book uses `pwr`,
-`gsDesign`, `rpact`, `randomizeR`, `BOIN`, `clinfun`,
-`mmrm`, `mice`, and `survival`; code blocks are short
-enough to read even by someone who does not write R
+needed rather than assumed at the outset. The book uses
+`pwr`, `gsDesign`, `rpact`, `randomizeR`, `BOIN`, `clinfun`,
+`mmrm`, `mice`, and `survival`. The code blocks are kept
+short enough to read even for someone who does not write R
 routinely. No chapter assumes prior exposure to trials.
 
 ## Chapter template
 
-Each content chapter follows the sequence-wide structure:
+Each content chapter follows the sequence-wide structure.
 Learning objectives, Orientation, The statistician's
 contribution, content sections with collapsible
 Check-your-understanding callouts, a Worked example,
-Collaborating with an LLM, Principle in use, Exercises,
-and Further reading. The template puts human judgment and
-verification at the center of every chapter rather than
-treating them as afterthoughts.
+Collaborating with an LLM, Principle in use, Exercises, and
+Further reading. The template puts human judgment and
+verification at the center of every chapter, rather than
+treating them as an afterthought.
 
 ## A note on tone
 
-The book is opinionated where the literature is settled
-and explicit about disagreement where it is not. The 3+3
-design is poor and remains in use; single-arm phase II
-trials with historical controls mislead more often than
-they inform; covariate-adjusted analyses are
-under-used in confirmatory trials. Each of these claims is
-argued, not asserted, and each is followed by what a
-statistician should actually do when the study team wants
-otherwise.
+The book is opinionated where the literature is settled and
+explicit about disagreement where it is not. In our view,
+the 3+3 design is poor and remains in use. Single-arm phase
+II trials with historical controls mislead more often than
+they inform. Covariate-adjusted analyses remain under-used
+in confirmatory trials. Each of these claims is argued, not
+asserted, and each is followed by what a statistician
+should actually do when the study team wants otherwise.

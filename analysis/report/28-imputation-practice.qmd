@@ -22,9 +22,9 @@ By the end of this chapter you should be able to:
 
 Chapter 10 established the framework: mechanisms,
 prevention, MMRM under MAR, multiple imputation,
-reference-based methods, and sensitivity analysis. This
-chapter takes up two specific practical problems where the
-generic advice is insufficient.
+reference-based methods, and sensitivity analysis. We take
+up here two specific practical problems where the generic
+advice is insufficient.
 
 The first is whether machine-learning imputation methods
 belong in a confirmatory trial. Random-forest imputation
@@ -33,7 +33,8 @@ data types, minimal specification. It is also, in its
 standard form, a single-imputation method that ignores
 temporal structure and offers no route to sensitivity
 analysis, which makes it unsuitable as delivered. Whether
-it can be repaired is the subject of the first half.
+it can be repaired is the subject of the chapter's first
+half.
 
 The second is left-censored data: assay readings below a
 limit of detection. This is a different kind of

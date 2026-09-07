@@ -24,24 +24,24 @@ $p$-value. The objective is estimation of a dose: the
 largest dose that a defined patient population can
 tolerate, which will then be carried into phase II.
 
-The inversion has a reason. In oncology, where most of
-this methodology developed, cytotoxic drugs are assumed to
-have efficacy increasing with dose and toxicity increasing
-with dose, so the best dose is the highest tolerable one.
+The inversion has a reason. In oncology, where most of this
+methodology developed, cytotoxic drugs are assumed to have
+efficacy increasing with dose and toxicity increasing with
+dose. The best dose is therefore the highest tolerable one.
 Patients enrolled are typically those who have exhausted
 standard therapy, so the ethical calculus permits exposure
-to an unknown dose, and it simultaneously demands that as
+to an unknown dose. At the same time, it demands that as
 few patients as possible be treated at doses that are
 either toxic or subtherapeutic.
 
-The chapter's central claim is uncomfortable and well
-supported: the design used in the majority of phase I
+The chapter's central claim is uncomfortable, and well
+supported. The design used in the majority of phase I
 oncology protocols for four decades, the 3+3, is
 substantially worse than the available alternatives, and
 the alternatives are implemented in free software and are
-no harder to run. The chapter explains the 3+3 anyway,
-because you will encounter it constantly, and then
-explains what to use instead.
+no harder to run. We explain the 3+3 anyway, because the
+reader will encounter it constantly, and then explain what
+to use instead.
 
 ## The statistician's contribution {#sec-phase1-human}
 

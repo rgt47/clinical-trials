@@ -23,16 +23,16 @@ equally sophisticated statisticians have arrived at
 opposite default analyses. Oncology analyzes time to
 event with Cox regression. Alzheimer disease analyzes
 change in a continuous score with MMRM. The difference is
-not arbitrary and it is not purely statistical; it is the
+not arbitrary, and it is not purely statistical. It is the
 product of the endpoints available, the regulatory
 history, and a genuine efficiency argument.
 
-The question this chapter answers is what happens when
-both options are available for the same trial. In
-Alzheimer disease, a patient's CDR score can be analyzed
-as a continuous trajectory, or dichotomized into
-'conversion to CDR at or above 1.0' and analyzed as a
-time to event. Both are legitimate. They are not equally
+We take up here what happens when both options are
+available for the same trial. In Alzheimer disease, a
+patient's CDR score can be analyzed as a continuous
+trajectory, or dichotomized into 'conversion to CDR at or
+above 1.0' and analyzed as a time to event. Both are
+legitimate. They are, as we shall see, not equally
 efficient.
 
 ## Provenance

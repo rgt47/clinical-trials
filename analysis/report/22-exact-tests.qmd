@@ -23,13 +23,13 @@ Chapter 5's binary sample-size formula and Chapter 8's
 logistic regression both rest on asymptotic
 approximations. In a trial with 30 patients per arm and an
 event rate of 8%, those approximations are not merely
-imprecise, they can be wrong in ways that matter: nominal
+imprecise. They can be wrong in ways that matter: nominal
 5% tests with actual sizes of 8% or of 1%, and confidence
 intervals with coverage far from 95%.
 
 Exact methods compute the sampling distribution of the
 test statistic by enumeration rather than approximation.
-They have a reputation for conservatism, which is
+They carry a reputation for conservatism, which is
 deserved for the conditional test and largely undeserved
 for the unconditional alternatives, and a reputation for
 computational difficulty, which was accurate in 1935 and

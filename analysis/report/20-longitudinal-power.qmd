@@ -25,18 +25,18 @@ difference in rates of change, the observations within a
 patient are correlated, and dropout removes some
 observations and not others.
 
-Three approaches exist, and a competent design uses at
-least two of them. **Closed-form formulas** give an answer
-in a line and expose which parameters matter.
+Three approaches exist, and we recommend a competent design
+use at least two of them. **Closed-form formulas** give an
+answer in a line and expose which parameters matter.
 **Package implementations** encode those formulas with
 extensions for dropout and unequal spacing. **Simulation**
 handles everything else and is the only route once the
 analysis model departs from what the formulas assume.
 
-The chapter's practical message: use the closed form to
-understand the design, use simulation to size it, and use
-the agreement between them as the check that neither has a
-mistake in it.
+Our practical message for this chapter: use the closed
+form to understand the design, use simulation to size it,
+and use the agreement between them as the check that
+neither has a mistake in it.
 
 ## Provenance
 

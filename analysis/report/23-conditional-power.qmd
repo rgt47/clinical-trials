@@ -28,16 +28,17 @@ is **stochastic curtailment**, so called because it
 curtails a trial whose conclusion is nearly determined.
 
 The standard implementations rest on the asymptotic
-normality of the final test statistic and the independent
-increments structure. Those assumptions are reasonable in
-a large cardiovascular trial with thousands of events.
-They are not reasonable in a trial with a low-incidence
-mortality endpoint, where the final comparison will be an
-exact test because the counts are small, and where the
-number of events at the interim may be in single digits.
+normality of the final test statistic and on an
+independent-increments structure. Those assumptions are
+reasonable in a large cardiovascular trial with thousands
+of events. They are not reasonable in a trial with a
+low-incidence mortality endpoint, where the final
+comparison will be an exact test because the counts are
+small, and where the number of events at the interim may
+be in single digits.
 
-This chapter develops the exact treatment: conditional
-power computed by enumeration, for a trial whose final
+We develop here the exact treatment: conditional power
+computed by enumeration, for a trial whose final
 comparison is Fisher's exact test.
 
 ## Provenance

@@ -30,16 +30,16 @@ information through their observed visits.
 
 The consequence is systematic mis-sizing, in a direction
 that depends on the dropout rate and the analysis. The
-menu of alternatives is large and largely undocumented
-comparatively: heuristic inflation factors, replacement
+menu of alternatives is large and, comparatively, largely
+undocumented: heuristic inflation factors, replacement
 strategies, and analytical adjustments derived from the
 likelihood of the planned analysis.
 
-This chapter compares them. Its practical conclusion is
-that the adjustment should match the planned analysis, and
-that when the analysis is MMRM the analytical adjustment
-derived for MMRM is available, unbiased, and better than
-any of the heuristics.
+We compare them in this chapter. Our practical conclusion
+is that the adjustment should match the planned analysis,
+and that when the analysis is MMRM, the analytical
+adjustment derived for MMRM is available, unbiased, and
+preferable to any of the heuristics.
 
 ## Provenance
 

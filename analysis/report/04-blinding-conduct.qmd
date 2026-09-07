@@ -20,23 +20,23 @@ By the end of this chapter you should be able to:
 ## Orientation
 
 Randomization creates comparable groups at the moment of
-assignment. Everything that happens afterward can
-un-create them. Patients who know they received placebo
-drop out at different rates; clinicians who know the
-assignment prescribe co-interventions differently;
-assessors who know it grade an ambiguous radiograph
-differently; and analysts who know it choose among models
-differently. Blinding is the general defense.
+assignment. Everything that happens afterward can un-create
+them. Patients who know they received placebo drop out at
+different rates. Clinicians who know the assignment
+prescribe co-interventions differently. Assessors who know
+it grade an ambiguous radiograph differently, and analysts
+who know it choose among models differently. Blinding is
+the general defense.
 
-This chapter is the least mathematical in the book and one
+This chapter is the least mathematical in the book, and one
 of the most important. Most trials that fail do not fail
 because the sample-size formula was wrong. They fail
 because enrollment was slower than projected, the event
-rate was lower than assumed, the data were of poor
-quality, or the protocol was applied inconsistently across
-sites. The statistician who treats these as someone else's
-department will be the one explaining, two years later,
-why the primary analysis cannot be interpreted.
+rate was lower than assumed, the data were of poor quality,
+or the protocol was applied inconsistently across sites. In
+our experience, the statistician who treats these as
+someone else's department is the one explaining, two years
+later, why the primary analysis cannot be interpreted.
 
 ## The statistician's contribution {#sec-blinding-human}
 

@@ -4,28 +4,29 @@ This is the online version of **Design and Analysis of
 Clinical Trials: A ten-week graduate course** by The
 rgtlab Curriculum Project.
 
-The book covers the design, conduct, monitoring, analysis,
-and reporting of randomized clinical trials, written for
-first- and second-year graduate students in
+This book covers the design, conduct, monitoring,
+analysis, and reporting of randomized clinical trials. It
+is written for first- and second-year graduate students in
 biostatistics, epidemiology, and public health, and for
 medical students with an interest in research. The core is
-structured for a single ten-week academic quarter: one
+structured for a single ten-week academic quarter, one
 chapter per week, each roughly two hours of lecture and
 four to six hours of assigned work. Eighteen further
-chapters treat advanced topics in depth for readers who
+chapters treat advanced topics in depth, for readers who
 continue past the quarter.
 
-The organizing claim of the book is that a trial is an
-experiment whose design decisions are made once, in
-advance, under uncertainty, and cannot be revised after
-the first patient is randomized. Everything the book
-teaches follows from that constraint: why the estimand is
-specified before the sample size, why the randomization
-procedure dictates the analysis model, why interim looks
-must be priced into the type I error before the first
-look, and why a pre-specified analysis of imperfect data
-is worth more than a perfect analysis chosen after seeing
-the data.
+The organizing claim of the book is straightforward. A
+trial is an experiment whose design decisions are made
+once, in advance, under uncertainty. Once the first patient
+is randomized, none of those decisions can be revised.
+Everything the book teaches follows from that constraint.
+We see why the estimand must be specified before the
+sample size, why the randomization procedure dictates the
+analysis model, and why interim looks must be priced into
+the type I error before the first look is taken. Lastly,
+we see why a pre-specified analysis of imperfect data is
+worth more than a perfect analysis chosen after the data
+are already in hand.
 
 The ten weeks are:
 

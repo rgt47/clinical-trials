@@ -23,11 +23,11 @@ By the end of this chapter you should be able to:
 
 Chapter 3 established that restricted allocation schemes
 create an obligation for the analysis. This chapter
-examines that relationship quantitatively, using
-simulation evidence, and reaches a conclusion that
-simplifies design practice considerably: the two decisions
-do not interact, so they can be made separately, and the
-analysis decision is the one that matters.
+examines that relationship quantitatively, using simulation
+evidence, and reaches a conclusion that simplifies design
+practice considerably. The two decisions do not interact,
+so they can be made separately, and the analysis decision
+is the one that matters.
 
 That conclusion runs against the way these choices are
 usually discussed. Design teams debate minimization versus

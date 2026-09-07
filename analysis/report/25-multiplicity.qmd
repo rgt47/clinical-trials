@@ -29,17 +29,17 @@ multiplies the opportunities for a false positive, and
 without adjustment the probability that at least one false
 claim emerges can far exceed the declared level.
 
-Chapter 8 introduced the standard remedies. This chapter
-goes further, in two directions. First, it organizes the
-procedures by what they assume and what they deliver, so
-that a choice can be made on grounds other than
-familiarity. Second, it takes up resampling-based
-procedures, and specifically the Romano-Wolf stepdown,
-which exploits the joint dependence structure of the test
-statistics rather than treating them as independent or
-worst-case dependent. In a trial where the endpoints are
-strongly correlated, which is the normal case, the gain in
-power is substantial.
+Chapter 8 introduced the standard remedies. We go further
+here, in two directions. First, we organize the procedures
+by what they assume and what they deliver, so that a
+choice can be made on grounds other than familiarity.
+Second, we take up resampling-based procedures, and
+specifically the Romano-Wolf stepdown, which exploits the
+joint dependence structure of the test statistics rather
+than treating them as independent or worst-case dependent.
+In a trial where the endpoints are strongly correlated,
+which is the normal case, the gain in power is
+substantial.
 
 ## Provenance
 

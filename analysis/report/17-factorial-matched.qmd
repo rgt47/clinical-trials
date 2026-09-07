@@ -36,12 +36,12 @@ of the largest and most informative trials ever run.
 The second half of the chapter takes up a distinct
 question. A factorial design with $k$ arms needs balance
 across $k$ groups, and the standard tools (stratification,
-minimization) are strained by $k > 2$. Matched-tuple
-randomization is the natural generalization of the matched
-pair: group patients into tuples of size $k$ matched on
-baseline covariates, and randomly assign the $k$ treatment
-combinations within each tuple. Every factorial contrast
-is then exactly balanced within every tuple.
+minimization) are strained once $k > 2$. We turn to
+matched-tuple randomization, the natural generalization of
+the matched pair: group patients into tuples of size $k$
+matched on baseline covariates, and randomly assign the $k$
+treatment combinations within each tuple. Every factorial
+contrast is then exactly balanced within every tuple.
 
 ## Provenance
 
@@ -105,10 +105,11 @@ size.
 **What happens when there is an interaction.** The main
 effect of A is then an average over the levels of B, and
 whether that average is meaningful depends on the
-question. If B is a treatment that will be used in half of
-practice, the averaged effect may be exactly what a health
-system wants. If A works only in the presence of B, the
-averaged main effect describes no patient's situation.
+question being asked. If B is a treatment that will be
+used in half of practice, the averaged effect may be
+exactly what a health system wants. If A works only in the
+presence of B, however, the averaged main effect describes
+no patient's actual situation.
 
 **Practical examples.** The Physicians' Health Study
 (aspirin and beta-carotene) and ISIS-2 (streptokinase and
@@ -319,9 +320,9 @@ the pool ratio.
 **What it buys, stated plainly.** A 15 to 20% variance
 reduction is equivalent to enrolling 15 to 20% more
 patients. At 400 patients in a prevention trial costing
-tens of millions, that is a substantial saving, and it is
-available only because the cohort was characterized in
-advance.
+tens of millions of dollars, that is a substantial saving,
+and it is available only because we characterized the
+cohort in advance.
 
 ## Collaborating with an LLM on factorial designs
 

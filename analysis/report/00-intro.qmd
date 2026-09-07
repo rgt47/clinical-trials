@@ -13,10 +13,11 @@ to be read one per week over a ten-week quarter, in order,
 and they assume nothing beyond one graduate methods course.
 Each carries roughly two hours of lecture material and
 four to six hours of assigned work. A reader who works
-through these ten chapters and their exercises has the
-working knowledge expected of a junior statistician
-joining a trial team, or of a clinical investigator who
-must read a protocol critically.
+through these ten chapters and their exercises acquires the
+working knowledge expected of a junior statistician joining
+a trial team. The same reader is also equipped to serve as
+a clinical investigator who must read a protocol
+critically.
 
 **Chapters 11 through 28 are advanced topics.** Each one
 takes a question that the course chapters raise but do not

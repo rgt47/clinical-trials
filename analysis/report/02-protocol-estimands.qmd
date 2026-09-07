@@ -26,13 +26,13 @@ the primary question will be answered. It is a scientific
 document, a regulatory document, and a contract with the
 patients who consent on the basis of what it says.
 
-The reason this matters statistically is subtle and worth
+The reason this matters statistically is subtle, and worth
 stating plainly. Almost any dataset can be made to yield a
 significant result by someone willing to try enough
-analyses. The credibility of a trial's conclusion rests
-not on the analysis being clever but on the analysis
+analyses. The credibility of a trial's conclusion rests not
+on the analysis being clever. It rests on the analysis
 having been chosen before anyone could see which choice
-would be favorable. Pre-specification is not paperwork; it
+would be favorable. Pre-specification is not paperwork. It
 is the mechanism that makes the reported $p$-value mean
 what it claims to mean.
 
@@ -59,21 +59,21 @@ require ten thousand patients.
 
 **(Judgment 2.) The estimand comes before the estimator.**
 Teams reach for the analysis model first because that is
-what feels statistical. The correct order is: state the
-quantity to be estimated in words, decide how patients who
-deviate will be handled conceptually, and only then choose
-a model. When the order is reversed, the trial reports a
-number no one can interpret, because the population and
-the treatment condition it refers to were never named.
+what feels statistical. The correct order is to state the quantity to be estimated
+in words, decide how patients who deviate will be handled
+conceptually, and only then choose a model. When the order
+is reversed, the trial reports a number no one can
+interpret. The population and the treatment condition it
+refers to were never named.
 
 **(Judgment 3.) Anticipate the intercurrent events.**
 Patients will stop treatment, switch, take rescue
 medication, and die. Every one of these is foreseeable
 before enrollment. The protocol must say what each means
-for the estimand, and a protocol that is silent has not
-avoided the decision, it has deferred it to whoever
-analyzes the data under deadline pressure with the
-unblinded results in front of them.
+for the estimand. A protocol that is silent has not avoided
+the decision. It has merely deferred it to whoever analyzes
+the data under deadline pressure, with the unblinded
+results already in front of them.
 
 ## The protocol
 

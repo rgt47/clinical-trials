@@ -35,10 +35,10 @@ Then group-sequential methods arrived
 decade fully sequential monitoring had essentially
 disappeared from confirmatory trials.
 
-This chapter asks whether the reasons for that
+We ask in this chapter whether the reasons for that
 displacement still hold. They were largely practical
 rather than theoretical, and the practical landscape has
-changed: computation is free, alpha-spending has decoupled
+changed. Computation is free, alpha spending has decoupled
 the number of looks from the design, and adaptive
 methodology has normalized designs far more complex than a
 continuous boundary.

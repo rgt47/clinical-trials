@@ -25,23 +25,21 @@ A clinical trial is an experiment on people. That sentence
 contains both the reason trials work and the reason they
 are constrained in ways no other experiment is. They work
 because the investigator, not nature and not the patient's
-physician, assigns the treatment; the assignment is made
-by a chance mechanism that no one can predict or
-manipulate; and the resulting comparison is therefore free
-of the confounding that makes observational treatment
-comparisons so difficult to interpret. They are
-constrained because the units of the experiment are
-patients who may be harmed, who must consent, and whose
-interests are not identical to the interests of the
-question.
+physician, assigns the treatment. The assignment is made by
+a chance mechanism that no one can predict or manipulate,
+and the resulting comparison is therefore free of the
+confounding that makes observational treatment comparisons
+so difficult to interpret. They are constrained because the
+units of the experiment are patients who may be harmed, who
+must consent, and whose interests are not identical to the
+interests of the question.
 
 This chapter sets up the rest of the book. It is the least
-technical chapter and the one whose ideas recur most
+technical chapter, and the one whose ideas recur most
 often. The technical chapters that follow all answer some
-version of a single question: given that we get exactly
-one shot at this experiment, and given that we must commit
-to the design before we see the data, what is the best
-design?
+version of a single question. We get exactly one shot at
+this experiment, and we must commit to the design before we
+see the data. Given that, what is the best design?
 
 Three threads run through the chapter. **Why randomize**:
 the logical argument for the randomized comparison and the

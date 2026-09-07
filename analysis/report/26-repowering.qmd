@@ -39,9 +39,9 @@ participants have contributed and have a claim.
 The statistical machinery for this, sample-size
 re-estimation or repowering, has matured over two decades
 and remains contested both methodologically and
-institutionally. This chapter organizes it around what
-each operation observes, because that is what determines
-whether it is free, costly, or invalid.
+institutionally. We organize it in this chapter around
+what each operation observes, because that is what
+determines whether it is free, costly, or invalid.
 
 ## Provenance
 

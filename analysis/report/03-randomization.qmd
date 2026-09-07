@@ -30,12 +30,12 @@ sequence. **Allocation concealment** is preventing anyone
 who could influence enrollment from knowing the upcoming
 assignment before the patient is enrolled. **Blinding** is
 preventing patients, clinicians, and assessors from
-knowing assignments after enrollment. The first two
-protect against selection bias at entry; the third
-protects against differential treatment and assessment
-afterward. A trial can be randomized and unconcealed (a
-sequence taped inside a cabinet), and that trial has
-selection bias despite being randomized.
+knowing assignments after enrollment. The first two protect
+against selection bias at entry. The third protects against
+differential treatment and assessment afterward. A trial
+can be randomized and unconcealed (a sequence taped inside
+a cabinet). That trial has selection bias despite being
+randomized.
 
 The chapter covers the mechanics of generating the
 sequence, the trade-off between balance and

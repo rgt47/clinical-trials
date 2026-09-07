@@ -20,22 +20,22 @@ By the end of this chapter you should be able to:
 
 The mixed model for repeated measures is the default
 analysis for longitudinal trials, and it is often adopted
-without asking two questions that determine whether it is
-buying anything.
+without our asking two questions that determine whether it
+is buying anything.
 
 The first is whether the model reduces to something
 simpler. With two time points and an unstructured
 covariance, MMRM is *algebraically identical* to ANCOVA,
 not approximately but exactly. Knowing this saves
-arguments and clarifies what the machinery does.
+arguments and clarifies what the machinery actually does.
 
 The second is what the model assumes about the shape of
 the treatment effect. A random-slopes model constrains the
-effect to accumulate linearly in time. When that is true,
-it is more powerful than the unconstrained alternative;
-when it is false, it is biased. The size of both effects
-is quantifiable and the choice should be made on
-biological grounds before the data exist.
+effect to accumulate linearly in time. When that assumption
+holds, the model is more powerful than the unconstrained
+alternative. When it fails, the model is biased. The size
+of both effects is quantifiable, and the choice should be
+made on biological grounds before the data exist.
 
 ## Provenance
 
@@ -87,11 +87,11 @@ This is an exact equivalence, not an approximation.
 The practical consequence: for any two-time-point design
 with complete data, ANCOVA is a sufficient analysis, and
 the MMRM apparatus adds no information about the treatment
-contrast. Teams that fit MMRM to pre-post data believing
-it is more sophisticated are fitting ANCOVA with extra
-steps. What MMRM does add, and it is not nothing, is
+contrast. Teams that fit MMRM to pre-post data believing it
+more sophisticated are, in effect, fitting ANCOVA with
+extra steps. What MMRM does add, and it is not nothing, is
 graceful handling of missing baselines and a route to
-including patients missing the follow-up.
+including patients who are missing the follow-up visit.
 
 **Condition 2: small between-subject slope variance.** In
 designs with three or more time points, the random-slopes

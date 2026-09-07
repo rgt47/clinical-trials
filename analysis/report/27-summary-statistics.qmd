@@ -26,17 +26,17 @@ be the mean over the follow-up period, the slope from a
 per-patient regression, the area under the curve, the peak
 value, or the time to a threshold.
 
-The approach has an unfashionable reputation, and this
-chapter argues that the reputation is undeserved. The
+The approach has an unfashionable reputation, and we argue
+in this chapter that the reputation is undeserved. The
 summary-measures analysis is simple, transparent, robust
 to covariance misspecification, and, under conditions that
 describe a substantial fraction of real trials,
 essentially as powerful as MMRM.
 
-The chapter is not an argument against mixed models. It is
-an argument that the choice should be made on the trial's
-features rather than by default, and a specification of
-which features matter.
+We are not arguing against mixed models. We are arguing
+that the choice should be made on the trial's features
+rather than by default, and we specify below which
+features matter.
 
 ## Provenance
 

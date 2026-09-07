@@ -17,9 +17,9 @@ By the end of this chapter you should be able to:
 ## Orientation
 
 The sample size is the most scrutinized number in a
-protocol and often the least defensible. It is scrutinized
+protocol, and often the least defensible. It is scrutinized
 because it determines the cost, the duration, and whether
-the trial can answer its question; it is indefensible
+the trial can answer its question. It is indefensible
 because at least one of its inputs is usually a guess
 dressed as a citation.
 
