@@ -62,6 +62,10 @@ The book sits in the rgtlab graduate sequence:
 See the [Preface](preface.qmd) for motivation and the
 [Conventions](conventions.qmd) page for visual cues.
 
+::: {.content-visible when-format="html"}
+The [Contents](contents.qmd) page lists every chapter on one page.
+:::
+
 ## License
 
 This book is licensed under
